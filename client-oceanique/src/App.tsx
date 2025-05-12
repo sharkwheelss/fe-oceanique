@@ -2,7 +2,7 @@ import './App.css'
 import { useState } from 'react'
 import Navbar from './components/Navbar'
 import Signin from './components/SignIn';
-import Signup from './components/Signup';
+import Signup from './components/SignUp';
 
 function App() {
 

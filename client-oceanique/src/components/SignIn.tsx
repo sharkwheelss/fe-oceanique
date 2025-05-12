@@ -25,7 +25,7 @@ const Signin = () => {
                 {/* Beach illustration */}
                 <div className="max-w-md mx-auto">
                     <img
-                        src="public/cust-signin.png"
+                        src="/cust-signin.png"
                         alt="Beach illustration"
                         className="w-full h-auto"
                     />

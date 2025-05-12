@@ -14,7 +14,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPage }) => {
         {/* Logo */}
         <div className="flex items-center">
           <img
-            src="public/logo.png"
+            src="/logo.png"
             alt="Oceanique Logo"
             className="h-10 w-10 mr-2"
           />

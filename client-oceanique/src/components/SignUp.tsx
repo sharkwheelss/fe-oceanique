@@ -100,7 +100,7 @@ const Signup = () => {
                 {/* Beach vacation illustration */}
                 <div className="max-w-md ml-auto">
                     <img
-                        src="public/cust-signup.png"
+                        src="/cust-signup.png"
                         alt="Beach vacation illustration"
                         className="w-full h-auto"
                     />
