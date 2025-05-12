@@ -1,25 +1,41 @@
 import './App.css'
-import { useState } from 'react'
 import Navbar from './components/Navbar'
 import Signin from './components/SignIn';
 import Signup from './components/SignUp';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import NotFound from './components/NotFound';
+import { Home, WhyOceaniqueSection } from './components/Home';
+import Beaches from './components/Beaches';
 
 function App() {
-
-  // State to toggle between sign in and sign up pages
-  const [currentPage, setCurrentPage] = useState('signin'); // 'signin' or 'signup'
-
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation Bar */}
-      <Navbar onNavigate={setCurrentPage} currentPage={currentPage} />
+    <Router>
+      <div className="min-h-screen bg-white">
+        {/* Navigation Bar */}
+        <Navbar
+        />
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 flex">
-        {currentPage === 'signin' ? <Signin /> : <Signup />}
-      </main>
-    </div>
+        {/* Main Content */}
+        <main className="container mx-auto my-auto px-4 py-8">
+          <Routes>
+            <Route path="/home" element={
+              <div>
+                <Home />
+                <WhyOceaniqueSection />
+              </div>
+            } />
+            <Route path="/beaches" element={<Beaches />} />
+            <Route path="/events" element={<div>Upcoming Events</div>} />
+            <Route path="/wishlist" element={<div>Your Wishlist</div>} />
+            <Route path="/transaction-history" element={<div>Transaction History</div>} />
+            <Route path="/signin" element={<Signin />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
-export default App
+export default App;

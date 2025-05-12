@@ -18,7 +18,7 @@ const Signin = () => {
             {/* Left side with illustration and text */}
             <div className="md:w-1/2 flex flex-col justify-center p-8">
                 <h1 className="text-3xl font-bold mb-4">
-                    Discover Breathtaking Indonesian Shores with <span className="text-teal-500">Oceanique</span>
+                    Discover Breathtaking Indonesian Shores with <span className="text-teal-500 font-sharemono">Oceanique</span>
                 </h1>
                 <p className="text-xl mb-6">– Try our recommendation now!</p>
 

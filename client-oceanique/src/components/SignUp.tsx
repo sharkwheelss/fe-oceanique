@@ -95,7 +95,7 @@ const Signup = () => {
                 <h1 className="text-3xl font-bold mb-4">
                     Your Indonesian Beach Escape Starts Here
                 </h1>
-                <p className="text-xl mb-6">– Join <span className="text-teal-500">Oceanique</span> Now!</p>
+                <p className="text-xl mb-6">– Join <span className="text-teal-500 font-sharemono">Oceanique</span> Now!</p>
 
                 {/* Beach vacation illustration */}
                 <div className="max-w-md ml-auto">
