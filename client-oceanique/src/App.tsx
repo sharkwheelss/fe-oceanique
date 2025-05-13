@@ -2,7 +2,7 @@ import './App.css'
 import Navbar from './components/Navbar'
 import Signin from './components/SignIn';
 import Signup from './components/SignUp';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import NotFound from './components/NotFound';
 import { Home, WhyOceaniqueSection } from './components/Home';
 import Beaches from './components/Beaches';
@@ -12,12 +12,13 @@ function App() {
     <Router>
       <div className="min-h-screen bg-white">
         {/* Navigation Bar */}
-        <Navbar
-        />
+        <Navbar />
 
         {/* Main Content */}
-        <main className="container mx-auto my-auto px-4 py-8">
+        <main className="container mx-auto my-auto px-4 py-4">
           <Routes>
+            {/* Redirect to /home when the app is loaded */}
+            <Route path="/" element={<Navigate to="/home" />} />
             <Route path="/home" element={
               <div>
                 <Home />

@@ -101,11 +101,69 @@ const Beaches = () => {
         }));
     };
 
+
+    const FilterDropdown: React.FC<{ label: string; value: string; onChange: (value: string) => void }> = ({ label, value, onChange }) => {
+        const [isOpen, setIsOpen] = useState(false);
+
+        // Sample options for the dropdown
+        const options = ['Option 1adwd', 'Option 2', 'Option 3'];
+
+        // Toggle dropdown open/close
+        const toggleDropdown = () => {
+            setIsOpen(!isOpen);
+        };
+
+        // Handle option selection
+        const handleSelect = (option: string): void => {
+            onChange(option);
+            setIsOpen(false);
+        };
+
+        return (
+            <div>
+                <button
+                    onClick={toggleDropdown}
+                    className="bg-gray-200 text-gray-700 px-4 py-3 rounded-md min-w-36 flex items-center justify-between"
+                >
+                    <span className="truncate">{value || label}</span>
+                    <ChevronDown />
+                </button>
+
+                {isOpen && (
+                    <div
+                        className={`absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg transition-all duration-300 ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                            }`}
+                        style={{ width: `${Math.max(...options.map(option => option.length)) * 10 + 20}px` }}
+                    >
+                        {options.map((option) => (
+                            <div
+                                key={option}
+                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                onClick={() => handleSelect(option)}
+                            >
+                                {option}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    function handlePrev(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+        setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+    }
+
+    function handleNext(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+        setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, beaches.length - 1));
+    }
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Search and Filters */}
-            <div className="container mx-auto px-4 py-6">
-                <div className="flex flex-wrap gap-4">
+            <div className="container sticky top-[72px] z-40 bg-white mx-auto px-4 py-6">
+                <div className="flex flex-wrap justify-center gap-4">
                     <div className="relative flex-grow max-w-lg">
                         <Search className="absolute left-3 top-3 text-gray-400" size={20} />
                         <input
@@ -117,29 +175,10 @@ const Beaches = () => {
                         />
                     </div>
 
-                    <FilterDropdown
-                        label="Province"
-                        value={filters.province}
-                        onChange={(val: string) => handleFilterChange('province', val)}
-                    />
-
-                    <FilterDropdown
-                        label="City"
-                        value={filters.city}
-                        onChange={(val: string) => handleFilterChange('city', val)}
-                    />
-
-                    <FilterDropdown
-                        label="subdistrict"
-                        value={filters.subdistrict}
-                        onChange={(val: string) => handleFilterChange('subdistrict', val)}
-                    />
-
-                    <FilterDropdown
-                        label="Estimate Price"
-                        value={filters.priceRange}
-                        onChange={(val: string) => handleFilterChange('priceRange', val)}
-                    />
+                    <FilterDropdown label="Province" value={filters.province} onChange={(val: string) => handleFilterChange('province', val)} />
+                    <FilterDropdown label="City" value={filters.city} onChange={(val: string) => handleFilterChange('city', val)} />
+                    <FilterDropdown label="Subdistrict" value={filters.subdistrict} onChange={(val: string) => handleFilterChange('subdistrict', val)} />
+                    <FilterDropdown label="Estimate Price" value={filters.priceRange} onChange={(val: string) => handleFilterChange('priceRange', val)} />
 
                     <button className="bg-teal-500 text-white px-8 py-3 rounded-md font-medium hover:bg-teal-600 transition-colors">
                         Filter
@@ -147,98 +186,46 @@ const Beaches = () => {
                 </div>
             </div>
 
-            {/* Near You Section */}
-            <section className="container mx-auto px-4 pt-4 pb-8">
-                <h2 className="text-2xl font-bold mb-4">Near You</h2>
-                <div className="border-t border-gray-200 pt-4">
-                    <div className="relative">
-                        <div className="flex overflow-x-hidden">
-                            <div className="flex gap-6">
-                                {beaches.slice(0, 3).map((beach) => (
-                                    <BeachCard key={beach.id} beach={beach} />
-                                ))}
+            {/* Section Template Component */}
+            {[{ title: 'Near You' }, { title: 'Sabang to Merauke' }].map((section, idx) => (
+                <section key={idx} className="container mx-auto px-4 pt-4 pb-8">
+                    <h2 className="text-2xl font-bold mb-4 text-center">{section.title}</h2>
+                    <div className="border-t border-gray-200 pt-4">
+                        <div className="relative">
+                            <div className="flex justify-center overflow-hidden">
+                                <div
+                                    className="flex gap-6 transition-transform duration-300"
+                                    style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+                                >
+                                    {beaches.map((beach) => (
+                                        <div key={beach.id} className="w-full sm:w-1/2 md:w-1/3 flex-shrink-0">
+                                            <BeachCard beach={beach} />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
+                            <button
+                                onClick={handlePrev}
+                                className="absolute left-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors"
+                            >
+                                <ChevronLeft size={24} />
+                            </button>
+                            <button
+                                onClick={handleNext}
+                                className="absolute right-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors"
+                            >
+                                <ChevronRight size={24} />
+                            </button>
                         </div>
-                        <button className="absolute left-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors">
-                            <ChevronLeft size={24} />
-                        </button>
-                        <button className="absolute right-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors">
-                            <ChevronRight size={24} />
-                        </button>
                     </div>
-                </div>
-            </section>
-
-            {/* Sabang to Merauke Section */}
-            <section className="container mx-auto px-4 pt-4 pb-8">
-                <h2 className="text-2xl font-bold mb-4">Sabang to Merauke</h2>
-                <div className="border-t border-gray-200 pt-4">
-                    <div className="relative">
-                        <div className="flex overflow-x-hidden">
-                            <div className="flex gap-6">
-                                {beaches.slice(3, 6).map((beach) => (
-                                    <BeachCard key={beach.id} beach={beach} />
-                                ))}
-                            </div>
-                        </div>
-                        <button className="absolute left-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors">
-                            <ChevronLeft size={24} />
-                        </button>
-                        <button className="absolute right-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors">
-                            <ChevronRight size={24} />
-                        </button>
-                    </div>
-                </div>
-            </section>
+                </section>
+            ))}
         </div>
     );
+
 }
 
-// Removed unused NavLink component
 
-const FilterDropdown: React.FC<{ label: string; value: string; onChange: (value: string) => void }> = ({ label, value, onChange }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    // Sample options for the dropdown
-    const options = ['Option 1', 'Option 2', 'Option 3'];
-
-    // Toggle dropdown open/close
-    const toggleDropdown = () => {
-        setIsOpen(!isOpen);
-    };
-
-    // Handle option selection
-    const handleSelect = (option: string): void => {
-        onChange(option);
-        setIsOpen(false);
-    };
-
-    return (
-        <div className="relative">
-            <button
-                onClick={toggleDropdown}
-                className="bg-gray-200 text-gray-700 px-4 py-3 rounded-md min-w-36 flex items-center justify-between"
-            >
-                <span className="truncate">{value || label}</span>
-                <ChevronDown />
-            </button>
-
-            {isOpen && (
-                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg">
-                    {options.map((option) => (
-                        <div
-                            key={option}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                            onClick={() => handleSelect(option)}
-                        >
-                            {option}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
 
 // ChevronDown icon component (simplified)
 const ChevronDown = () => {
