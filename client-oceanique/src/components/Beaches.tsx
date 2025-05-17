@@ -231,8 +231,6 @@ const Beaches = () => {
 
 }
 
-
-
 // ChevronDown icon component (simplified)
 const ChevronDown = () => {
     return (

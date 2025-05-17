@@ -23,7 +23,7 @@ export default function BeachDetailPage() {
         review: 145,
         location: 'Cungkil, Surabaya, Jawa Timur',
         weather: 'Mostly Sunny',
-        image: '/api/placeholder/1000/400',
+        image: 'https://picsum.photos/id/16/2500/1667',
         hasEvent: false,
         about: 'Information about this beach would go here...',
         facility: 'List of facilities would go here...',

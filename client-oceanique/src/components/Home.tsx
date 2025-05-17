@@ -1,6 +1,8 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
+    const navigate = useNavigate();
     return (
         <>
             <section className="container mx-auto px-4 py-16 flex flex-col md:flex-row items-center">
@@ -51,10 +53,11 @@ const Home = () => {
                     {/* Try Now Button */}
                 </div>
             </section>
-            <button className="w-full py-4 bg-teal-500 text-white rounded-full hover:bg-teal-600 transition-colors flex items-center justify-center font-medium text-sm md:text-base lg:text-lg">
+            <button className="w-full py-4 bg-teal-500 text-white rounded-full hover:bg-teal-600 transition-colors flex items-center justify-center font-medium text-sm md:text-base lg:text-lg"
+                onClick={() => navigate(`/personality`)} >
                 <span className="mr-2">Try now</span>
                 <img src="/home-trynow.png" alt="trynow" className='h-6 w-6 ml-1' />
-            </button>
+            </button >
         </>
     );
 }
@@ -69,7 +72,7 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({ icon, title, description })
     return (
         <div className="flex flex-col items-center text-center bg-white shadow-lg rounded-xl p-6">
             <div className="mb-6">
-            {icon}
+                {icon}
             </div>
             <h3 className="text-xl font-semibold mb-3">{title}</h3>
             <p className="text-gray-600">{description}</p>

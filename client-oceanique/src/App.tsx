@@ -9,6 +9,10 @@ import Profile from './components/Profile';
 import Beaches from './components/Beaches';
 import BeachDetail from './components/BeachDetail';
 import Events from './components/Events';
+import Wishlist from './components/Wishlist';
+import TransactionHistory from './components/TransactionHistory';
+import Personality from './components/recommendation/Personality';
+
 function App() {
   return (
     <Router>
@@ -27,11 +31,12 @@ function App() {
                 <WhyOceaniqueSection />
               </div>
             } />
+            <Route path="/personality" element={<Personality />} />
             <Route path="/beaches" element={<Beaches />} />
             <Route path="/beach-detail/:id" element={<BeachDetail />} />
             <Route path="/events" element={<Events />} />
-            <Route path="/wishlist" element={<div>Your Wishlist</div>} />
-            <Route path="/transaction-history" element={<div>Transaction History</div>} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/transaction-history" element={<TransactionHistory />} />
             <Route path="/signin" element={<Signin />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/profile" element={<Profile />} />

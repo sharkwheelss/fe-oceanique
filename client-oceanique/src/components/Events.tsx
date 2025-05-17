@@ -258,7 +258,7 @@ const EventCard: React.FC<{ beach: Beach }> = ({ beach }) => {
         <div className="bg-white rounded-xl shadow-md overflow-hidden w-80 flex flex-col">
             <div className="relative h-48">
                 <img
-                    src='https://picsum.photos/id/16/2500/1667'
+                    src='https://picsum.photos/id/20/3670/2462'
                     alt={beach.name}
                     className="h-full w-full object-cover"
                 />
