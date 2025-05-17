@@ -1,5 +1,11 @@
 import { useState } from 'react';
 import { ChevronLeft, MapPin, Star, Heart, Sun } from 'lucide-react';
+import ReviewsTab from './tabs/ReviewsTab';
+import AboutTab from './tabs/AboutTab';
+import FacilityTab from './tabs/FacilityTab';
+import PhotoVideoTab from './tabs/PhotoVideoTab';
+import LocationTab from './tabs/LocationTab';
+
 
 // Main BeachDetailPage component
 export default function BeachDetailPage() {
@@ -14,7 +20,7 @@ export default function BeachDetailPage() {
         name: 'Pantai Pasir Putih',
         price: 'Rp10k - 35k',
         rating: 4.9,
-        reviews: 145,
+        review: 145,
         location: 'Cungkil, Surabaya, Jawa Timur',
         weather: 'Mostly Sunny',
         image: '/api/placeholder/1000/400',
@@ -38,7 +44,7 @@ export default function BeachDetailPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-8">
+        <div className="min-h-screen pb-8">
             {/* Header with Navigation and Wishlist */}
             <div className="container mx-auto px-4 py-6">
                 <div className="flex justify-between items-center">
@@ -117,7 +123,7 @@ export default function BeachDetailPage() {
 
             {/* Tabs Navigation */}
             <div className="container mx-auto px-4">
-                <div className="flex border-b border-gray-200">
+                <div className="flex border-b border-gray-200 sticky top-[72px] z-40 bg-white">
                     <TabButton
                         active={activeTab === 'about'}
                         onClick={() => handleTabChange('about')}
@@ -157,96 +163,23 @@ export default function BeachDetailPage() {
                 {/* Tab Content */}
                 <div className="py-6">
                     {activeTab === 'about' && (
-                        <div>
-                            <h3 className="text-xl font-semibold mb-4">About Pantai Pasir Putih</h3>
-                            <p className="text-gray-700">
-                                Pantai Pasir Putih is a beautiful beach located in Surabaya, East Java.
-                                The beach features pristine white sand and clear blue waters, making it a
-                                popular destination for both locals and tourists. Visitors can enjoy
-                                swimming, sunbathing, and various water activities. The beach is also known
-                                for its stunning sunsets, as shown in the image.
-                            </p>
-                            <p className="text-gray-700 mt-4">
-                                The beach is well-maintained and offers basic facilities for visitors.
-                                It's an ideal place for a day trip or weekend getaway. The calm waters make
-                                it suitable for families with children as well.
-                            </p>
-                        </div>
+                        <AboutTab />
                     )}
 
                     {activeTab === 'facility' && (
-                        <div>
-                            <h3 className="text-xl font-semibold mb-4">Facilities Available</h3>
-                            <ul className="list-disc list-inside space-y-2 text-gray-700">
-                                <li>Parking area</li>
-                                <li>Public restrooms</li>
-                                <li>Food stalls and restaurants</li>
-                                <li>Beach chairs and umbrellas for rent</li>
-                                <li>Changing rooms</li>
-                                <li>Lifeguard service (during peak hours)</li>
-                                <li>Souvenir shops</li>
-                            </ul>
-                        </div>
+                        <FacilityTab />
                     )}
 
                     {activeTab === 'foto_video' && (
-                        <div>
-                            <h3 className="text-xl font-semibold mb-4">Photos & Videos</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div className="rounded-lg overflow-hidden">
-                                    <img src="/api/placeholder/300/200" alt="Beach photo 1" className="w-full h-48 object-cover" />
-                                </div>
-                                <div className="rounded-lg overflow-hidden">
-                                    <img src="/api/placeholder/300/200" alt="Beach photo 2" className="w-full h-48 object-cover" />
-                                </div>
-                                <div className="rounded-lg overflow-hidden">
-                                    <img src="/api/placeholder/300/200" alt="Beach photo 3" className="w-full h-48 object-cover" />
-                                </div>
-                            </div>
-                        </div>
+                        <PhotoVideoTab />
                     )}
 
                     {activeTab === 'reviews' && (
-                        <div>
-                            <h3 className="text-xl font-semibold mb-4">Reviews</h3>
-                            <div className="space-y-4">
-                                <ReviewItem
-                                    name="John Doe"
-                                    date="April 15, 2025"
-                                    rating={5}
-                                    comment="Beautiful beach with crystal clear water. Highly recommended!"
-                                />
-                                <ReviewItem
-                                    name="Jane Smith"
-                                    date="March 22, 2025"
-                                    rating={4.5}
-                                    comment="Great place for family trips. The sand is clean and the water is not too deep."
-                                />
-                                <ReviewItem
-                                    name="Mike Johnson"
-                                    date="February 10, 2025"
-                                    rating={5}
-                                    comment="Amazing sunset views! I got some incredible photos here."
-                                />
-                            </div>
-                        </div>
+                        <ReviewsTab />
                     )}
 
                     {activeTab === 'location' && (
-                        <div>
-                            <h3 className="text-xl font-semibold mb-4">Location</h3>
-                            <div className="bg-gray-200 rounded-lg h-64 flex items-center justify-center">
-                                <p className="text-gray-600">Map would be displayed here</p>
-                            </div>
-                            <div className="mt-4">
-                                <h4 className="font-medium mb-2">How to get there:</h4>
-                                <p className="text-gray-700">
-                                    From Surabaya city center, head east towards Cungkil district.
-                                    Follow the signs for Pantai Pasir Putih. The beach is approximately
-                                    30 minutes by car from downtown Surabaya.
-                                </p>
-                            </div>
-                        </div>
+                        <LocationTab />
                     )}
                 </div>
             </div>
@@ -260,36 +193,11 @@ function TabButton({ children, active, onClick }: { children: React.ReactNode; a
         <button
             onClick={onClick}
             className={`px-6 py-4 font-medium text-sm ${active
-                    ? 'text-teal-500 border-b-2 border-teal-500'
-                    : 'text-gray-600 hover:text-teal-500'
+                ? 'text-teal-500 border-b-2 border-teal-500'
+                : 'text-gray-600 hover:text-teal-500'
                 } transition-colors`}
         >
             {children}
         </button>
-    );
-}
-
-// Review item component
-// Define a type for the ReviewItem props
-interface ReviewItemProps {
-    name: string;
-    date: string;
-    rating: number;
-    comment: string;
-}
-
-function ReviewItem({ name, date, rating, comment }: ReviewItemProps) {
-    return (
-        <div className="border-b border-gray-200 pb-4">
-            <div className="flex justify-between items-center mb-2">
-                <div className="font-medium">{name}</div>
-                <div className="text-sm text-gray-500">{date}</div>
-            </div>
-            <div className="flex items-center mb-2">
-                <Star size={16} className="text-yellow-400 fill-current" />
-                <span className="ml-1 text-sm">{rating}</span>
-            </div>
-            <p className="text-gray-700">{comment}</p>
-        </div>
     );
 }
