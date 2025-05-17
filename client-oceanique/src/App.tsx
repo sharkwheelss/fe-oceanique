@@ -8,7 +8,7 @@ import { Home, WhyOceaniqueSection } from './components/Home';
 import Profile from './components/Profile';
 import Beaches from './components/Beaches';
 import BeachDetail from './components/BeachDetail';
-
+import Events from './components/Events';
 function App() {
   return (
     <Router>
@@ -29,7 +29,7 @@ function App() {
             } />
             <Route path="/beaches" element={<Beaches />} />
             <Route path="/beach-detail/:id" element={<BeachDetail />} />
-            <Route path="/events" element={<div>Upcoming Events</div>} />
+            <Route path="/events" element={<Events />} />
             <Route path="/wishlist" element={<div>Your Wishlist</div>} />
             <Route path="/transaction-history" element={<div>Transaction History</div>} />
             <Route path="/signin" element={<Signin />} />
