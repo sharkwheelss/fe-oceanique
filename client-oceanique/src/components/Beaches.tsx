@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, MapPin, Star, Calendar, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Define the Filters type
 type Filters = {
@@ -11,6 +12,7 @@ type Filters = {
 
 const Beaches = () => {
     const [searchQuery, setSearchQuery] = useState('');
+    const navigate = useNavigate();
     const [filters, setFilters] = useState({
         province: '',
         city: '',
@@ -198,7 +200,11 @@ const Beaches = () => {
                                     style={{ transform: `translateX(-${currentIndex * 100}%)` }}
                                 >
                                     {beaches.map((beach) => (
-                                        <div key={beach.id} className="w-full sm:w-1/2 md:w-1/3 flex-shrink-0">
+                                        <div
+                                            key={beach.id}
+                                            className="w-full sm:w-1/2 md:w-1/3 flex-shrink-0 cursor-pointer"
+                                            onClick={() => navigate(`/beach-detail/${beach.id}`)}
+                                        >
                                             <BeachCard beach={beach} />
                                         </div>
                                     ))}

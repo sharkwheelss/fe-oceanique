@@ -5,7 +5,9 @@ import Signup from './components/SignUp';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import NotFound from './components/NotFound';
 import { Home, WhyOceaniqueSection } from './components/Home';
+import Profile from './components/Profile';
 import Beaches from './components/Beaches';
+import BeachDetail from './components/BeachDetail';
 
 function App() {
   return (
@@ -26,11 +28,13 @@ function App() {
               </div>
             } />
             <Route path="/beaches" element={<Beaches />} />
+            <Route path="/beach-detail/:id" element={<BeachDetail />} />
             <Route path="/events" element={<div>Upcoming Events</div>} />
             <Route path="/wishlist" element={<div>Your Wishlist</div>} />
             <Route path="/transaction-history" element={<div>Transaction History</div>} />
             <Route path="/signin" element={<Signin />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
