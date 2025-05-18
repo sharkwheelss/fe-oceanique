@@ -12,6 +12,8 @@ import Events from './components/Events';
 import Wishlist from './components/Wishlist';
 import TransactionHistory from './components/TransactionHistory';
 import Personality from './components/recommendation/Personality';
+import CreateEditReviews from './components/CreateEditReview';
+import EventDetail from './components/EventDetail';
 
 function App() {
   return (
@@ -34,12 +36,14 @@ function App() {
             <Route path="/personality" element={<Personality />} />
             <Route path="/beaches" element={<Beaches />} />
             <Route path="/beach-detail/:id" element={<BeachDetail />} />
+            <Route path="/event-detail/:id" element={<EventDetail />} />
             <Route path="/events" element={<Events />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/transaction-history" element={<TransactionHistory />} />
             <Route path="/signin" element={<Signin />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/add-review" element={<CreateEditReviews />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

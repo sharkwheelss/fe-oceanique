@@ -50,7 +50,8 @@ export default function BeachDetailPage() {
                 <div className="flex justify-between items-center">
                     {/* Back button and breadcrumb */}
                     <div className="flex items-center">
-                        <button className="bg-teal-500 text-white p-2 rounded-full hover:bg-teal-600 transition-colors mr-4">
+                        <button className="bg-teal-500 text-white p-2 rounded-full hover:bg-teal-600 transition-colors mr-4"
+                        onClick={() => window.history.back()}>
                             <ChevronLeft size={24} />
                         </button>
                         <div className="text-gray-600">

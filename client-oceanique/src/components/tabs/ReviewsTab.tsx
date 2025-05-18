@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Star, ThumbsUp, Plus, Check } from 'lucide-react';
 import Pagination from '../helper/pagination';
+import { useNavigate } from 'react-router-dom';
 
 export default function ReviewsSection() {
     // State for sorting option
@@ -9,6 +10,7 @@ export default function ReviewsSection() {
     // State for current page
     const [currentPage, setCurrentPage] = useState(1);
 
+    const navigate = useNavigate();
     // Sample review data
     const reviews = [
         {
@@ -78,7 +80,8 @@ export default function ReviewsSection() {
 
                     {/* Action Buttons */}
                     <div className="flex items-center">
-                        <button className="bg-teal-500 text-white rounded-md px-4 py-2 mr-4 flex items-center">
+                        <button className="bg-teal-500 text-white rounded-md px-4 py-2 mr-4 flex items-center"
+                        onClick={() => navigate('/add-review')}>
                             <Plus size={18} className="mr-1" />
                             Add
                         </button>
