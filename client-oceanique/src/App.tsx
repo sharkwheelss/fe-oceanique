@@ -14,6 +14,7 @@ import TransactionHistory from './components/TransactionHistory';
 import Personality from './components/recommendation/Personality';
 import CreateEditReviews from './components/CreateEditReview';
 import EventDetail from './components/EventDetail';
+import MainPurchase from './components/purchasing/MainPurchase';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             <Route path="/beaches" element={<Beaches />} />
             <Route path="/beach-detail/:id" element={<BeachDetail />} />
             <Route path="/event-detail/:id" element={<EventDetail />} />
+            <Route path="/purchase/:id" element={<MainPurchase />} />
             <Route path="/events" element={<Events />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/transaction-history" element={<TransactionHistory />} />

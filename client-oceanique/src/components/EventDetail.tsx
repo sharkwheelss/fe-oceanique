@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Calendar, Minus, Plus, ArrowRight } from 'lucide-react';
 
 // Main component for the Event Ticket Purchase page
 export default function EventTicketPage() {
+    const navigate = useNavigate();
+
     // State for ticket quantities
     const [tickets, setTickets] = useState({
         "Ticket Apache Epic 1": 1,
@@ -189,6 +192,7 @@ export default function EventTicketPage() {
                     <button
                         className={`px-6 py-3 rounded-lg flex items-center ${totalSelectedTickets > 0 ? 'bg-teal-500 text-white' : 'bg-gray-300 text-gray-500'}`}
                         disabled={totalSelectedTickets === 0}
+                        onClick={() => navigate('/purchase/2', { state: { tickets } })}
                     >
                         Continue
                         <ArrowRight className="ml-2 h-5 w-5" />
