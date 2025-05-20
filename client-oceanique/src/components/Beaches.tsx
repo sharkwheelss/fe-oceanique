@@ -165,66 +165,72 @@ const Beaches = () => {
         <div className="min-h-screen bg-gray-50">
             {/* Search and Filters */}
             <div className="container sticky top-[72px] z-40 bg-white mx-auto px-4 py-6">
-                <div className="flex flex-wrap justify-center gap-4">
-                    <div className="relative flex-grow max-w-lg">
-                        <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            className="pl-10 pr-4 py-3 bg-gray-200 rounded-md w-full outline-none"
-                            value={searchQuery}
-                            onChange={handleSearchChange}
-                        />
-                    </div>
-
-                    <FilterDropdown label="Province" value={filters.province} onChange={(val: string) => handleFilterChange('province', val)} />
-                    <FilterDropdown label="City" value={filters.city} onChange={(val: string) => handleFilterChange('city', val)} />
-                    <FilterDropdown label="Subdistrict" value={filters.subdistrict} onChange={(val: string) => handleFilterChange('subdistrict', val)} />
-                    <FilterDropdown label="Estimate Price" value={filters.priceRange} onChange={(val: string) => handleFilterChange('priceRange', val)} />
-
-                    <button className="bg-teal-500 text-white px-8 py-3 rounded-md font-medium hover:bg-teal-600 transition-colors">
-                        Filter
-                    </button>
+            <div className="flex flex-wrap justify-center gap-4">
+                <div className="relative flex-grow max-w-lg">
+                <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+                <input
+                    type="text"
+                    placeholder="Search..."
+                    className="pl-10 pr-4 py-3 bg-gray-200 rounded-md w-full outline-none"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                />
                 </div>
+
+                <FilterDropdown label="Province" value={filters.province} onChange={(val: string) => handleFilterChange('province', val)} />
+                <FilterDropdown label="City" value={filters.city} onChange={(val: string) => handleFilterChange('city', val)} />
+                <FilterDropdown label="Subdistrict" value={filters.subdistrict} onChange={(val: string) => handleFilterChange('subdistrict', val)} />
+                <FilterDropdown label="Estimate Price" value={filters.priceRange} onChange={(val: string) => handleFilterChange('priceRange', val)} />
+
+                <button className="bg-teal-500 text-white px-8 py-3 rounded-md font-medium hover:bg-teal-600 transition-colors">
+                Filter
+                </button>
+            </div>
             </div>
 
             {/* Section Template Component */}
             {[{ title: 'Near You' }, { title: 'Sabang to Merauke' }].map((section, idx) => (
-                <section key={idx} className="container mx-auto px-4 pt-4 pb-8">
-                    <h2 className="text-2xl font-bold mb-4 text-center">{section.title}</h2>
-                    <div className="border-t border-gray-200 pt-4">
-                        <div className="relative">
-                            <div className="flex justify-center overflow-hidden">
-                                <div
-                                    className="flex gap-6 transition-transform duration-300"
-                                    style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-                                >
-                                    {beaches.map((beach) => (
-                                        <div
-                                            key={beach.id}
-                                            className="w-full sm:w-1/2 md:w-1/3 flex-shrink-0 cursor-pointer"
-                                            onClick={() => navigate(`/beach-detail/${beach.id}`)}
-                                        >
-                                            <BeachCard beach={beach} />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <button
-                                onClick={handlePrev}
-                                className="absolute left-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors"
-                            >
-                                <ChevronLeft size={24} />
-                            </button>
-                            <button
-                                onClick={handleNext}
-                                className="absolute right-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors"
-                            >
-                                <ChevronRight size={24} />
-                            </button>
+            <section key={idx} className="container mx-auto px-4 py-4">
+                <h2 className="text-2xl font-bold mb-4 text-center">{section.title}</h2>
+                <div className="border-t border-gray-200 pt-4">
+                <div className="relative flex items-center justify-center">
+                    <button
+                    onClick={handlePrev}
+                    className="z-10 absolute left-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors"
+                    style={{ transform: 'translateY(-50%)' }}
+                    disabled={currentIndex === 0}
+                    >
+                    <ChevronLeft size={24} />
+                    </button>
+                    <div className="w-full px-12">
+                    <div
+                        className="flex gap-6 transition-transform duration-500 ease-in-out"
+                        style={{
+                        transform: `translateX(-${currentIndex * (320 + 24)}px)`, // 320px card + 24px gap
+                        }}
+                    >
+                        {beaches.map((beach) => (
+                        <div
+                            key={beach.id}
+                            className="w-80 flex-shrink-0 cursor-pointer"
+                            onClick={() => navigate(`/beach-detail/${beach.id}`)}
+                        >
+                            <BeachCard beach={beach} />
                         </div>
+                        ))}
                     </div>
-                </section>
+                    </div>
+                    <button
+                    onClick={handleNext}
+                    className="z-10 absolute right-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors"
+                    style={{ transform: 'translateY(-50%)' }}
+                    disabled={currentIndex >= beaches.length - 1}
+                    >
+                    <ChevronRight size={24} />
+                    </button>
+                </div>
+                </div>
+            </section>
             ))}
         </div>
     );

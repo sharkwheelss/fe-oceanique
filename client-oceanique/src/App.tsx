@@ -15,6 +15,7 @@ import Personality from './components/recommendation/Personality';
 import CreateEditReviews from './components/CreateEditReview';
 import EventDetail from './components/EventDetail';
 import MainPurchase from './components/purchasing/MainPurchase';
+import Result from './components/recommendation/Result';
 
 function App() {
   return (
@@ -46,6 +47,8 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/add-review" element={<CreateEditReviews />} />
+            <Route path="/recommendation-result" element={<Result />} />
+            {/* Catch-all route for 404 Not Found */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

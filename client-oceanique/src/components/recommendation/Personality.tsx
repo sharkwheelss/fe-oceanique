@@ -17,25 +17,25 @@ export default function OceaniquePersonalityPage() {
             id: "adventurer",
             title: "The Adventurer",
             description: "Love action and exploring new places? This one's for you!",
-            icon: "/api/placeholder/80/80"
+            icon: "adventurer.png"
         },
         {
             id: "social",
             title: "The Social Explorer",
             description: "You're all about fun, music, and good company.",
-            icon: "/api/placeholder/80/80"
+            icon: "social-explorer.png"
         },
         {
             id: "relaxer",
             title: "The Relaxer",
             description: "Want to just chill and enjoy the view? We got you.",
-            icon: "/api/placeholder/80/80"
+            icon: "relaxer.png"
         },
         {
             id: "scenic",
             title: "The Scenic Soul",
             description: "You appreciate beauty, sunsets, and meaningful moments.",
-            icon: "/api/placeholder/80/80"
+            icon: "scenic-soul.png"
         }
     ];
 
@@ -93,7 +93,7 @@ function NavLink({ children, active = false }) {
 function PersonalityCard({ personality, isSelected, onSelect }) {
     return (
         <div
-            className={`relative rounded-xl shadow-lg overflow-hidden p-6 border-2 transition-all cursor-pointer
+            className={`p-6 shadow-sm rounded-xl border cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-lg
         ${isSelected ? 'border-teal-500 bg-teal-50' : 'border-transparent hover:border-gray-300'}`}
             onClick={() => onSelect(personality.id)}
         >
