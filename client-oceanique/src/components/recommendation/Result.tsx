@@ -6,10 +6,12 @@ import {
     ThumbsUp,
     MapPin
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function DestinationPage() {
     // State for current active destination (for pagination)
     const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
+    const navigate = useNavigate();
 
     // Sample data for destinations
     const destinations = [
@@ -113,7 +115,8 @@ export default function DestinationPage() {
             {/* Header Section */}
             <div className="p-4 border-b">
                 <div className="flex justify-between items-center mb-4">
-                    <button className="text-teal-600 flex items-center">
+                    <button className="text-teal-600 flex items-center"
+                    onClick={() => navigate('/preference')}>
                         <ChevronLeft size={16} />
                         <span>Start Over</span>
                     </button>

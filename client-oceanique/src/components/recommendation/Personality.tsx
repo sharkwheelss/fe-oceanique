@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Main App component
 export default function OceaniquePersonalityPage() {
     // State to track which personality has been selected
     const [selectedPersonality, setSelectedPersonality] = useState(null);
+    const navigate = useNavigate();
 
     // User information - in a real app this would come from authentication/user context
     const user = {
@@ -47,6 +49,7 @@ export default function OceaniquePersonalityPage() {
         setSelectedPersonality(personalityId);
         // In a real app, you might want to save this preference to a backend
         console.log(`Selected personality: ${personalityId}`);
+        navigate('/preference', { state: { personalityId } });
     };
 
     return (
@@ -69,6 +72,7 @@ export default function OceaniquePersonalityPage() {
                             personality={personality}
                             isSelected={selectedPersonality === personality.id}
                             onSelect={handlePersonalitySelect}
+                            
                         />
                     ))}
                 </div>

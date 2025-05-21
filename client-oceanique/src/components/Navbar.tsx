@@ -29,7 +29,7 @@ const Navbar: React.FC = () => {
             return (
               <a
                 key={path}
-                href="#"
+                href={path}
                 onClick={(e) => {
                   e.preventDefault();
                   navigate(path);

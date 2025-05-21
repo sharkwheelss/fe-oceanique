@@ -5,15 +5,17 @@ import {
     Edit2,
     Star
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function UserProfilePage() {
     // User data state
+    const navigate = useNavigate();
     const [userData, setUserData] = useState({
         username: "Ryyan Ramadhan",
         email: "himail@gmail.com",
         address: "jalan lorem ipsum",
         userType: "Adventurer",
-        profileImage: "/api/placeholder/200/200",
+        profileImage: "profile-placeholder.png",
         preferences: {
             accessibility: 1,
             activity: 1,
@@ -115,7 +117,7 @@ export default function UserProfilePage() {
                     {/* Edit button */}
                     <div className="flex justify-end mb-6">
                         <button
-                            onClick={handleEditProfile}
+                            onClick={() => navigate("/edit-profile")}
                             className="bg-teal-500 text-white px-6 py-2 rounded-full text-sm"
                         >
                             Edit

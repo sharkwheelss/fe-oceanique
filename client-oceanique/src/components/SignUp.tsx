@@ -8,11 +8,18 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showDialog, setShowDialog] = useState(false);
 
     // Handle form submission
     const handleSubmit = () => {
+        // You can add validation here if needed
+        setShowDialog(true);
         console.log('Signing up with:', { username, email, password, confirmPassword });
         // Add sign up logic here
+    };
+
+    const handleCloseDialog = () => {
+        setShowDialog(false);
     };
 
     return (
@@ -106,8 +113,46 @@ const Signup = () => {
                     />
                 </div>
             </div>
+
+            {/* Popup Dialog */}
+            {showDialog && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
+                    <div
+                        className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-popup"
+                        style={{
+                            animation: 'popup 0.3s cubic-bezier(0.22, 1, 0.36, 1)'
+                        }}
+                    >
+                        <h3 className="text-2xl font-bold mb-4 text-teal-600">Sign Up Successful!</h3>
+                        <p className="mb-6 text-gray-700">Welcome to <span className="font-sharemono text-teal-500">Oceanique</span>! Your account has been created.</p>
+                        <button
+                            onClick={handleCloseDialog}
+                            className="px-6 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors"
+                        >
+                            Close
+                        </button>
+                    </div>
+                    <style>
+                        {`
+                @keyframes popup {
+                    0% {
+                    opacity: 0;
+                    transform: scale(0.8);
+                    }
+                    100% {
+                    opacity: 1;
+                    transform: scale(1);
+                    }
+                }
+                .animate-popup {
+                    animation: popup 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+                }
+                `}
+                    </style>
+                </div>
+            )}
         </div>
     );
 }
 
-export default Signup
+export default Signup;

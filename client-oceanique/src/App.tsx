@@ -16,6 +16,9 @@ import CreateEditReviews from './components/CreateEditReview';
 import EventDetail from './components/EventDetail';
 import MainPurchase from './components/purchasing/MainPurchase';
 import Result from './components/recommendation/Result';
+import EditProfile from './components/EditProfile';
+import PreferenceRank from './components/recommendation/PreferenceRank';
+import Accessibility from './components/recommendation/Accessibility';
 
 function App() {
   return (
@@ -35,19 +38,29 @@ function App() {
                 <WhyOceaniqueSection />
               </div>
             } />
-            <Route path="/personality" element={<Personality />} />
-            <Route path="/beaches" element={<Beaches />} />
-            <Route path="/beach-detail/:id" element={<BeachDetail />} />
-            <Route path="/event-detail/:id" element={<EventDetail />} />
-            <Route path="/purchase/:id" element={<MainPurchase />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/wishlist" element={<Wishlist />} />
-            <Route path="/transaction-history" element={<TransactionHistory />} />
             <Route path="/signin" element={<Signin />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/add-review" element={<CreateEditReviews />} />
+            <Route path="/edit-profile" element={<EditProfile />} />
+
+            <Route path="/personality" element={<Personality />} />
+            <Route path="/preference" element={<PreferenceRank/>} />
+            <Route path="/accessibility" element={<Accessibility />} />
             <Route path="/recommendation-result" element={<Result />} />
+
+
+            <Route path="/beaches" element={<Beaches />} />
+            <Route path="/beach-detail/:id" element={<BeachDetail />} />
+            <Route path="/add-review" element={<CreateEditReviews />} />
+
+            <Route path="/events" element={<Events />} />
+            <Route path="/event-detail/:id" element={<EventDetail />} />
+            <Route path="/purchase/:id" element={<MainPurchase />} />
+
+            <Route path="/wishlist" element={<Wishlist />} />
+
+            <Route path="/transaction-history" element={<TransactionHistory />} />
+
             {/* Catch-all route for 404 Not Found */}
             <Route path="*" element={<NotFound />} />
           </Routes>
