@@ -1,28 +1,58 @@
 import { useState } from 'react';
 import PassInput from './PassInput';
 import GoogleBtn from './GoogleBtn';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 
 const Signin = () => {
-    // Form state
     const [emailOrUsername, setEmailOrUsername] = useState('');
     const [password, setPassword] = useState('');
+    const navigate = useNavigate();
+    const { login } = useAuth();
 
-    // Handle form submission
-    const handleSubmit = () => {
-        console.log('Signing in with:', { emailOrUsername, password });
-        // Add sign in logic here
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+
+    const handleSubmit = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    login: emailOrUsername,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error('Login error:', data.errors || data.message);
+                throw new Error(data.errors ? data.errors[0].msg : data.message || 'Login failed');
+            }
+
+            login(data.token, data.user);
+            setShowSuccess(true);
+            setErrorMessage('');
+
+        } catch (error: any) {
+            console.error('Login error:', error);
+            setErrorMessage(error.message || 'Something went wrong. Please try again.');
+            setShowSuccess(false);
+        }
     };
 
     return (
         <div className="w-full flex flex-col md:flex-row">
-            {/* Left side with illustration and text */}
+            {/* Left side */}
             <div className="md:w-1/2 flex flex-col justify-center p-8">
                 <h1 className="text-3xl font-bold mb-4">
                     Discover Breathtaking Indonesian Shores with <span className="text-teal-500 font-sharemono">Oceanique</span>
                 </h1>
                 <p className="text-xl mb-6">– Try our recommendation now!</p>
-
-                {/* Beach illustration */}
                 <div className="max-w-md mx-auto">
                     <img
                         src="/cust-signin.png"
@@ -32,12 +62,11 @@ const Signin = () => {
                 </div>
             </div>
 
-            {/* Right side with sign in form */}
+            {/* Right side */}
             <div className="md:w-1/2 flex flex-col justify-center p-8">
                 <h2 className="text-3xl font-bold mb-8 text-center">Sign In</h2>
 
                 <div className="max-w-md mx-auto w-full">
-                    {/* Email/Username Input */}
                     <div className="mb-6">
                         <input
                             type="text"
@@ -48,7 +77,6 @@ const Signin = () => {
                         />
                     </div>
 
-                    {/* Password Input */}
                     <div className="mb-2">
                         <PassInput
                             value={password}
@@ -57,14 +85,12 @@ const Signin = () => {
                         />
                     </div>
 
-                    {/* Forgot Password Link */}
                     <div className="text-right mb-6">
                         <a href="#" className="text-sm text-gray-400 hover:text-teal-500">
                             Forgot password?
                         </a>
                     </div>
 
-                    {/* Sign In Button */}
                     <button
                         onClick={handleSubmit}
                         className="w-full py-3 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors"
@@ -72,7 +98,6 @@ const Signin = () => {
                         Sign in
                     </button>
 
-                    {/* Register Link */}
                     <div className="text-center mt-6">
                         <p>
                             Don't have an account?
@@ -82,17 +107,101 @@ const Signin = () => {
                         </p>
                     </div>
 
-                    {/* Or continue with */}
                     <div className="mt-6 text-center">
                         <p className="text-gray-500">or continue with</p>
-
-                        {/* Google Sign In */}
-                        <GoogleBtn text='Sign in with Google' />
+                        <GoogleBtn text="Sign in with Google" />
                     </div>
+
+                    {/* Pop-up Messages */}
+                    {showSuccess && (
+                        <DialogMessage
+                            type="success"
+                            title="Sign In Successful!"
+                            message={`Welcome back to Oceanique!`}
+                            navigate='/home'
+                            handleResponse={() => setShowSuccess(false)}
+                        />
+                    )}
+                    {errorMessage && (
+                        <DialogMessage
+                            type="error"
+                            title="Sign In Failed!"
+                            message={errorMessage}
+                            navigate='/signin'
+                            handleResponse={() => setErrorMessage('')}
+                        />
+                    )}
                 </div>
             </div>
         </div>
     );
+};
+
+interface DialogMessageProps {
+    type: 'success' | 'error';
+    title: string;
+    message: string;
+    handleResponse: () => void;
+    navigate: string;
 }
 
-export default Signin
+const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, navigate, handleResponse }) => {
+    const styles = {
+        success: {
+            background: 'bg-white',
+            title: 'text-teal-600',
+            button: 'bg-teal-500 hover:bg-teal-600',
+            navigate: navigate
+        },
+        error: {
+            background: 'bg-white',
+            title: 'text-red-600',
+            button: 'bg-red-500 hover:bg-red-600',
+            navigate: navigate
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
+            <div
+                className={`${styles[type].background} rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-popup`}
+                style={{
+                    animation: 'popup 0.3s cubic-bezier(0.22, 1, 0.36, 1)'
+                }}
+            >
+                <h3 className={`text-2xl font-bold mb-4 ${styles[type].title}`}>{title}</h3>
+                <p className="mb-6 text-gray-700">{message}</p>
+                <button
+                    onClick={() => {
+                        handleResponse();
+                        if (type === 'success') {
+                            window.location.href = '/home';
+                        }
+                    }}
+                    className={`px-6 py-2 text-white rounded transition-colors ${styles[type].button}`}
+                >
+                    {type === 'success' ? 'Continue' : 'Close'}
+                </button>
+            </div>
+            <style>
+                {`
+                @keyframes popup {
+                    0% {
+                    opacity: 0;
+                    transform: scale(0.8);
+                    }
+                    100% {
+                    opacity: 1;
+                    transform: scale(1);
+                    }
+                }
+                .animate-popup {
+                    animation: popup 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+                }
+                `}
+            </style>
+        </div>
+    )
+}
+
+export default Signin;
