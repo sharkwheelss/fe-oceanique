@@ -8,18 +8,39 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [showDialog, setShowDialog] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     // Handle form submission
-    const handleSubmit = () => {
-        // You can add validation here if needed
-        setShowDialog(true);
-        console.log('Signing up with:', { username, email, password, confirmPassword });
-        // Add sign up logic here
-    };
+    const handleSubmit = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    email: email,
+                    password: password,
+                    confirmPassword: confirmPassword
+                })
+            });
 
-    const handleCloseDialog = () => {
-        setShowDialog(false);
+            const data = await response.json();
+            if (!response.ok) {
+                console.error('Sign up error:', data.errors || data.message);
+                throw new Error(data.errors ? data.errors[0].msg : data.message || 'Sign up failed');
+            }
+            setShowSuccess(true);
+            setErrorMessage('');
+        } catch (error: any) {
+            console.error('Sign up error:', error);
+            setErrorMessage(error.message || 'Something went wrong. Please try again.');
+            setShowSuccess(false);
+
+        }
     };
 
     return (
@@ -114,26 +135,77 @@ const Signup = () => {
                 </div>
             </div>
 
-            {/* Popup Dialog */}
-            {showDialog && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
-                    <div
-                        className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-popup"
-                        style={{
-                            animation: 'popup 0.3s cubic-bezier(0.22, 1, 0.36, 1)'
-                        }}
-                    >
-                        <h3 className="text-2xl font-bold mb-4 text-teal-600">Sign Up Successful!</h3>
-                        <p className="mb-6 text-gray-700">Welcome to <span className="font-sharemono text-teal-500">Oceanique</span>! Your account has been created.</p>
-                        <button
-                            onClick={handleCloseDialog}
-                            className="px-6 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors"
-                        >
-                            Close
-                        </button>
-                    </div>
-                    <style>
-                        {`
+            {/* Pop-up Messages */}
+            {showSuccess && (
+                <DialogMessage
+                    type="success"
+                    title="Sign Up Successful!"
+                    message={`Welcome to Oceanique!`}
+                    navigate='/signin'
+                    handleResponse={() => setShowSuccess(false)}
+                />
+            )}
+            {errorMessage && (
+                <DialogMessage
+                    type="error"
+                    title="Sign Up Failed!"
+                    message={errorMessage}
+                    navigate='/signup'
+                    handleResponse={() => setErrorMessage('')}
+                />
+            )}
+        </div>
+    );
+}
+
+interface DialogMessageProps {
+    type: 'success' | 'error';
+    title: string;
+    message: string;
+    handleResponse: () => void;
+    navigate: string;
+}
+
+const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, navigate, handleResponse }) => {
+    const styles = {
+        success: {
+            background: 'bg-white',
+            title: 'text-teal-600',
+            button: 'bg-teal-500 hover:bg-teal-600',
+            navigate: navigate
+        },
+        error: {
+            background: 'bg-white',
+            title: 'text-red-600',
+            button: 'bg-red-500 hover:bg-red-600',
+            navigate: navigate
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
+            <div
+                className={`${styles[type].background} rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-popup`}
+                style={{
+                    animation: 'popup 0.3s cubic-bezier(0.22, 1, 0.36, 1)'
+                }}
+            >
+                <h3 className={`text-2xl font-bold mb-4 ${styles[type].title}`}>{title}</h3>
+                <p className="mb-6 text-gray-700">{message}</p>
+                <button
+                    onClick={() => {
+                        handleResponse();
+                        if (type === 'success') {
+                            window.location.href = '/home';
+                        }
+                    }}
+                    className={`px-6 py-2 text-white rounded transition-colors ${styles[type].button}`}
+                >
+                    {type === 'success' ? 'Continue' : 'Close'}
+                </button>
+            </div>
+            <style>
+                {`
                 @keyframes popup {
                     0% {
                     opacity: 0;
@@ -148,11 +220,9 @@ const Signup = () => {
                     animation: popup 0.3s cubic-bezier(0.22, 1, 0.36, 1);
                 }
                 `}
-                    </style>
-                </div>
-            )}
+            </style>
         </div>
-    );
+    )
 }
 
 export default Signup;
