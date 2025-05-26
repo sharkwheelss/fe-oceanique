@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import GoogleBtn from './GoogleBtn';
 import PassInput from './PassInput';
+import { Link } from 'react-router-dom';
 
 const Signup = () => {
     // Form state
@@ -102,9 +103,9 @@ const Signup = () => {
                     <div className="text-center mt-6">
                         <p>
                             Already have an account?
-                            <a href="#" className="text-teal-500 ml-1 hover:underline">
+                            <Link to="/signin" className="text-teal-500 ml-1 hover:underline">
                                 Sign in here
-                            </a>
+                            </Link>
                         </p>
                     </div>
 

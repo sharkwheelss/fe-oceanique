@@ -3,6 +3,7 @@ import PassInput from './PassInput';
 import GoogleBtn from './GoogleBtn';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { Link } from 'react-router-dom';
 
 const Signin = () => {
     const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -101,9 +102,9 @@ const Signin = () => {
                     <div className="text-center mt-6">
                         <p>
                             Don't have an account?
-                            <a href="#" className="text-teal-500 ml-1 hover:underline">
+                            <Link to="/signup" className="text-teal-500 ml-1 hover:underline">
                                 Register here
-                            </a>
+                            </Link>
                         </p>
                     </div>
 
