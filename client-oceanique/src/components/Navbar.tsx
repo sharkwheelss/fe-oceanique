@@ -83,24 +83,25 @@ const Navbar: React.FC = () => {
                   <span>{user?.username || 'name placeholder'}</span>
                 </button>
 
-                {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Profile
-                    </Link>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
+                <div className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 overflow-hidden transition-all duration-200 ease-in-out origin-top-right ${showDropdown
+                  ? 'opacity-100 scale-100 max-h-32'
+                  : 'opacity-0 scale-95 max-h-0 py-0'
+                  }`}>
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
             </>
           ) : (
