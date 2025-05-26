@@ -5,13 +5,17 @@ interface User {
     id: string;
     username: string;
     email: string;
+    userTypeId:number;
     avatar?: string;
 }
 
 interface AuthContextType {
     isAuthenticated: boolean;
     user: User | null;
-    login: (token: string, userData: User) => void;
+    login: (
+        emailOrUsername: string,
+        password: string
+    ) => Promise<{ success: boolean; message?: string }>;
     logout: () => void;
 }
 
@@ -39,19 +43,59 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
 
             if (response.ok) {
-                const userData = await response.json();
-                setUser(userData);
-                setIsAuthenticated(true);
+                const data = await response.json();
+                console.log('Session check successful:', data);
+                if (data.authenticated && data.user) {
+                    setUser(data.user);
+                    setIsAuthenticated(true);
+                } else {
+                    setUser(null);
+                    setIsAuthenticated(false);
+                }
             }
         } catch (error) {
             console.error('Session check failed:', error);
         }
     };
 
-    const login = (token: string, userData: User) => {
-        setIsAuthenticated(true);
-        setUser(userData);
-        localStorage.setItem('token', token);
+    const login = async (emailOrUsername: string, password: string): Promise<{ success: boolean; message?: string }> => {
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    login: emailOrUsername,
+                    password: password
+                }),
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error('Login error:', data.errors || data.message);
+                throw new Error(data.errors ? data.errors[0].msg : data.message || 'Login failed');
+            }
+
+            console.log('Login successful:', data.token);
+            setIsAuthenticated(true);
+            setUser(data.user);
+
+            // Store the token in localStorage for future requests -> optional
+            localStorage.setItem('token', data.token);
+
+            return { success: true };
+
+        } catch (error: any) {
+            console.error('Login error:', error);
+            return {
+                success: false,
+                message: error.message || 'Something went wrong. Please try again.',
+            };
+        }
     };
 
     const logout = async () => {

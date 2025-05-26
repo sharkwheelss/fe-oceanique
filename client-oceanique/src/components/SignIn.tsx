@@ -1,48 +1,26 @@
 import { useState } from 'react';
 import PassInput from './PassInput';
 import GoogleBtn from './GoogleBtn';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Signin = () => {
     const [emailOrUsername, setEmailOrUsername] = useState('');
     const [password, setPassword] = useState('');
-    const navigate = useNavigate();
     const { login } = useAuth();
 
     const [showSuccess, setShowSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
     const handleSubmit = async () => {
-        try {
-            const response = await fetch('http://localhost:5000/api/auth/signin', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    login: emailOrUsername,
-                    password: password
-                })
-            });
+        const result = await login(emailOrUsername, password);
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                console.error('Login error:', data.errors || data.message);
-                throw new Error(data.errors ? data.errors[0].msg : data.message || 'Login failed');
-            }
-
-            login(data.token, data.user);
+        if (result.success) {
             setShowSuccess(true);
             setErrorMessage('');
-
-        } catch (error: any) {
-            console.error('Login error:', error);
-            setErrorMessage(error.message || 'Something went wrong. Please try again.');
+        } else {
             setShowSuccess(false);
+            setErrorMessage(result.message || 'Login failed');
         }
     };
 
@@ -119,7 +97,7 @@ const Signin = () => {
                             type="success"
                             title="Sign In Successful!"
                             message={`Welcome back to Oceanique!`}
-                            navigate='/home'
+                            navigateTo='/home'
                             handleResponse={() => setShowSuccess(false)}
                         />
                     )}
@@ -128,7 +106,7 @@ const Signin = () => {
                             type="error"
                             title="Sign In Failed!"
                             message={errorMessage}
-                            navigate='/signin'
+                            navigateTo='/signin'
                             handleResponse={() => setErrorMessage('')}
                         />
                     )}
@@ -143,22 +121,23 @@ interface DialogMessageProps {
     title: string;
     message: string;
     handleResponse: () => void;
-    navigate: string;
+    navigateTo: string;
 }
 
-const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, navigate, handleResponse }) => {
+const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, navigateTo, handleResponse }) => {
+    const navigate = useNavigate();
     const styles = {
         success: {
             background: 'bg-white',
             title: 'text-teal-600',
             button: 'bg-teal-500 hover:bg-teal-600',
-            navigate: navigate
+            // navigate: navigate
         },
         error: {
             background: 'bg-white',
             title: 'text-red-600',
             button: 'bg-red-500 hover:bg-red-600',
-            navigate: navigate
+            // navigate: navigate
         }
     }
 
@@ -176,7 +155,7 @@ const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, nav
                     onClick={() => {
                         handleResponse();
                         if (type === 'success') {
-                            window.location.href = '/home';
+                            navigate(navigateTo);
                         }
                     }}
                     className={`px-6 py-2 text-white rounded transition-colors ${styles[type].button}`}
