@@ -5,7 +5,7 @@ interface User {
     id: string;
     username: string;
     email: string;
-    userTypeId:number;
+    userTypeId: number;
     avatar?: string;
 }
 

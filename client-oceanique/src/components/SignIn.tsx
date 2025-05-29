@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PassInput from './PassInput';
 import GoogleBtn from './GoogleBtn';
 import { useAuth } from '../AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const Signin = () => {
     const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -11,6 +11,7 @@ const Signin = () => {
 
     const [showSuccess, setShowSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
 
     const handleSubmit = async () => {
         const result = await login(emailOrUsername, password);
@@ -97,7 +98,6 @@ const Signin = () => {
                             type="success"
                             title="Sign In Successful!"
                             message={`Welcome back to Oceanique!`}
-                            navigateTo='/home'
                             handleResponse={() => setShowSuccess(false)}
                         />
                     )}
@@ -106,7 +106,6 @@ const Signin = () => {
                             type="error"
                             title="Sign In Failed!"
                             message={errorMessage}
-                            navigateTo='/signin'
                             handleResponse={() => setErrorMessage('')}
                         />
                     )}
@@ -121,23 +120,23 @@ interface DialogMessageProps {
     title: string;
     message: string;
     handleResponse: () => void;
-    navigateTo: string;
 }
 
-const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, navigateTo, handleResponse }) => {
+const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, handleResponse }) => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from?.pathname || '/home';
+
     const styles = {
         success: {
             background: 'bg-white',
             title: 'text-teal-600',
             button: 'bg-teal-500 hover:bg-teal-600',
-            // navigate: navigate
         },
         error: {
             background: 'bg-white',
             title: 'text-red-600',
             button: 'bg-red-500 hover:bg-red-600',
-            // navigate: navigate
         }
     }
 
@@ -155,7 +154,7 @@ const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, nav
                     onClick={() => {
                         handleResponse();
                         if (type === 'success') {
-                            navigate(navigateTo);
+                            navigate(from, { replace: true });
                         }
                     }}
                     className={`px-6 py-2 text-white rounded transition-colors ${styles[type].button}`}
