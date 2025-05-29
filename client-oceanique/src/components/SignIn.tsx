@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import PassInput from './PassInput';
 import GoogleBtn from './GoogleBtn';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const Signin = () => {

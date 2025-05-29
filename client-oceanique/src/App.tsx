@@ -2,7 +2,7 @@ import './App.css'
 import Navbar from './components/Navbar'
 import { BrowserRouter as Router } from 'react-router-dom';
 import OceaniqueRoute from './Routes'
-import { AuthProvider } from './AuthContext';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
