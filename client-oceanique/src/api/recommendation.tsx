@@ -1,3 +1,4 @@
+
 const BASE_URL = 'http://localhost:5000/api';
 
 export const recommendationApi = {
@@ -8,5 +9,22 @@ export const recommendationApi = {
             credentials: 'include',
         });
         return response.json();
-    }
+    },
+    getUserPersonality: async () => {
+        const response = await fetch(`${BASE_URL}/recommendations/personality/user`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
+    updateUserPersonality: async (personalityId: number) => {
+        const response = await fetch(`${BASE_URL}/recommendations/personality/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ personalityId })
+        });
+        return response.json();
+    },
 }

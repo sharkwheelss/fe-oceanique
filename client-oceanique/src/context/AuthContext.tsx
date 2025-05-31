@@ -3,10 +3,11 @@ import type { ReactNode } from 'react';
 import api from '../api';
 
 interface User {
-    id: string;
+    id: number;
     username: string;
     email: string;
-    userTypeId: number;
+    user_types_id: number;
+    user_personality_id?: number | null;
     avatar?: string;
 }
 

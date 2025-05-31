@@ -14,6 +14,8 @@ interface RecommendationContextType {
     loading: boolean;
     error: string | null;
     getAllPersonalities: () => Promise<void>;
+    updateUserPersonality: (personalityId: number) => Promise<void>;
+    getUserPersonality: () => Promise<Personality | null>;
 }
 
 const RecommendationContext = createContext<RecommendationContextType | undefined>(undefined);
@@ -37,12 +39,41 @@ export const RecommendationProvider = ({ children }: { children: ReactNode }) =>
             setLoading(false);
         }
     };
+    const getUserPersonality = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.recommendation.getUserPersonality();
+            
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch user personality');
+            console.error('Error fetching user personality:', err);
+            return null;
+        }
+    };
+    const updateUserPersonality = async (personalityId: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            await api.recommendation.updateUserPersonality(personalityId);
+            await getAllPersonalities();
+        } catch (err) {
+            setError('Failed to update personality');
+            console.error('Error updating personality:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const value = {
         personalities,
         loading,
         error,
         getAllPersonalities,
+        getUserPersonality,
+        updateUserPersonality
     };
 
     return (

@@ -10,6 +10,8 @@ interface Api {
     };
     recommendation: {
         getAllPersonalities: () => Promise<any>;
+        updateUserPersonality: (personalityId: number) => Promise<any>;
+        getUserPersonality: () => Promise<any>;
     };
 
 }

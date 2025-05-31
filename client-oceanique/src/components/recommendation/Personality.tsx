@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecommendation } from '../../context/RecommendationContext';
 import { useAuth } from '../../context/AuthContext';
+import { PersonalityConfirmDialog } from './PersonalityConfirmDialog';
 
 interface Personality {
     id: number;
@@ -15,16 +16,80 @@ export default function OceaniquePersonalityPage() {
     const navigate = useNavigate();
 
     const { user } = useAuth();
-    const { getAllPersonalities, personalities, loading } = useRecommendation();
+    const { getAllPersonalities, getUserPersonality, updateUserPersonality, personalities, loading } = useRecommendation();
+
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [currentPersonality, setCurrentPersonality] = useState<Personality | null>(null);
+    const [isExistingPersonality, setIsExistingPersonality] = useState(false);
+
+    const [hasFetchedUserPersonality, setHasFetchedUserPersonality] = useState(false);
+
+    // Handle existing personality confirmation on page load
+    useEffect(() => {
+        const fetchUserPersonality = async () => {
+            if (!loading && personalities.length > 0 && !hasFetchedUserPersonality) {
+                try {
+                    const personalityArray = await getUserPersonality();
+                    if (Array.isArray(personalityArray) && personalityArray.length > 0) {
+                        const personality = personalityArray[0];
+                        console.log('Found personality (API):', personality);
+                        setCurrentPersonality(personality);
+                        setIsExistingPersonality(true);
+                        setShowConfirmDialog(true);
+                    }
+                } catch (error) {
+                    console.error('Error fetching user personality:', error);
+                } finally {
+                    setHasFetchedUserPersonality(true);
+                }
+            }
+        };
+
+        fetchUserPersonality();
+    }, [loading, personalities, getUserPersonality, hasFetchedUserPersonality]);
+
 
     useEffect(() => {
-        getAllPersonalities();
-    }, []);
+        if (!showConfirmDialog) {
+            getAllPersonalities();
+        }
+    }, [showConfirmDialog]);
 
     const handlePersonalitySelect = (personalityId: number) => {
-        setSelectedPersonality(personalityId);
-        navigate('/preference', { state: { personalityId } });
+        const personality = personalities.find(p => p.id === personalityId);
+        if (personality) {
+            setSelectedPersonality(personalityId);
+            setCurrentPersonality(personality);
+            setIsExistingPersonality(false);
+            setShowConfirmDialog(true);
+        }
     };
+
+    const handleConfirmPersonality = async () => {
+        if (currentPersonality) {
+            try {
+                // Only update if it's a new selection (not confirming existing)
+                if (!isExistingPersonality) {
+                    await updateUserPersonality(currentPersonality.id);
+                }
+                navigate('/preference', { state: { personalityId: currentPersonality.id } });
+            } catch (error) {
+                console.error('Error updating personality:', error);
+                // You might want to show an error message to the user here
+                setShowConfirmDialog(false);
+            }
+        }
+    };
+
+    const handleCancelSelection = () => {
+        setShowConfirmDialog(false);
+        setCurrentPersonality(null);
+        setSelectedPersonality(null);
+        setIsExistingPersonality(false);
+    };
+
+    // Don't render the personality selection if dialog is showing
+    const shouldShowPersonalityGrid = !showConfirmDialog;
 
     return (
         <div className="flex flex-col min-h-screen bg-white">
@@ -36,21 +101,35 @@ export default function OceaniquePersonalityPage() {
                     <p className="text-xl">What's your vibe? Let's match your personality!</p>
                 </div>
 
-                {/* Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                    {loading
-                        ? Array.from({ length: 4 }).map((_, index) => (
-                            <PersonalityCardSkeleton key={index} />
-                        ))
-                        : personalities.map((personality) => (
-                            <PersonalityCard
-                                key={personality.id}
-                                personality={personality}
-                                isSelected={selectedPersonality === personality.id}
-                                onSelect={handlePersonalitySelect}
-                            />
-                        ))}
-                </div>
+                {/* Only show cards grid when not showing confirmation dialog */}
+                {shouldShowPersonalityGrid && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        {loading
+                            ? Array.from({ length: 4 }).map((_, index) => (
+                                <PersonalityCardSkeleton key={index} />
+                            ))
+                            : personalities.map((personality) => (
+                                <PersonalityCard
+                                    key={personality.id}
+                                    personality={personality}
+                                    isSelected={selectedPersonality === personality.id}
+                                    onSelect={handlePersonalitySelect}
+                                />
+                            ))}
+                    </div>
+                )}
+
+                {/* Unified Confirmation Dialog */}
+                <PersonalityConfirmDialog
+                    isOpen={showConfirmDialog}
+                    onConfirm={handleConfirmPersonality}
+                    onCancel={handleCancelSelection}
+                    currentPersonality={currentPersonality?.name || ''}
+                    name={user?.username || ''}
+                    profileDescription={currentPersonality?.description || ''}
+                    img_path={currentPersonality?.img_path || ''}
+                    isExistingPersonality={isExistingPersonality}
+                />
             </main>
         </div>
     );
