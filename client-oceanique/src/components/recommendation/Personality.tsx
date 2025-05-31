@@ -11,6 +11,8 @@ interface Personality {
     img_path: string;
 }
 
+
+
 export default function OceaniquePersonalityPage() {
     const [selectedPersonality, setSelectedPersonality] = useState<number | null>(null);
     const navigate = useNavigate();
@@ -21,8 +23,8 @@ export default function OceaniquePersonalityPage() {
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [currentPersonality, setCurrentPersonality] = useState<Personality | null>(null);
     const [isExistingPersonality, setIsExistingPersonality] = useState(false);
-
     const [hasFetchedUserPersonality, setHasFetchedUserPersonality] = useState(false);
+
 
     // Handle existing personality confirmation on page load
     useEffect(() => {
@@ -48,7 +50,6 @@ export default function OceaniquePersonalityPage() {
         fetchUserPersonality();
     }, [loading, personalities, getUserPersonality, hasFetchedUserPersonality]);
 
-
     useEffect(() => {
         if (!showConfirmDialog) {
             getAllPersonalities();
@@ -72,7 +73,10 @@ export default function OceaniquePersonalityPage() {
                 if (!isExistingPersonality) {
                     await updateUserPersonality(currentPersonality.id);
                 }
+
+                // Navigate to preference page
                 navigate('/preference', { state: { personalityId: currentPersonality.id } });
+
             } catch (error) {
                 console.error('Error updating personality:', error);
                 // You might want to show an error message to the user here
@@ -87,6 +91,7 @@ export default function OceaniquePersonalityPage() {
         setSelectedPersonality(null);
         setIsExistingPersonality(false);
     };
+
 
     // Don't render the personality selection if dialog is showing
     const shouldShowPersonalityGrid = !showConfirmDialog;
@@ -130,6 +135,7 @@ export default function OceaniquePersonalityPage() {
                     img_path={currentPersonality?.img_path || ''}
                     isExistingPersonality={isExistingPersonality}
                 />
+
             </main>
         </div>
     );
