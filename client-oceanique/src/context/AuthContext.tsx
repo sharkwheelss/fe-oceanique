@@ -12,7 +12,15 @@ interface User {
 
 interface AuthContextType {
     isAuthenticated: boolean;
+    isLoading: boolean;
     user: User | null;
+    checkSession: () => Promise<User | null>;
+    signup: (
+        username: string,
+        email: string,
+        password: string,
+        confirmPassword: string
+    ) => Promise<{ success: boolean; message?: string }>;
     login: (
         emailOrUsername: string,
         password: string
@@ -28,6 +36,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
@@ -36,8 +45,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const checkSession = async () => {
         try {
+            setIsLoading(true);
             const data = await api.auth.checkSession();
-            console.log('Session check successful:', data);
+            console.log('Session check', data.authenticated ? 'success' : 'failed', ':', data);
 
             if (data.authenticated && data.user) {
                 setUser(data.user);
@@ -49,7 +59,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } catch (error) {
             console.error('Session check failed:', error);
         }
+        finally {
+            setIsLoading(false);
+        }
+        return user;
     };
+
+    const signup = async (
+        username: string,
+        email: string,
+        password: string,
+        confirmPassword: string
+    ): Promise<{ success: boolean; message?: string }> => {
+        try {
+            const data = await api.auth.signup({
+                username,
+                email,
+                password,
+                confirmPassword,
+            });
+
+            if (data.errors || !data.user) {
+                const message = data.errors?.[0]?.msg || data.message || 'Sign up failed';
+                console.error('Sign up error:', message);
+                throw new Error(message);
+            }
+
+            return { success: true };
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.message || 'Something went wrong. Please try again.',
+            };
+        }
+    }
 
     const login = async (
         emailOrUsername: string,
@@ -93,7 +136,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, isLoading, user, checkSession, signup, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

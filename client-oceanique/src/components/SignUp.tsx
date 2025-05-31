@@ -2,9 +2,11 @@ import { useState } from 'react';
 import GoogleBtn from './GoogleBtn';
 import PassInput from './PassInput';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Signup = () => {
     // Form state
+    const { signup } = useAuth();
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -14,33 +16,13 @@ const Signup = () => {
 
     // Handle form submission
     const handleSubmit = async () => {
-        try {
-            const response = await fetch('http://localhost:5000/api/auth/signup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: username,
-                    email: email,
-                    password: password,
-                    confirmPassword: confirmPassword
-                })
-            });
-
-            const data = await response.json();
-            if (!response.ok) {
-                console.error('Sign up error:', data.errors || data.message);
-                throw new Error(data.errors ? data.errors[0].msg : data.message || 'Sign up failed');
-            }
+        const result = await signup(username, email, password, confirmPassword);
+        if (result.success) {
             setShowSuccess(true);
             setErrorMessage('');
-        } catch (error: any) {
-            console.error('Sign up error:', error);
-            setErrorMessage(error.message || 'Something went wrong. Please try again.');
+        } else {
             setShowSuccess(false);
-
+            setErrorMessage(result.message || 'Sign up failed');
         }
     };
 
@@ -197,7 +179,7 @@ const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, nav
                     onClick={() => {
                         handleResponse();
                         if (type === 'success') {
-                            window.location.href = '/home';
+                            window.location.href = '/signin';
                         }
                     }}
                     className={`px-6 py-2 text-white rounded transition-colors ${styles[type].button}`}

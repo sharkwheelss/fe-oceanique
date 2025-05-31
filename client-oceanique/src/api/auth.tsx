@@ -1,6 +1,22 @@
 const BASE_URL = 'http://localhost:5000/api';
 
 export const authApi = {
+    signup: async (userData: { username: string; email: string; password: string; confirmPassword: string }) => {
+        const response = await fetch(`${BASE_URL}/auth/signup`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                username: userData.username,
+                email: userData.email,
+                password: userData.password,
+                confirmPassword: userData.confirmPassword
+            })
+        });
+        return response.json();
+    },
     login: async (credentials: { login: string; password: string }) => {
         const response = await fetch(`${BASE_URL}/auth/signin`, {
             method: 'POST',

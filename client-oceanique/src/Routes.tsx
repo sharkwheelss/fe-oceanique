@@ -1,6 +1,7 @@
 import { Route, Routes, Navigate } from "react-router-dom"
 import Signin from './components/SignIn';
 import Signup from './components/SignUp';
+import { RecommendationProvider } from './context/RecommendationContext';
 import NotFound from './components/NotFound';
 import { Home, WhyOceaniqueSection } from './components/Home';
 import Profile from './components/Profile';
@@ -37,10 +38,26 @@ export default function OceaniqueRoutes() {
             <Route element={<ProtectedRoutes />}>
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/edit-profile" element={<EditProfile />} />
-
-                <Route path="/personality" element={<Personality />} />
-                <Route path="/preference" element={<PreferenceRank />} />
-                <Route path="/accessibility" element={<Accessibility />} />
+                <Route path="/personality" element={
+                    <RecommendationProvider>
+                        <Personality />
+                    </RecommendationProvider>
+                } />
+                <Route path="/preference" element={
+                    <RecommendationProvider>
+                        <PreferenceRank />
+                    </RecommendationProvider>
+                } />
+                <Route path="/accessibility" element={
+                    <RecommendationProvider>
+                        <Accessibility />
+                    </RecommendationProvider>
+                } />
+                <Route path="/recommendation-result" element={
+                    <RecommendationProvider>
+                        <Result />
+                    </RecommendationProvider>
+                } />
                 <Route path="/recommendation-result" element={<Result />} />
 
                 <Route path="/beaches" element={<Beaches />} />
