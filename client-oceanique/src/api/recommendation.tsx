@@ -27,4 +27,12 @@ export const recommendationApi = {
         });
         return response.json();
     },
+    getPreferenceCategories: async () => {
+        const response = await fetch(`${BASE_URL}/recommendations/preferences/categories`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    }
 }

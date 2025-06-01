@@ -16,6 +16,7 @@ interface RecommendationContextType {
     getAllPersonalities: () => Promise<void>;
     updateUserPersonality: (personalityId: number) => Promise<void>;
     getUserPersonality: () => Promise<Personality | null>;
+    getPreferenceCategories: () => Promise<string[]>;
 }
 
 const RecommendationContext = createContext<RecommendationContextType | undefined>(undefined);
@@ -44,7 +45,7 @@ export const RecommendationProvider = ({ children }: { children: ReactNode }) =>
             setLoading(true);
             setError(null);
             const response = await api.recommendation.getUserPersonality();
-            
+
             return response.data;
         } catch (err) {
             setError('Failed to fetch user personality');
@@ -65,6 +66,20 @@ export const RecommendationProvider = ({ children }: { children: ReactNode }) =>
             setLoading(false);
         }
     };
+    const getPreferenceCategories = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.recommendation.getPreferenceCategories();
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch preference categories');
+            console.error('Error fetching preference categories:', err);
+            return [];
+        } finally {
+            setLoading(false);
+        }
+    }
 
 
     const value = {
@@ -73,7 +88,8 @@ export const RecommendationProvider = ({ children }: { children: ReactNode }) =>
         error,
         getAllPersonalities,
         getUserPersonality,
-        updateUserPersonality
+        updateUserPersonality,
+        getPreferenceCategories
     };
 
     return (

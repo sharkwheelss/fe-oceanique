@@ -12,6 +12,7 @@ interface Api {
         getAllPersonalities: () => Promise<any>;
         updateUserPersonality: (personalityId: number) => Promise<any>;
         getUserPersonality: () => Promise<any>;
+        getPreferenceCategories: () => Promise<any>;
     };
 
 }

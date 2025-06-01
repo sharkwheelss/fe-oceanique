@@ -1,25 +1,47 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRecommendation } from '../../context/RecommendationContext';
+
+interface PreferenceCategory {
+    id: number;
+    name: string;
+    default_score: number;
+    information: string;
+}
 
 function PreferenceRankingStep() {
     const navigate = useNavigate();
-    const [rankings, setRankings] = useState<{ [key: string]: number }>({});
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const [rankings, setRankings] = useState<{ [key: string]: number }>({});
+    const [preferences, setPreferences] = useState<PreferenceCategory[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const preferences = [
-        { id: 1, label: 'Accessibility', icon: '/api/placeholder/40/40' },
-        { id: 2, label: 'Activity', icon: '/api/placeholder/40/40' },
-        { id: 3, label: 'Beach Type', icon: '/api/placeholder/40/40' },
-        { id: 4, label: 'Facility', icon: '/api/placeholder/40/40' },
-        { id: 5, label: 'Cleanliness', icon: '/api/placeholder/40/40' },
-        { id: 6, label: 'Budget', icon: '/api/placeholder/40/40' },
-        { id: 7, label: 'Weather', icon: '/api/placeholder/40/40' },
-    ];
+    const { getPreferenceCategories } = useRecommendation();
+
+    useEffect(() => {
+        const fetchPreferences = async () => {
+            setLoading(true);
+            try {
+                const response = await getPreferenceCategories();
+                setPreferences(response);
+                console.log('Fetched preferences:', response);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to fetch preferences');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPreferences();
+    }, []);
 
     const handleRankSelect = (prefId: string, rank: number) => {
         setRankings(prev => ({ ...prev, [prefId]: rank }));
         setOpenDropdown(null);
     };
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -39,28 +61,36 @@ function PreferenceRankingStep() {
                     <div key={pref.id} className="flex items-center p-4 bg-white rounded-full shadow-md">
                         <div className="flex items-center flex-1">
                             <img
-                                src={`preference-icons/${pref.id}.png`}
-                                alt={pref.label}
+                                src={`/preference-icons/${pref.id}.png`}
+                                alt={pref.name}
                                 className="w-10 h-10 mr-4 rounded-full"
                             />
-                            <span className="text-xl font-medium">{pref.label}</span>
+                            <span className="text-xl font-medium">{pref.name}</span>
+                            <div className="relative ml-2 group">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div className="absolute left-0 w-48 p-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 z-20">
+                                    {pref.information}
+                                </div>
+                            </div>
                         </div>
                         <div className="relative">
                             <button
                                 className="flex items-center justify-center w-16 h-10 rounded-full border border-gray-300 font-medium"
-                                onClick={() => setOpenDropdown(openDropdown === pref.id ? null : pref.id)}
+                                onClick={() => setOpenDropdown(openDropdown === String(pref.id) ? null : String(pref.id))}
                             >
-                                {rankings[pref.id] || '-'} <span className="ml-2">▼</span>
+                                {rankings[pref.id] || pref.default_score} <span className="ml-2">▼</span>
                             </button>
 
                             {/* Dropdown menu */}
-                            {openDropdown === pref.id && (
+                            {openDropdown === String(pref.id) && (
                                 <div className="absolute right-0 mt-2 w-16 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                                     {[1, 2, 3, 4, 5].map((rank) => (
                                         <button
                                             key={rank}
                                             className="block w-full px-4 py-2 text-center hover:bg-gray-100"
-                                            onClick={() => handleRankSelect(pref.id, rank)}
+                                            onClick={() => handleRankSelect(String(pref.id), rank)}
                                         >
                                             {rank}
                                         </button>
@@ -90,5 +120,6 @@ function PreferenceRankingStep() {
         </div>
     );
 }
+
 
 export default PreferenceRankingStep;
