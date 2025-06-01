@@ -101,7 +101,7 @@ export function PersonalityConfirmDialog({
         // Wait a moment then call the actual onConfirm
         setTimeout(() => {
             onConfirm();
-        }, 2500); // 2.5 seconds to show success animation
+        }, 1000); // 1 seconds to show success animation
     };
 
     // Reset states when dialog closes
