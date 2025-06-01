@@ -1,17 +1,25 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 function PreferenceRankingStep() {
     const navigate = useNavigate();
+    const [rankings, setRankings] = useState<{ [key: string]: number }>({});
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
     const preferences = [
-        { id: 'accessibility', label: 'Accessibility', icon: '/api/placeholder/40/40' },
-        { id: 'activity', label: 'Activity', icon: '/api/placeholder/40/40' },
-        { id: 'beachType', label: 'Beach Type', icon: '/api/placeholder/40/40' },
-        { id: 'facility', label: 'Facility', icon: '/api/placeholder/40/40' },
-        { id: 'cleanliness', label: 'Cleanliness', icon: '/api/placeholder/40/40' },
-        { id: 'budget', label: 'Budget', icon: '/api/placeholder/40/40' },
-        { id: 'weather', label: 'Weather', icon: '/api/placeholder/40/40' },
+        { id: 1, label: 'Accessibility', icon: '/api/placeholder/40/40' },
+        { id: 2, label: 'Activity', icon: '/api/placeholder/40/40' },
+        { id: 3, label: 'Beach Type', icon: '/api/placeholder/40/40' },
+        { id: 4, label: 'Facility', icon: '/api/placeholder/40/40' },
+        { id: 5, label: 'Cleanliness', icon: '/api/placeholder/40/40' },
+        { id: 6, label: 'Budget', icon: '/api/placeholder/40/40' },
+        { id: 7, label: 'Weather', icon: '/api/placeholder/40/40' },
     ];
+
+    const handleRankSelect = (prefId: string, rank: number) => {
+        setRankings(prev => ({ ...prev, [prefId]: rank }));
+        setOpenDropdown(null);
+    };
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -27,28 +35,41 @@ function PreferenceRankingStep() {
 
             {/* Preference ranking cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-                {preferences.map((pref, index) => {
-                    const rank = preferences[pref.id] || index + 1;
-
-                    return (
-                        <div key={pref.id} className="flex items-center p-4 bg-white rounded-full shadow-md">
-                            <div className="flex items-center flex-1">
-                                <img
-                                    src={pref.icon}
-                                    alt={pref.label}
-                                    className="w-10 h-10 mr-4 rounded-full"
-                                />
-                                <span className="text-xl font-medium">{pref.label}</span>
-                            </div>
-                            <div className="relative">
-                                <button className="flex items-center justify-center w-16 h-10 rounded-full border border-gray-300 font-medium">
-                                    {rank} <span className="ml-2">▼</span>
-                                </button>
-                                {/* Dropdown would be implemented here in a real app */}
-                            </div>
+                {preferences.map((pref) => (
+                    <div key={pref.id} className="flex items-center p-4 bg-white rounded-full shadow-md">
+                        <div className="flex items-center flex-1">
+                            <img
+                                src={`preference-icons/${pref.id}.png`}
+                                alt={pref.label}
+                                className="w-10 h-10 mr-4 rounded-full"
+                            />
+                            <span className="text-xl font-medium">{pref.label}</span>
                         </div>
-                    );
-                })}
+                        <div className="relative">
+                            <button
+                                className="flex items-center justify-center w-16 h-10 rounded-full border border-gray-300 font-medium"
+                                onClick={() => setOpenDropdown(openDropdown === pref.id ? null : pref.id)}
+                            >
+                                {rankings[pref.id] || '-'} <span className="ml-2">▼</span>
+                            </button>
+
+                            {/* Dropdown menu */}
+                            {openDropdown === pref.id && (
+                                <div className="absolute right-0 mt-2 w-16 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                    {[1, 2, 3, 4, 5].map((rank) => (
+                                        <button
+                                            key={rank}
+                                            className="block w-full px-4 py-2 text-center hover:bg-gray-100"
+                                            onClick={() => handleRankSelect(pref.id, rank)}
+                                        >
+                                            {rank}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Navigation buttons */}
