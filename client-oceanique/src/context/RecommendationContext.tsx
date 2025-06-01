@@ -14,9 +14,10 @@ interface RecommendationContextType {
     loading: boolean;
     error: string | null;
     getAllPersonalities: () => Promise<void>;
-    updateUserPersonality: (personalityId: number) => Promise<void>;
     getUserPersonality: () => Promise<Personality | null>;
     getPreferenceCategories: () => Promise<string[]>;
+    updateUserPersonality: (personalityId: number) => Promise<void>;
+    updateUserPreferences: (preferences: any) => Promise<void>;
 }
 
 const RecommendationContext = createContext<RecommendationContextType | undefined>(undefined);
@@ -52,19 +53,6 @@ export const RecommendationProvider = ({ children }: { children: ReactNode }) =>
             return null;
         }
     };
-    const updateUserPersonality = async (personalityId: number) => {
-        try {
-            setLoading(true);
-            setError(null);
-            await api.recommendation.updateUserPersonality(personalityId);
-            await getAllPersonalities();
-        } catch (err) {
-            setError('Failed to update personality');
-            console.error('Error updating personality:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
     const getPreferenceCategories = async () => {
         try {
             setLoading(true);
@@ -78,6 +66,33 @@ export const RecommendationProvider = ({ children }: { children: ReactNode }) =>
         } finally {
             setLoading(false);
         }
+    };
+
+
+    const updateUserPersonality = async (personalityId: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            await api.recommendation.updateUserPersonality(personalityId);
+            await getAllPersonalities();
+        } catch (err) {
+            setError('Failed to update personality');
+            console.error('Error updating personality:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const updateUserPreferences = async (preferences: any) => {
+        try {
+            setLoading(true);
+            setError(null);
+            await api.recommendation.updateUserPreferences(preferences);
+        } catch (err) {
+            setError('Failed to update preferences');
+            console.error('Error updating preferences:', err);
+        } finally {
+            setLoading(false);
+        }
     }
 
 
@@ -88,7 +103,8 @@ export const RecommendationProvider = ({ children }: { children: ReactNode }) =>
         getAllPersonalities,
         getUserPersonality,
         updateUserPersonality,
-        getPreferenceCategories
+        getPreferenceCategories,
+        updateUserPreferences,
     };
 
     return (

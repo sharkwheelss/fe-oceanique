@@ -17,7 +17,7 @@ function PreferenceRankingStep() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const { getPreferenceCategories } = useRecommendation();
+    const { getPreferenceCategories, updateUserPreferences } = useRecommendation();
 
     useEffect(() => {
         const fetchPreferences = async () => {
@@ -40,6 +40,26 @@ function PreferenceRankingStep() {
         setOpenDropdown(null);
     };
 
+    // Add a new function to handle the next button click
+    const handleNext = async () => {
+        try {
+            // Transform rankings object into the required format
+            const preferenceScores = preferences.map(pref => ({
+                categoryId: pref.id,
+                score: rankings[pref.id] || pref.default_score
+            }));
+            console.log('Submitting preference scores:', preferenceScores);
+
+            // Call the API
+            await updateUserPreferences({ preferenceScores });
+
+            // Navigate to next page if successful
+            navigate('/accessibility');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update preferences');
+        }
+    };
+
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
 
@@ -50,7 +70,9 @@ function PreferenceRankingStep() {
                 <h1 className="text-3xl font-bold max-w-xl">
                     Your beach, your rules! Rank what you care about the most.
                 </h1>
-                <button className="text-teal-500 font-medium flex items-center">
+                <button className="text-teal-500 font-medium flex items-center hover:underline hover:text-teal-600 transition-colors duration-300"
+                    onClick={() => navigate('/accessibility')}
+                >
                     Skip for now <span className="ml-2">→</span>
                 </button>
             </div>
@@ -58,7 +80,7 @@ function PreferenceRankingStep() {
             {/* Preference ranking cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
                 {preferences.map((pref) => (
-                    <div key={pref.id} className="flex items-center p-4 bg-white rounded-full shadow-md">
+                    <div key={pref.id} className="flex items-center p-4 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow duration-300">
                         <div className="flex items-center flex-1">
                             <img
                                 src={`/preference-icons/${pref.id}.png`}
@@ -67,7 +89,7 @@ function PreferenceRankingStep() {
                             />
                             <span className="text-xl font-medium">{pref.name}</span>
                             <div className="relative ml-2 group">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-teal-500 hover:text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-teal-500 hover:text-teal-600 transition-colors duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <div className="absolute left-0 w-48 p-3 bg-white text-gray-700 text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 z-20 border border-gray-200">
@@ -77,7 +99,7 @@ function PreferenceRankingStep() {
                         </div>
                         <div className="relative">
                             <button
-                                className="flex items-center justify-center w-16 h-10 rounded-full border border-gray-300 font-medium"
+                                className="flex items-center justify-center w-16 h-10 rounded-full border border-gray-300 font-medium hover:border-teal-500 hover:bg-teal-50 transition-all duration-300"
                                 onClick={() => setOpenDropdown(openDropdown === String(pref.id) ? null : String(pref.id))}
                             >
                                 {rankings[pref.id] || pref.default_score} <span className="ml-2">▼</span>
@@ -89,7 +111,7 @@ function PreferenceRankingStep() {
                                     {[1, 2, 3, 4, 5].map((rank) => (
                                         <button
                                             key={rank}
-                                            className="block w-full px-4 py-2 text-center hover:bg-gray-100"
+                                            className="block w-full px-4 py-2 text-center hover:bg-teal-50 transition-colors duration-300"
                                             onClick={() => handleRankSelect(String(pref.id), rank)}
                                         >
                                             {rank}
@@ -105,14 +127,14 @@ function PreferenceRankingStep() {
             {/* Navigation buttons */}
             <div className="flex justify-between">
                 <button
-                    className="bg-red-500 text-white py-3 px-10 rounded-full font-medium"
+                    className="bg-red-500 text-white py-3 px-10 rounded-full font-medium hover:bg-red-600 transition-colors duration-300"
                     onClick={() => window.history.back()}
                 >
                     Back
                 </button>
                 <button
-                    className="bg-teal-500 text-white py-3 px-10 rounded-full font-medium flex items-center"
-                    onClick={() => navigate('/accessibility')}
+                    className="bg-teal-500 text-white py-3 px-10 rounded-full font-medium flex items-center hover:bg-teal-600 transition-colors duration-300"
+                    onClick={handleNext}
                 >
                     Next <span className="ml-2">→</span>
                 </button>
