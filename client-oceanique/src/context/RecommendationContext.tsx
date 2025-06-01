@@ -45,7 +45,6 @@ export const RecommendationProvider = ({ children }: { children: ReactNode }) =>
             setLoading(true);
             setError(null);
             const response = await api.recommendation.getUserPersonality();
-
             return response.data;
         } catch (err) {
             setError('Failed to fetch user personality');

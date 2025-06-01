@@ -67,10 +67,10 @@ function PreferenceRankingStep() {
                             />
                             <span className="text-xl font-medium">{pref.name}</span>
                             <div className="relative ml-2 group">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-teal-500 hover:text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <div className="absolute left-0 w-48 p-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 z-20">
+                                <div className="absolute left-0 w-48 p-3 bg-white text-gray-700 text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 z-20 border border-gray-200">
                                     {pref.information}
                                 </div>
                             </div>

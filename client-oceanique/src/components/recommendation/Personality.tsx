@@ -28,33 +28,36 @@ export default function OceaniquePersonalityPage() {
 
     // Handle existing personality confirmation on page load
     useEffect(() => {
-        const fetchUserPersonality = async () => {
-            if (!loading && personalities.length > 0 && !hasFetchedUserPersonality) {
-                try {
-                    const personalityArray = await getUserPersonality();
-                    if (Array.isArray(personalityArray) && personalityArray.length > 0) {
-                        const personality = personalityArray[0];
-                        console.log('Found personality (API):', personality);
-                        setCurrentPersonality(personality);
-                        setIsExistingPersonality(true);
-                        setShowConfirmDialog(true);
-                    }
-                } catch (error) {
-                    console.error('Error fetching user personality:', error);
-                } finally {
-                    setHasFetchedUserPersonality(true);
+        const checkExistingPersonality = async () => {
+            try {
+                const personalityArray = await getUserPersonality();
+                if (Array.isArray(personalityArray) && personalityArray.length > 0) {
+                    const personality = personalityArray[0];
+                    setCurrentPersonality(personality);
+                    setIsExistingPersonality(true);
+                    setShowConfirmDialog(true); // Show dialog if personality exists
+                } else {
+                    // No existing personality, load all options
+                    getAllPersonalities();
                 }
+            } catch (error: any) {
+                if (!error.message?.includes("User personality not found")) {
+                    console.error('Error checking personality:', error);
+                }
+                getAllPersonalities();
             }
         };
 
-        fetchUserPersonality();
-    }, [loading, personalities, getUserPersonality, hasFetchedUserPersonality]);
+        checkExistingPersonality();
+    }, []); // Run once on mount
 
+    // Remove or modify the existing showConfirmDialog effect
+    // as it might interfere with the desired behavior
     useEffect(() => {
-        if (!showConfirmDialog) {
+        if (!showConfirmDialog && !isExistingPersonality) {
             getAllPersonalities();
         }
-    }, [showConfirmDialog]);
+    }, [showConfirmDialog, isExistingPersonality]);
 
     const handlePersonalitySelect = (personalityId: number) => {
         const personality = personalities.find(p => p.id === personalityId);
