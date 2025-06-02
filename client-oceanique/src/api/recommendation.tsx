@@ -27,6 +27,14 @@ export const recommendationApi = {
         });
         return response.json();
     },
+    getAllQuestions: async () => {
+        const response = await fetch(`${BASE_URL}/recommendations/questions`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
 
     // all POST methods
     updateUserPersonality: async (personalityId: number) => {

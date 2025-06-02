@@ -1,0 +1,236 @@
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useRecommendation } from '../../context/RecommendationContext';
+
+export interface Option {
+    id: number;
+    option_text: string;
+    option_value: string;
+}
+
+export interface Questions {
+    id: number;
+    question: string;
+    question_text?: string; // Alternative field name
+    question_type: string;
+    category: string;
+    options: Option[];
+}
+
+function Questions() {
+    const navigate = useNavigate();
+    const [questions, setQuestions] = useState<Questions[]>([]);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [answers, setAnswers] = useState<Map<number, number[]>>(new Map());
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [optionSliderIndex, setOptionSliderIndex] = useState(0); // For option slider
+
+    const { getAllQuestions } = useRecommendation();
+
+    useEffect(() => {
+        const loadQuestions = async () => {
+            try {
+                setIsLoading(true);
+                const questionsData = await getAllQuestions();
+                setQuestions(questionsData);
+                console.log('questions:', questionsData);
+            } catch (error) {
+                console.error('Error loading questions:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadQuestions();
+    }, [getAllQuestions]);
+
+    // Reset slider when question changes
+    useEffect(() => {
+        setOptionSliderIndex(0);
+    }, [currentQuestionIndex]);
+
+    const handleOptionSelect = (questionId: number, optionId: number, isMultiple: boolean) => {
+        const newAnswers = new Map(answers);
+        const currentSelections = newAnswers.get(questionId) || [];
+
+        if (isMultiple) {
+            // Multiple choice - toggle selection
+            if (currentSelections.includes(optionId)) {
+                const filteredSelections = currentSelections.filter(id => id !== optionId);
+                if (filteredSelections.length === 0) {
+                    newAnswers.delete(questionId);
+                } else {
+                    newAnswers.set(questionId, filteredSelections);
+                }
+            } else {
+                newAnswers.set(questionId, [...currentSelections, optionId]);
+            }
+        } else {
+            // Single choice - replace selection
+            newAnswers.set(questionId, [optionId]);
+        }
+
+        setAnswers(newAnswers);
+    };
+
+    const handleNextQuestion = () => {
+        const isLastQuestion = currentQuestionIndex === questions.length - 1;
+        if (isLastQuestion) {
+            // Submit or navigate to results
+            navigate('/recommendation-result');
+        } else {
+            setCurrentQuestionIndex(currentQuestionIndex + 1);
+        }
+    };
+
+    const handleOptionSliderPrevious = () => {
+        if (optionSliderIndex > 0) {
+            setOptionSliderIndex(optionSliderIndex - 1);
+        }
+    };
+
+    const handleOptionSliderNext = () => {
+        const currentQuestion = questions[currentQuestionIndex];
+        const maxVisibleOptions = 3;
+        const maxSliderIndex = Math.max(0, (currentQuestion?.options?.length || 0) - maxVisibleOptions);
+
+        if (optionSliderIndex < maxSliderIndex) {
+            setOptionSliderIndex(optionSliderIndex + 1);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="max-w-4xl mx-auto p-6 flex justify-center items-center min-h-screen">
+                <div className="text-center">
+                    <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading questions...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (questions.length === 0) {
+        return (
+            <div className="max-w-4xl mx-auto p-6 flex justify-center items-center min-h-screen">
+                <div className="text-center">
+                    <p className="text-gray-600">No questions available.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const currentQuestion = questions[currentQuestionIndex];
+    const hasAnsweredCurrentQuestion = currentQuestion && answers.has(currentQuestion.id);
+    const questionText = currentQuestion?.question_text || currentQuestion?.question || '';
+
+    // Calculate visible options for slider
+    const maxVisibleOptions = 3;
+    const canSlideLeft = optionSliderIndex > 0;
+    const canSlideRight = optionSliderIndex < Math.max(0, (currentQuestion?.options?.length || 0) - maxVisibleOptions);
+
+    return (
+        <div className="max-w-4xl mx-auto">
+            {/* Back button and progress indicator */}
+            <div className="flex justify-between items-center mb-8">
+                <button
+                    className="flex items-center text-teal-500 font-medium"
+                    onClick={() => window.history.back()}
+                >
+                    <span className="mr-2">←</span> Back
+                </button>
+                <div className="text-gray-500">
+                    {currentQuestionIndex + 1} of {questions.length} questions
+                </div>
+            </div>
+
+            {/* Question */}
+            <h1 className="text-3xl font-bold text-center mb-12">
+                {questionText}
+            </h1>
+
+            {/* Options with slider */}
+            <div className="relative flex justify-center items-center mb-12">
+                {/* Previous slider button */}
+                <button
+                    className={`absolute left-0 p-4 rounded-md z-10 ${canSlideLeft
+                            ? 'bg-teal-500 text-white hover:bg-teal-600'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
+                    onClick={handleOptionSliderPrevious}
+                    disabled={!canSlideLeft}
+                >
+                    ←
+                </button>
+
+                {/* Option cards */}
+                <div className="flex gap-8 justify-center max-w-4xl overflow-hidden">
+                    <div
+                        className="flex gap-8 transition-transform duration-500 ease-in-out"
+                        style={{ transform: `translateX(-${optionSliderIndex * (192 + 32)}px)` }}
+                    >
+                        {currentQuestion?.options?.map(option => {
+                            const isSelected = answers.get(currentQuestion.id)?.includes(option.id) || false;
+
+                            return (
+                                <div key={option.id} className="flex flex-col items-center">
+                                    <div className="bg-white rounded-3xl shadow-md overflow-hidden mb-4 w-48">
+                                        {/* Placeholder for illustration - you can replace with actual images */}
+                                        <div className="w-full h-64 bg-gradient-to-br from-teal-100 to-blue-100 flex items-center justify-center">
+                                            <img src="https://picsum.photos/200/300" alt="" />
+                                        </div>
+                                    </div>
+                                    <div className="text-center text-xl font-medium mb-2">
+                                        {option.option_text}
+                                    </div>
+                                    <button
+                                        className={`h-8 w-8 rounded-full flex items-center justify-center ${isSelected
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-gray-200 hover:bg-gray-300'
+                                            }`}
+                                        onClick={() => handleOptionSelect(
+                                            currentQuestion.id,
+                                            option.id,
+                                            currentQuestion.question_type === 'multiple'
+                                        )}
+                                    >
+                                        {isSelected && '✓'}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Next slider button */}
+                <button
+                    className={`absolute right-0 p-4 rounded-md z-10 ${canSlideRight
+                            ? 'bg-teal-500 text-white hover:bg-teal-600'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
+                    onClick={handleOptionSliderNext}
+                    disabled={!canSlideRight}
+                >
+                    →
+                </button>
+            </div>
+
+            {/* Next question button */}
+            <div className="flex justify-center">
+                <button
+                    className={`py-4 px-6 rounded-full w-full max-w-xl flex items-center justify-center text-lg font-medium ${hasAnsweredCurrentQuestion
+                            ? 'bg-teal-500 text-white hover:bg-teal-600'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                    onClick={handleNextQuestion}
+                    disabled={!hasAnsweredCurrentQuestion}
+                >
+                    Next <span className="ml-2">→</span>
+                </button>
+            </div>
+        </div>
+    );
+}
+
+export default Questions;

@@ -14,6 +14,7 @@ interface Api {
         getUserPersonality: () => Promise<any>;
         getPreferenceCategories: () => Promise<any>;
         updateUserPreferences: (preferences: any) => Promise<any>;
+        getAllQuestions: () => Promise<any>;
     };
 
 }

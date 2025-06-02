@@ -54,7 +54,7 @@ function PreferenceRankingStep() {
             await updateUserPreferences({ preferenceScores });
 
             // Navigate to next page if successful
-            navigate('/accessibility');
+            navigate('/questions');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to update preferences');
         }
@@ -71,7 +71,7 @@ function PreferenceRankingStep() {
                     Your beach, your rules! Rank what you care about the most.
                 </h1>
                 <button className="text-teal-500 font-medium flex items-center hover:underline hover:text-teal-600 transition-colors duration-300"
-                    onClick={() => navigate('/accessibility')}
+                    onClick={() => navigate('/questions')}
                 >
                     Skip for now <span className="ml-2">→</span>
                 </button>

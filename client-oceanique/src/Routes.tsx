@@ -17,7 +17,7 @@ import MainPurchase from './components/purchasing/MainPurchase';
 import Result from './components/recommendation/Result';
 import EditProfile from './components/EditProfile';
 import PreferenceRank from './components/recommendation/PreferenceRank';
-import Accessibility from './components/recommendation/Accessibility';
+import Questions from './components/recommendation/Questions';
 import ProtectedRoutes from './ProtectedRoutes';
 
 export default function OceaniqueRoutes() {
@@ -48,9 +48,9 @@ export default function OceaniqueRoutes() {
                         <PreferenceRank />
                     </RecommendationProvider>
                 } />
-                <Route path="/accessibility" element={
+                <Route path="/questions" element={
                     <RecommendationProvider>
-                        <Accessibility />
+                        <Questions />
                     </RecommendationProvider>
                 } />
                 <Route path="/recommendation-result" element={
