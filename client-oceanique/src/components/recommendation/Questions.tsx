@@ -84,6 +84,13 @@ function Questions() {
         }
     };
 
+    const handlePrevQuestion = () => {
+        if (currentQuestionIndex > 0) {
+            setCurrentQuestionIndex(currentQuestionIndex - 1);
+            setOptionSliderIndex(0);
+        }
+    }
+
     const handleOptionSliderPrevious = () => {
         if (optionSliderIndex > 0) {
             setOptionSliderIndex(optionSliderIndex - 1);
@@ -155,8 +162,8 @@ function Questions() {
                 {/* Previous slider button */}
                 <button
                     className={`absolute left-0 p-4 rounded-md z-10 ${canSlideLeft
-                            ? 'bg-teal-500 text-white hover:bg-teal-600'
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        ? 'bg-teal-500 text-white hover:bg-teal-600'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
                     onClick={handleOptionSliderPrevious}
                     disabled={!canSlideLeft}
@@ -186,8 +193,8 @@ function Questions() {
                                     </div>
                                     <button
                                         className={`h-8 w-8 rounded-full flex items-center justify-center ${isSelected
-                                                ? 'bg-green-500 text-white'
-                                                : 'bg-gray-200 hover:bg-gray-300'
+                                            ? 'bg-green-500 text-white'
+                                            : 'bg-gray-200 hover:bg-gray-300'
                                             }`}
                                         onClick={() => handleOptionSelect(
                                             currentQuestion.id,
@@ -206,8 +213,8 @@ function Questions() {
                 {/* Next slider button */}
                 <button
                     className={`absolute right-0 p-4 rounded-md z-10 ${canSlideRight
-                            ? 'bg-teal-500 text-white hover:bg-teal-600'
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        ? 'bg-teal-500 text-white hover:bg-teal-600'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
                     onClick={handleOptionSliderNext}
                     disabled={!canSlideRight}
@@ -217,11 +224,17 @@ function Questions() {
             </div>
 
             {/* Next question button */}
-            <div className="flex justify-center">
+            <div className="flex justify-between">
                 <button
-                    className={`py-4 px-6 rounded-full w-full max-w-xl flex items-center justify-center text-lg font-medium ${hasAnsweredCurrentQuestion
-                            ? 'bg-teal-500 text-white hover:bg-teal-600'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    className="bg-red-500 text-white py-3 px-10 rounded-full font-medium hover:bg-red-600 transition-colors duration-300"
+                    onClick={handlePrevQuestion}
+                >
+                    Previous
+                </button>
+                <button
+                    className={`bg-teal-500 text-white py-3 px-10 rounded-full font-medium flex items-center ${hasAnsweredCurrentQuestion
+                        ? 'bg-teal-500 text-white hover:bg-teal-600 transition-colors duration-300'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                     onClick={handleNextQuestion}
                     disabled={!hasAnsweredCurrentQuestion}
