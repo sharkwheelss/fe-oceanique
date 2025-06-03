@@ -43,7 +43,7 @@ function Questions() {
         };
 
         loadQuestions();
-    }, [getAllQuestions]);
+    }, []);
 
     // Reset slider when question changes
     useEffect(() => {
@@ -74,10 +74,9 @@ function Questions() {
         setAnswers(newAnswers);
     };
 
+    const isLastQuestion = currentQuestionIndex === questions.length - 1;
     const handleNextQuestion = () => {
-        const isLastQuestion = currentQuestionIndex === questions.length - 1;
         if (isLastQuestion) {
-            // Submit or navigate to results
             navigate('/recommendation-result');
         } else {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -232,14 +231,20 @@ function Questions() {
                     Previous
                 </button>
                 <button
-                    className={`bg-teal-500 text-white py-3 px-10 rounded-full font-medium flex items-center ${hasAnsweredCurrentQuestion
+                    className={`py-3 px-10 rounded-full font-medium flex items-center ${hasAnsweredCurrentQuestion
                         ? 'bg-teal-500 text-white hover:bg-teal-600 transition-colors duration-300'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                     onClick={handleNextQuestion}
                     disabled={!hasAnsweredCurrentQuestion}
                 >
-                    Next <span className="ml-2">→</span>
+                    {
+                        isLastQuestion ? 'Submit' : (
+                            <>
+                                Next <span className="ml-2">→</span>
+                            </>
+                        )
+                    }
                 </button>
             </div>
         </div>
