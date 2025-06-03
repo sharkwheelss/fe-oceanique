@@ -133,8 +133,13 @@ function Questions() {
 
     // Calculate visible options for slider
     const maxVisibleOptions = 3;
+    const itemWidth = 192; // w-48 = 192px
+    const itemGap = 64; // gap-16 = 64px
+    const itemTotalWidth = itemWidth + itemGap;
+    const maxSliderIndex = Math.max(0, (currentQuestion?.options?.length || 0) - maxVisibleOptions);
+
     const canSlideLeft = optionSliderIndex > 0;
-    const canSlideRight = optionSliderIndex < Math.max(0, (currentQuestion?.options?.length || 0) - maxVisibleOptions);
+    const canSlideRight = optionSliderIndex < maxSliderIndex;
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -157,10 +162,10 @@ function Questions() {
             </h1>
 
             {/* Options with slider */}
-            <div className="relative flex justify-center items-center mb-12">
+            <div className="flex items-center justify-center mb-12 gap-4">
                 {/* Previous slider button */}
                 <button
-                    className={`absolute left-0 p-4 rounded-md z-10 ${canSlideLeft
+                    className={`p-3 rounded-full z-10 flex-shrink-0 ${canSlideLeft
                         ? 'bg-teal-500 text-white hover:bg-teal-600'
                         : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
@@ -170,17 +175,17 @@ function Questions() {
                     ←
                 </button>
 
-                {/* Option cards */}
-                <div className="flex gap-8 justify-center max-w-4xl overflow-hidden">
+                {/* Option cards container */}
+                <div className="overflow-hidden" style={{ width: `${maxVisibleOptions * itemTotalWidth - itemGap}px` }}>
                     <div
-                        className="flex gap-8 transition-transform duration-500 ease-in-out"
-                        style={{ transform: `translateX(-${optionSliderIndex * (192 + 32)}px)` }}
+                        className="flex gap-16 transition-transform duration-500 ease-in-out"
+                        style={{ transform: `translateX(-${optionSliderIndex * itemTotalWidth}px)` }}
                     >
                         {currentQuestion?.options?.map(option => {
                             const isSelected = answers.get(currentQuestion.id)?.includes(option.id) || false;
 
                             return (
-                                <div key={option.id} className="flex flex-col items-center">
+                                <div key={option.id} className="flex flex-col items-center flex-shrink-0">
                                     <div className="bg-white rounded-3xl shadow-md overflow-hidden mb-4 w-48">
                                         {/* Placeholder for illustration - you can replace with actual images */}
                                         <div className="w-full h-64 bg-gradient-to-br from-teal-100 to-blue-100 flex items-center justify-center">
@@ -211,7 +216,7 @@ function Questions() {
 
                 {/* Next slider button */}
                 <button
-                    className={`absolute right-0 p-4 rounded-md z-10 ${canSlideRight
+                    className={`p-3 rounded-full z-10 flex-shrink-0 ${canSlideRight
                         ? 'bg-teal-500 text-white hover:bg-teal-600'
                         : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
