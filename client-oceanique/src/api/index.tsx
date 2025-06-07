@@ -15,6 +15,7 @@ interface Api {
         getPreferenceCategories: () => Promise<any>;
         updateUserPreferences: (preferences: any) => Promise<any>;
         getAllQuestions: () => Promise<any>;
+        beachRecommendation: (userOptions: any) => Promise<any>;
     };
 
 }

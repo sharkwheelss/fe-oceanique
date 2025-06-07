@@ -55,4 +55,13 @@ export const recommendationApi = {
         });
         return response.json();
     },
+    beachRecommendation: async (userOptions: any) => {
+        const response = await fetch(`${BASE_URL}/recommendations/recommendation-result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(userOptions)
+        });
+        return response.json();
+    },
 }

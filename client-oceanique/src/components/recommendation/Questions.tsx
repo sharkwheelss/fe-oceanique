@@ -23,10 +23,10 @@ function Questions() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Map<number, number[]>>(new Map());
     const [isLoading, setIsLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [optionSliderIndex, setOptionSliderIndex] = useState(0); // For option slider
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { getAllQuestions } = useRecommendation();
+    const { getAllQuestions, beachRecommendation } = useRecommendation();
 
     useEffect(() => {
         const loadQuestions = async () => {
@@ -75,9 +75,44 @@ function Questions() {
     };
 
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
-    const handleNextQuestion = () => {
+
+    // Function to collect all selected option IDs
+    const getAllSelectedOptions = (): number[] => {
+        const allOptions: number[] = [];
+        answers.forEach((optionIds) => {
+            allOptions.push(...optionIds);
+        });
+        return allOptions;
+    };
+
+    const handleNextQuestion = async () => {
         if (isLastQuestion) {
-            navigate('/recommendation-result');
+            // Submit answers and get recommendations
+            setIsSubmitting(true);
+            try {
+                const userOptions = getAllSelectedOptions();
+                console.log('Submitting user options:', userOptions);
+
+                // Call the recommendation API
+                const recommendationData = await beachRecommendation({ userOptions });
+                console.log('Recommendation data:', recommendationData);
+
+                // Store the recommendation data in context or pass it to the result page
+                // You might want to store this in your RecommendationContext
+
+                // Navigate to result page
+                navigate('/recommendation-result', {
+                    state: {
+                        recommendationData,
+                        userOptions
+                    }
+                });
+            } catch (error) {
+                console.error('Error getting recommendations:', error);
+                // Handle error - maybe show a toast or error message
+            } finally {
+                setIsSubmitting(false);
+            }
         } else {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
         }
@@ -236,20 +271,25 @@ function Questions() {
                     Previous
                 </button>
                 <button
-                    className={`py-3 px-10 rounded-full font-medium flex items-center ${hasAnsweredCurrentQuestion
+                    className={`py-3 px-10 rounded-full font-medium flex items-center ${hasAnsweredCurrentQuestion && !isSubmitting
                         ? 'bg-teal-500 text-white hover:bg-teal-600 transition-colors duration-300'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                     onClick={handleNextQuestion}
-                    disabled={!hasAnsweredCurrentQuestion}
+                    disabled={!hasAnsweredCurrentQuestion || isSubmitting}
                 >
-                    {
-                        isLastQuestion ? 'Submit' : (
-                            <>
-                                Next <span className="ml-2">→</span>
-                            </>
-                        )
-                    }
+                    {isSubmitting ? (
+                        <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Submitting...
+                        </>
+                    ) : isLastQuestion ? (
+                        'Submit'
+                    ) : (
+                        <>
+                            Next <span className="ml-2">→</span>
+                        </>
+                    )}
                 </button>
             </div>
         </div>
