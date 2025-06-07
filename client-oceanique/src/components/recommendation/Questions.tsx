@@ -97,9 +97,6 @@ function Questions() {
                 const recommendationData = await beachRecommendation({ userOptions });
                 console.log('Recommendation data:', recommendationData);
 
-                // Store the recommendation data in context or pass it to the result page
-                // You might want to store this in your RecommendationContext
-
                 // Navigate to result page
                 navigate('/recommendation-result', {
                     state: {

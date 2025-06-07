@@ -114,10 +114,10 @@ export const RecommendationProvider = ({ children }: { children: ReactNode }) =>
         try {
             setLoading(true);
             setError(null);
-            await api.recommendation.beachRecommendation(userOptions);
+            return await api.recommendation.beachRecommendation(userOptions);
         } catch (err) {
-            setError('Failed to update preferences');
-            console.error('Error updating preferences:', err);
+            setError('Failed to get recommendation');
+            console.error('Error to get recommendation:', err);
         } finally {
             setLoading(false);
         }
