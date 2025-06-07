@@ -89,12 +89,20 @@ function Questions() {
         if (isLastQuestion) {
             // Submit answers and get recommendations
             setIsSubmitting(true);
+
+            // Create a minimum loading time promise
+            const minLoadingTime = new Promise(resolve => setTimeout(resolve, 2000));
+
             try {
                 const userOptions = getAllSelectedOptions();
                 console.log('Submitting user options:', userOptions);
 
-                // Call the recommendation API
-                const recommendationData = await beachRecommendation({ userOptions });
+                // Call the recommendation API and wait for both API and minimum time
+                const [recommendationData] = await Promise.all([
+                    beachRecommendation({ userOptions }),
+                    minLoadingTime
+                ]);
+
                 console.log('Recommendation data:', recommendationData);
 
                 // Navigate to result page
@@ -138,6 +146,18 @@ function Questions() {
         }
     };
 
+    // Loading animation component
+    const LoadingSpinner = () => (
+        <div className="relative w-16 h-16">
+            {/* Outer rotating ring */}
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-400 border-r-purple-300 animate-spin"></div>
+            {/* Inner blob shape */}
+            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-teal-400 via-blue-400 to-purple-500 animate-pulse"></div>
+            {/* Inner highlight */}
+            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-white/40 to-transparent"></div>
+        </div>
+    );
+
     if (isLoading) {
         return (
             <div className="max-w-4xl mx-auto p-6 flex justify-center items-center min-h-screen">
@@ -154,6 +174,25 @@ function Questions() {
             <div className="max-w-4xl mx-auto p-6 flex justify-center items-center min-h-screen">
                 <div className="text-center">
                     <p className="text-gray-600">No questions available.</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show full-screen loading overlay when submitting
+    if (isSubmitting) {
+        return (
+            <div className="fixed inset-0 bg-white z-50 flex flex-col justify-center items-center">
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold text-gray-800 mb-8">
+                        Hang tight, processing!
+                    </h1>
+                    <div className="flex justify-center mb-8">
+                        <LoadingSpinner />
+                    </div>
+                    <p className="text-gray-600 text-lg">
+                        We're finding the perfect recommendations for you...
+                    </p>
                 </div>
             </div>
         );
@@ -268,19 +307,14 @@ function Questions() {
                     Previous
                 </button>
                 <button
-                    className={`py-3 px-10 rounded-full font-medium flex items-center ${hasAnsweredCurrentQuestion && !isSubmitting
+                    className={`py-3 px-10 rounded-full font-medium flex items-center ${hasAnsweredCurrentQuestion
                         ? 'bg-teal-500 text-white hover:bg-teal-600 transition-colors duration-300'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                     onClick={handleNextQuestion}
-                    disabled={!hasAnsweredCurrentQuestion || isSubmitting}
+                    disabled={!hasAnsweredCurrentQuestion}
                 >
-                    {isSubmitting ? (
-                        <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                            Submitting...
-                        </>
-                    ) : isLastQuestion ? (
+                    {isLastQuestion ? (
                         'Submit'
                     ) : (
                         <>
