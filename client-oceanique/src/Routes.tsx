@@ -2,6 +2,7 @@ import { Route, Routes, Navigate } from "react-router-dom"
 import Signin from './components/SignIn';
 import Signup from './components/SignUp';
 import { RecommendationProvider } from './context/RecommendationContext';
+import { BeachProvider } from './context/BeachContext'
 import NotFound from './components/NotFound';
 import { Home, WhyOceaniqueSection } from './components/Home';
 import Profile from './components/Profile';
@@ -58,10 +59,17 @@ export default function OceaniqueRoutes() {
                         <Result />
                     </RecommendationProvider>
                 } />
-                <Route path="/recommendation-result" element={<Result />} />
 
-                <Route path="/beaches" element={<Beaches />} />
-                <Route path="/beach-detail/:id" element={<BeachDetail />} />
+                <Route path="/beaches" element={
+                    <BeachProvider>
+                        <Beaches />
+                    </BeachProvider>
+                } />
+                <Route path="/beach-detail/:id" element={
+                    <BeachProvider>
+                        <BeachDetail />
+                    </BeachProvider>
+                } />
                 <Route path="/add-review" element={<CreateEditReviews />} />
 
                 <Route path="/events" element={<Events />} />

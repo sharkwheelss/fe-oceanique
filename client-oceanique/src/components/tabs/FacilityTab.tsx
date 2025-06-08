@@ -23,32 +23,27 @@ const FacilityContent = () => {
         <div>
             <h2 className="text-2xl font-bold mb-6">All Facilities in Pantai Pasir Putih</h2>
 
-            <div className="grid md:grid-cols-4 gap-6">
-                <FacilityCategory
-                    title="General"
-                    image="https://picsum.photos/id/8/5000/3333"
-                    items={["Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum"]}
-                />
-
-                <FacilityCategory
-                    title="Kids"
-                    image="https://picsum.photos/id/8/5000/3333"
-                    items={["Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum"]}
-                />
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 place-items-center">
                 <FacilityCategory
                     title="Public"
-                    image="https://picsum.photos/id/8/5000/3333"
+                    image="/public-facility.png"
                     items={["Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum"]}
                 />
 
                 <FacilityCategory
                     title="Private"
-                    image="https://picsum.photos/id/8/5000/3333"
+                    image="/private-facility.png"
+                    items={["Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum"]}
+                />
+
+                <FacilityCategory
+                    title="Kids"
+                    image="/kids-facility.png"
                     items={["Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum"]}
                 />
             </div>
         </div>
+
     );
 };
 

@@ -1,47 +1,121 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, MapPin, Star, Heart, Sun } from 'lucide-react';
 import ReviewsTab from './tabs/ReviewsTab';
 import AboutTab from './tabs/AboutTab';
 import FacilityTab from './tabs/FacilityTab';
 import PhotoVideoTab from './tabs/PhotoVideoTab';
 import LocationTab from './tabs/LocationTab';
+import { useBeaches } from '../context/BeachContext';
 
+// Main BeachDetailPage component
+export interface Beach {
+    id: number;
+    beach_name: string;
+    descriptions: string;
+    cp_name: string;
+    official_website: string;
+    rating_average: number;
+    estimate_price: string;
+    latitude: string;
+    longitude: string;
+    kecamatan: string;
+    kota: string;
+    province: string;
+    path: string;
+    img_path: string;
+    activities: Activity[];
+    facilities: Facility[];
+    contents: BeachContent[];
+    reviews: BeachReview[];
+}
+
+export interface Activity {
+    option_id: number;
+    beach_id: number;
+    name: string;
+}
+
+export interface Facility {
+    id: number;
+    facility_name: string;
+    facility_category_id: number;
+    beaches_id: number;
+}
+
+export interface BeachContent {
+    id: number;
+    path: string;
+    beaches_id: number;
+    reviews_id: number;
+    img_path: string;
+}
+
+export interface BeachReview {
+    id: number;
+    rating: number;
+    beaches_id: number;
+    users_id: number;
+    created_at: string; // ISO 8601 timestamp
+    updated_at: string;
+    option_vote_id: number;
+    votes: number;
+}
 
 // Main BeachDetailPage component
 export default function BeachDetailPage() {
-    // State for wishlist status
-    const [isInWishlist, setIsInWishlist] = useState(false);
-    // State for active tab
-    const [activeTab, setActiveTab] = useState('about');
+    // Get beach data from context
+    const { getBeachDetails, loading } = useBeaches();
 
-    // Beach data (normally would be fetched from API based on ID in URL)
-    const beachData = {
-        id: 1,
-        name: 'Pantai Pasir Putih',
-        price: 'Rp10k - 35k',
-        rating: 4.9,
-        review: 145,
-        location: 'Cungkil, Surabaya, Jawa Timur',
-        weather: 'Mostly Sunny',
-        image: 'https://picsum.photos/id/16/2500/1667',
-        hasEvent: false,
-        about: 'Information about this beach would go here...',
-        facility: 'List of facilities would go here...',
-        photos: [],
-        videos: [],
-        reviews: [],
-        mapLocation: {}
+    // State for active tab, beach data, and wishlist
+    const [activeTab, setActiveTab] = useState('about');
+    const [beachData, setBeachData] = useState<Beach | null>(null);
+    const [isWishlisted, setIsWishlisted] = useState(false);
+
+    // Get beachId from URL params (you might need to adjust this based on your routing)
+    const beachId = new URLSearchParams(window.location.search).get('id') ||
+        window.location.pathname.split('/').pop();
+
+    // Fetch beach data on component mount
+    useEffect(() => {
+        const fetchBeachData = async () => {
+            if (!beachId) return;
+
+            try {
+                const response = await getBeachDetails(beachId);
+
+                // Convert into array
+                const beach = Array.isArray(response) ? response[0] : response;
+                setBeachData(beach);
+            } catch (error) {
+                console.error('Error fetching beaches:', error);
+            }
+        };
+
+        fetchBeachData();
+    }, [beachId]);
+    console.log(beachData)
+
+    // Wishlist management functions
+    const checkWishlistStatus = async (beachId: string) => {
+        console.log('Check status: ', beachId)
     };
 
-    // Handler for toggling wishlist status
-    const toggleWishlist = () => {
-        setIsInWishlist(prev => !prev);
+    const toggleWishlist = async () => {
+        console.log('toogle wishlist clicked')
     };
 
     // Handler for changing active tab
-    const handleTabChange = (tab: string): void => {
+    const handleTabChange = (tab: string) => {
         setActiveTab(tab);
     };
+
+    if (loading || !beachData) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-xl">Loading details...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen pb-8">
@@ -51,24 +125,24 @@ export default function BeachDetailPage() {
                     {/* Back button and breadcrumb */}
                     <div className="flex items-center">
                         <button className="bg-teal-500 text-white p-2 rounded-full hover:bg-teal-600 transition-colors mr-4"
-                        onClick={() => window.history.back()}>
+                            onClick={() => window.history.back()}>
                             <ChevronLeft size={24} />
                         </button>
                         <div className="text-gray-600">
                             <a href="#" className="hover:text-teal-500 transition-colors">Beach</a>
                             <span className="mx-2">/</span>
-                            <span>{beachData.name}</span>
+                            <span>{beachData.beach_name}</span>
                         </div>
                     </div>
 
                     {/* Wishlist button */}
                     <button
                         onClick={toggleWishlist}
-                        className={`flex items-center px-6 py-3 rounded-full ${isInWishlist ? 'bg-red-500' : 'bg-teal-500'
+                        className={`flex items-center px-6 py-3 rounded-full ${isWishlisted ? 'bg-red-500' : 'bg-teal-500'
                             } text-white font-medium hover:bg-opacity-90 transition-colors`}
                     >
-                        <Heart size={20} className={`mr-2 ${isInWishlist ? 'fill-current' : ''}`} />
-                        Save to wishlist
+                        <Heart size={20} className={`mr-2 ${isWishlisted ? 'fill-current' : ''}`} />
+                        {isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
                     </button>
                 </div>
             </div>
@@ -79,28 +153,33 @@ export default function BeachDetailPage() {
                     <div>
                         {/* Beach name and weather */}
                         <div className="flex items-center mb-2">
-                            <h1 className="text-3xl font-bold mr-4">{beachData.name}</h1>
+                            <h1 className="text-3xl font-bold mr-4">{beachData.beach_name}</h1>
+                            {/* Weather is not in the Beach interface, but keeping it for potential future use */}
                             <div className="bg-gray-100 text-gray-800 rounded-full px-4 py-1 flex items-center">
                                 <Sun size={16} className="text-yellow-500 mr-2" />
-                                <span className="text-sm">{beachData.weather}</span>
+                                <span className="text-sm">Sunny</span>
                             </div>
                         </div>
 
                         {/* Rating */}
                         <div className="flex items-center mb-2">
                             <Star size={20} className="text-yellow-400 fill-current" />
-                            <span className="ml-2 font-semibold">{beachData.rating} ({beachData.reviews} reviews)</span>
+                            <span className="ml-2 font-semibold">
+                                {beachData.rating_average} ({beachData.reviews?.length || 0} reviews)
+                            </span>
                         </div>
 
                         {/* Location */}
                         <div className="flex items-center">
                             <MapPin size={20} className="text-red-500" />
-                            <span className="ml-2 text-gray-700">{beachData.location}</span>
+                            <span className="ml-2 text-gray-700">
+                                {beachData.kecamatan}, {beachData.kota}, {beachData.province}
+                            </span>
                         </div>
                     </div>
 
                     {/* Price */}
-                    <div className="text-2xl font-bold">{beachData.price}</div>
+                    <div className="text-2xl font-bold">{beachData.estimate_price}</div>
                 </div>
             </div>
 
@@ -108,8 +187,8 @@ export default function BeachDetailPage() {
             <div className="container mx-auto px-4 mb-4">
                 <div className="rounded-lg overflow-hidden">
                     <img
-                        src={beachData.image}
-                        alt={beachData.name}
+                        src={beachData.img_path}
+                        alt={beachData.beach_name}
                         className="w-full h-96 object-cover"
                     />
                 </div>
@@ -118,7 +197,8 @@ export default function BeachDetailPage() {
             {/* Event Availability */}
             <div className="container mx-auto px-4 mb-6">
                 <div className="border border-gray-200 rounded-lg p-6 text-center text-gray-600">
-                    {beachData.hasEvent ? 'Events available' : 'No event available'}
+                    {/* Event availability logic can be added here based on your data structure */}
+                    No event available
                 </div>
             </div>
 
@@ -161,26 +241,26 @@ export default function BeachDetailPage() {
                     </TabButton>
                 </div>
 
-                {/* Tab Content */}
+                {/* Tab Content - Passing beachData as props */}
                 <div className="py-6">
                     {activeTab === 'about' && (
-                        <AboutTab />
+                        <AboutTab beachData={beachData} />
                     )}
 
                     {activeTab === 'facility' && (
-                        <FacilityTab />
+                        <FacilityTab beachData={beachData} />
                     )}
 
                     {activeTab === 'foto_video' && (
-                        <PhotoVideoTab />
+                        <PhotoVideoTab beachData={beachData} />
                     )}
 
                     {activeTab === 'reviews' && (
-                        <ReviewsTab />
+                        <ReviewsTab beachData={beachData} />
                     )}
 
                     {activeTab === 'location' && (
-                        <LocationTab />
+                        <LocationTab beachData={beachData} />
                     )}
                 </div>
             </div>
@@ -189,7 +269,13 @@ export default function BeachDetailPage() {
 }
 
 // Tab button component
-function TabButton({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
+interface TabButtonProps {
+    children: React.ReactNode;
+    active: boolean;
+    onClick: () => void;
+}
+
+function TabButton({ children, active, onClick }: TabButtonProps) {
     return (
         <button
             onClick={onClick}

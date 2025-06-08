@@ -1,5 +1,6 @@
 import { authApi } from './auth';
 import { recommendationApi } from './recommendation';
+import { beachApi } from './beach';
 
 interface Api {
     auth: {
@@ -17,12 +18,17 @@ interface Api {
         getAllQuestions: () => Promise<any>;
         beachRecommendation: (userOptions: any) => Promise<any>;
     };
+    beach: {
+        getAllBeaches: () => Promise<any>;
+        getBeachDetails: (id: string) => Promise<any>;
+    },
 
 }
 
 const api: Api = {
     auth: authApi,
     recommendation: recommendationApi,
+    beach: beachApi,
 }
 
 export default api

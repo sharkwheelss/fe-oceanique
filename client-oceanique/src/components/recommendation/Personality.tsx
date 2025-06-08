@@ -23,7 +23,6 @@ export default function OceaniquePersonalityPage() {
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [currentPersonality, setCurrentPersonality] = useState<Personality | null>(null);
     const [isExistingPersonality, setIsExistingPersonality] = useState(false);
-    const [hasFetchedUserPersonality, setHasFetchedUserPersonality] = useState(false);
 
 
     // Handle existing personality confirmation on page load
