@@ -1,3 +1,4 @@
+// for the checklist icon
 interface ActivityItemProps {
     text: string;
 }
@@ -15,41 +16,10 @@ const ActivityItem = ({ text }: ActivityItemProps) => {
     );
 };
 
-/**
- * Facility tab content
- */
-const FacilityContent = () => {
-    return (
-        <div>
-            <h2 className="text-2xl font-bold mb-6">All Facilities in Pantai Pasir Putih</h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 place-items-center">
-                <FacilityCategory
-                    title="Public"
-                    image="/public-facility.png"
-                    items={["Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum"]}
-                />
-
-                <FacilityCategory
-                    title="Private"
-                    image="/private-facility.png"
-                    items={["Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum"]}
-                />
-
-                <FacilityCategory
-                    title="Kids"
-                    image="/kids-facility.png"
-                    items={["Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum", "Lorem Ipsum"]}
-                />
-            </div>
-        </div>
-
-    );
-};
 
 /**
  * Facility category component with image and list of items
- */
+*/
 interface FacilityCategoryProps {
     title: string;
     image: string;
@@ -71,5 +41,44 @@ const FacilityCategory = ({ title, image, items = [] }: FacilityCategoryProps) =
         </div>
     );
 };
+
+/**
+ * Facility tab content
+ */
+const FacilityContent = (data: any) => {
+    const facilities = data.beachData.facilities;
+
+    const publicFacilities = facilities.filter(f => f.facility_category_id === 1).map(f => f.facility_name);
+    const privateFacilities = facilities.filter(f => f.facility_category_id === 2).map(f => f.facility_name);
+    const kidsFacilities = facilities.filter(f => f.facility_category_id === 3).map(f => f.facility_name);
+
+    // console.log('inside facility:', data.beachData.facilities)
+    return (
+        <div>
+            <h2 className="text-2xl font-bold mb-6">All Facilities in {data?.beach_name}</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 place-items-center">
+                <FacilityCategory
+                    title="Public"
+                    image="/public-facility.png"
+                    items={publicFacilities}
+                />
+
+                <FacilityCategory
+                    title="Private"
+                    image="/private-facility.png"
+                    items={privateFacilities}
+                />
+
+                <FacilityCategory
+                    title="Kids"
+                    image="/kids-facility.png"
+                    items={kidsFacilities}
+                />
+            </div>
+        </div>
+    );
+};
+
 
 export default FacilityContent;
