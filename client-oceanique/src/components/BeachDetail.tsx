@@ -252,7 +252,7 @@ export default function BeachDetailPage() {
                     )}
 
                     {activeTab === 'foto_video' && (
-                        <PhotoVideoTab beachData={beachData} />
+                        <PhotoVideoTab beachData={beachData.contents} />
                     )}
 
                     {activeTab === 'reviews' && (
