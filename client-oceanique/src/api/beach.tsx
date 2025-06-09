@@ -20,4 +20,14 @@ export const beachApi = {
         });
         return response.json();
     },
+    getBeachReviews: async (id: string) => {
+        const response = await fetch(`${BASE_URL}/beaches/reviews/${id}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: 'include',
+        });
+        return response.json();
+    },
 }

@@ -100,7 +100,7 @@ export default function BeachReviewForm() {
                 onClick={() => window.history.back()}>
                     <ChevronLeft size={24} className="text-white" />
                 </button>
-                <h1 className="text-xl text-gray-600">Pantai Pasir Putih / Add Review</h1>
+                <h1 className="text-xl text-gray-600">Pantai Pasir Putih / Your Review</h1>
             </div>
 
             <div>

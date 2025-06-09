@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, MapPin, Star, Heart, Sun } from 'lucide-react';
 import ReviewsTab from './tabs/ReviewsTab';
 import AboutTab from './tabs/AboutTab';
@@ -6,6 +7,7 @@ import FacilityTab from './tabs/FacilityTab';
 import PhotoVideoTab from './tabs/PhotoVideoTab';
 import LocationTab from './tabs/LocationTab';
 import { useBeaches } from '../context/BeachContext';
+import { useAuth } from '../context/AuthContext';
 
 // Main BeachDetailPage component
 export interface Beach {
@@ -61,14 +63,55 @@ export interface BeachReview {
     votes: number;
 }
 
+export interface ReviewContent {
+    id: number;
+    path: string;
+    img_path?: string;
+}
+
+export interface OptionVote {
+    id: number;
+    option_name: string;
+    reviews_id: number;
+}
+
+export interface UserProfile {
+    id: number;
+    path: string;
+    img_path?: string;
+}
+
+export interface ReviewDetail {
+    review_id: number;
+    user_id: number;
+    username: string;
+    join_date: number;
+    rating: number;
+    user_review: string;
+    posted: string;
+    experience: number;
+    contents: ReviewContent[];
+    option_votes: OptionVote[];
+    user_profile?: UserProfile;
+}
+
+export interface BeachReviewsResponse {
+    users_vote: number;
+    rating_average: number;
+    reviews: ReviewDetail[];
+}
+
 // Main BeachDetailPage component
 export default function BeachDetailPage() {
     // Get beach data from context
-    const { getBeachDetails, loading } = useBeaches();
+    const { getBeachDetails, getBeachReviews, loading } = useBeaches();
+    const { user } = useAuth();
+    const navigate = useNavigate();
 
     // State for active tab, beach data, and wishlist
     const [activeTab, setActiveTab] = useState('about');
     const [beachData, setBeachData] = useState<Beach | null>(null);
+    const [beachReviews, setBeachReviews] = useState<BeachReviewsResponse | null>(null);
     const [isWishlisted, setIsWishlisted] = useState(false);
 
     // Get beachId from URL params (you might need to adjust this based on your routing)
@@ -82,10 +125,14 @@ export default function BeachDetailPage() {
 
             try {
                 const response = await getBeachDetails(beachId);
+                const resReviews = await getBeachReviews(beachId);
 
                 // Convert into array
                 const beach = Array.isArray(response) ? response[0] : response;
+                const reviews = Array.isArray(resReviews) ? resReviews[0] : resReviews;
+
                 setBeachData(beach);
+                setBeachReviews(reviews);
             } catch (error) {
                 console.error('Error fetching beaches:', error);
             }
@@ -93,7 +140,9 @@ export default function BeachDetailPage() {
 
         fetchBeachData();
     }, [beachId]);
-    console.log(beachData)
+
+    console.log('beach data:', beachData)
+    console.log('review data:', beachReviews)
 
     // Wishlist management functions
     const checkWishlistStatus = async (beachId: string) => {
@@ -256,7 +305,11 @@ export default function BeachDetailPage() {
                     )}
 
                     {activeTab === 'reviews' && (
-                        <ReviewsTab beachData={beachData} />
+                        <ReviewsTab
+                            reviewsData={beachReviews}
+                            currentUserId={user?.id}
+                            onNavigate={navigate}
+                        />
                     )}
 
                     {activeTab === 'location' && (

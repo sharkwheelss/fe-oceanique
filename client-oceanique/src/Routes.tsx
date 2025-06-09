@@ -71,6 +71,7 @@ export default function OceaniqueRoutes() {
                     </BeachProvider>
                 } />
                 <Route path="/add-review" element={<CreateEditReviews />} />
+                <Route path="/edit-review/:id" element={<CreateEditReviews />} />
 
                 <Route path="/events" element={<Events />} />
                 <Route path="/event-detail/:id" element={<EventDetail />} />

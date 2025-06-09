@@ -7,6 +7,7 @@ interface BeachContextType {
     error: string | null;
     getAllBeaches: () => Promise<any>;
     getBeachDetails: (id: string) => Promise<any>;
+    getBeachReviews: (id: string) => Promise<any>;
 }
 
 const BeachContext = createContext<BeachContextType | undefined>(undefined);
@@ -41,12 +42,26 @@ export const BeachProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
+    const getBeachReviews = async (id: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.beach.getBeachReviews(id);
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch beach reviews');
+            console.error('Error fetching beach reviews:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const value = {
         loading,
         error,
         getAllBeaches,
-        getBeachDetails
+        getBeachDetails,
+        getBeachReviews
     };
 
     return (
