@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Star, ThumbsUp, Plus, Check, Edit } from 'lucide-react';
+import { Star, ThumbsUp, Plus, Check, Edit, MessageSquare } from 'lucide-react';
 import Pagination from "../helper/pagination";
 
 // Type definitions
@@ -30,19 +30,24 @@ type Review = {
 };
 
 type ReviewsData = {
-    users_vote: number;
-    rating_average: number;
-    reviews: Review[];
+    users_vote?: number;
+    rating_average?: number;
+    reviews?: Review[];
+    message?: string; // Added for error case
 };
 
 type ReviewsSectionProps = {
     reviewsData: ReviewsData;
-    currentUserId?: number; // Pass this from parent component
-    onNavigate?: (path: string) => void; // Navigation callback
+    currentUserId?: number;
+    onNavigate?: (path: string) => void;
 };
 
 export default function ReviewsSection({ reviewsData, currentUserId, onNavigate }: ReviewsSectionProps) {
-    console.log(reviewsData)
+    console.log(reviewsData);
+
+    // Check if there are no reviews (either empty array or error message)
+    const hasNoReviews = !reviewsData.reviews || reviewsData.reviews.length === 0 || reviewsData.message;
+
     // State for sorting option
     const [sortBy, setSortBy] = useState('newest');
 
@@ -59,15 +64,45 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate 
 
     const reviewsPerPage = 5;
 
-    // Sorting logic
-    const reviews: Review[] = Array.isArray(reviewsData.reviews) ? [...reviewsData.reviews] : [];
+    // Early return for no reviews case
+    if (hasNoReviews) {
+        return (
+            <div className="container mx-auto">
+                <div className="py-6">
+                    <h2 className="text-2xl font-bold mb-8">Overall Rating & Review</h2>
+
+                    {/* Empty state */}
+                    <div className="text-center py-12">
+                        <div className="mb-6">
+                            <MessageSquare size={64} className="mx-auto text-gray-400 mb-4" />
+                            <h3 className="text-xl font-semibold text-gray-600 mb-2">No Reviews Yet</h3>
+                            <p className="text-gray-500 mb-6">
+                                {reviewsData.message || "Be the first to share your experience at this beach!"}
+                            </p>
+                        </div>
+
+                        {/* Add review button */}
+                        <button
+                            className="bg-teal-500 text-white rounded-md px-6 py-3 flex items-center mx-auto hover:bg-teal-600 transition-colors"
+                            onClick={() => handleNavigation('/add-review')}
+                        >
+                            <Plus size={20} className="mr-2" />
+                            Write First Review
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Sorting logic (only if we have reviews)
+    const reviews: Review[] = [...reviewsData.reviews];
 
     // First, separate current user's reviews from others
     const currentUserReviews = reviews.filter(review => review.user_id === currentUserId);
     const otherReviews = reviews.filter(review => review.user_id !== currentUserId);
 
     const sortedReviews = useMemo(() => {
-
         // Sort other reviews based on selected criteria
         otherReviews.sort((a, b) => {
             switch (sortBy) {
@@ -124,19 +159,19 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate 
                     <div className="flex items-center">
                         <div className="relative">
                             <div className="bg-teal-500 text-white w-24 h-24 rounded-full flex flex-col items-center justify-center text-center relative">
-                                <span className="text-2xl font-bold">{reviewsData.rating_average}</span>
+                                <span className="text-2xl font-bold">{reviewsData.rating_average || 0}</span>
                                 <span className="text-sm">/ 5</span>
                             </div>
                             <Star size={24} className="absolute top-0 right-0 text-yellow-400 fill-current" />
                         </div>
-                        <span className="ml-4 text-gray-700">from {reviewsData.users_vote} users</span>
+                        <span className="ml-4 text-gray-700">from {reviewsData.users_vote || 0} users</span>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex items-center">
                         {currentUserReviews.length === 0 && (
                             <button
-                                className="bg-teal-500 text-white rounded-md px-4 py-2 mr-4 flex items-center"
+                                className="bg-teal-500 text-white rounded-md px-4 py-2 mr-4 flex items-center hover:bg-teal-600 transition-colors"
                                 onClick={() => handleNavigation('/add-review')}
                             >
                                 <Plus size={18} className="mr-1" />
@@ -146,7 +181,7 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate 
 
                         <div className="relative">
                             <button
-                                className="flex items-center text-gray-700 border border-gray-300 rounded-md px-4 py-2"
+                                className="flex items-center text-gray-700 border border-gray-300 rounded-md px-4 py-2 hover:bg-gray-50 transition-colors"
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             >
                                 <span className="mr-2">Sort By: {sortOptions.find(opt => opt.value === sortBy)?.label}</span>
@@ -160,7 +195,7 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate 
                                     {sortOptions.map((option) => (
                                         <button
                                             key={option.value}
-                                            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                                            className="block w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
                                             onClick={() => handleSortChange(option.value)}
                                         >
                                             {option.label}
@@ -185,11 +220,13 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate 
                 </div>
 
                 {/* Pagination */}
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                />
+                {totalPages > 1 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                )}
             </div>
         </div>
     );
@@ -219,7 +256,7 @@ function ReviewCard({ review, isCurrentUser, onEdit }: {
     const amenities = review.option_votes?.map(vote => vote.option_name) || [];
 
     return (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div className="flex justify-between">
                 {/* User info */}
                 <div className="flex">
@@ -245,7 +282,7 @@ function ReviewCard({ review, isCurrentUser, onEdit }: {
                             {isCurrentUser && (
                                 <button
                                     onClick={onEdit}
-                                    className="ml-2 text-gray-500 hover:text-gray-700"
+                                    className="ml-2 text-gray-500 hover:text-gray-700 transition-colors"
                                     title="Edit review"
                                 >
                                     <Edit size={16} />
