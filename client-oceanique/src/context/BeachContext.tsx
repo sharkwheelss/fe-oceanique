@@ -6,8 +6,10 @@ interface BeachContextType {
     loading: boolean;
     error: string | null;
     getAllBeaches: () => Promise<any>;
+    getListOptions: () => Promise<any>;
     getBeachDetails: (id: string) => Promise<any>;
     getBeachReviews: (id: string) => Promise<any>;
+    addBeachReviews: (review: any) => Promise<any>;
 }
 
 const BeachContext = createContext<BeachContextType | undefined>(undefined);
@@ -55,13 +57,41 @@ export const BeachProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
+    const getListOptions = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.beach.getListOptions();
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch beach options');
+            console.error('Error fetching beach options:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const addBeachReviews = async (review: FormData) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.beach.addBeachReviews(review);
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch add reviews');
+            console.error('Error fetching add reviews:', err);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const value = {
         loading,
         error,
         getAllBeaches,
         getBeachDetails,
-        getBeachReviews
+        getBeachReviews,
+        getListOptions,
+        addBeachReviews
     };
 
     return (

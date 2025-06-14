@@ -20,8 +20,10 @@ interface Api {
     };
     beach: {
         getAllBeaches: () => Promise<any>;
+        getListOptions: () => Promise<any>;
         getBeachDetails: (id: string) => Promise<any>;
         getBeachReviews: (id: string) => Promise<any>;
+        addBeachReviews: (review: FormData) => Promise<any>;
     },
 
 }

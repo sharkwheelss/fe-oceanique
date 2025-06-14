@@ -40,10 +40,11 @@ type ReviewsSectionProps = {
     reviewsData: ReviewsData;
     currentUserId?: number;
     onNavigate?: (path: string) => void;
+    beachId: string;
 };
 
-export default function ReviewsSection({ reviewsData, currentUserId, onNavigate }: ReviewsSectionProps) {
-    console.log(reviewsData);
+export default function ReviewsSection({ reviewsData, currentUserId, onNavigate, beachId }: ReviewsSectionProps & { beachId: string }) {
+    console.log(beachId);
 
     // Check if there are no reviews (either empty array or error message)
     const hasNoReviews = !reviewsData.reviews || reviewsData.reviews.length === 0 || reviewsData.message;
@@ -84,7 +85,7 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate 
                         {/* Add review button */}
                         <button
                             className="bg-teal-500 text-white rounded-md px-6 py-3 flex items-center mx-auto hover:bg-teal-600 transition-colors"
-                            onClick={() => handleNavigation('/add-review')}
+                            onClick={() => handleNavigation(`/add-review/${beachId}`)}
                         >
                             <Plus size={20} className="mr-2" />
                             Write First Review
@@ -172,7 +173,7 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate 
                         {currentUserReviews.length === 0 && (
                             <button
                                 className="bg-teal-500 text-white rounded-md px-4 py-2 mr-4 flex items-center hover:bg-teal-600 transition-colors"
-                                onClick={() => handleNavigation('/add-review')}
+                                onClick={() => handleNavigation(`/add-review/${beachId}`)}
                             >
                                 <Plus size={18} className="mr-1" />
                                 Add

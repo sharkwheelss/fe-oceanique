@@ -24,12 +24,15 @@ const AboutContent = (data: any) => {
                             <span className="text-gray-600">🌐</span>
                         </div>
                         <a
-                            href={`https://${data.beachData.official_website.replace(/^https?:\/\//, "")}`}
+                            href={data.beachData.official_website
+                                ? `https://${data.beachData.official_website.replace(/^https?:\/\//, "")}`
+                                : "#"} // Fallback to "#" if null
                             className="text-blue-600 hover:underline"
                             target="_blank" // Opens in a new tab/window
                         >
-                            {data.beachData.official_website}
+                            {data.beachData.official_website || "-"}
                         </a>
+
                     </div>
                 </div>
             </div>

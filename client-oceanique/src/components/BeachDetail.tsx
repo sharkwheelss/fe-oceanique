@@ -141,7 +141,7 @@ export default function BeachDetailPage() {
         fetchBeachData();
     }, [beachId]);
 
-    console.log('beach data:', beachData)
+    console.log('beach data:', beachData?.id)
     console.log('review data:', beachReviews)
 
     // Wishlist management functions
@@ -309,6 +309,7 @@ export default function BeachDetailPage() {
                             reviewsData={beachReviews}
                             currentUserId={user?.id}
                             onNavigate={navigate}
+                            beachId={beachData?.id.toString()}
                         />
                     )}
 

@@ -30,4 +30,22 @@ export const beachApi = {
         });
         return response.json();
     },
+    getListOptions: async () => {
+        const response = await fetch(`${BASE_URL}/beaches/options`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: 'include',
+        });
+        return response.json();
+    },
+    addBeachReviews: async (review: FormData) => {
+        const response = await fetch(`${BASE_URL}/beaches/reviews`, {
+            method: 'POST',
+            credentials: 'include',
+            body: review // Send FormData directly
+        });
+        return response.json();
+    },
 }
