@@ -9,7 +9,9 @@ interface BeachContextType {
     getListOptions: () => Promise<any>;
     getBeachDetails: (id: string) => Promise<any>;
     getBeachReviews: (id: string) => Promise<any>;
+    getDetailsReview: (reviewId: string) => Promise<any>;
     addBeachReviews: (review: any) => Promise<any>;
+    editDetailsReview: (review_id: string, review: any) => Promise<any>;
 }
 
 const BeachContext = createContext<BeachContextType | undefined>(undefined);
@@ -70,6 +72,19 @@ export const BeachProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
+    const getDetailsReview = async (reviewId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.beach.getDetailsReview(reviewId);
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch beach reviews');
+            console.error('Error fetching beach reviews:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
     const addBeachReviews = async (review: FormData) => {
         try {
             setLoading(true);
@@ -82,6 +97,19 @@ export const BeachProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setLoading(false);
         }
+    };
+    const editDetailsReview = async (review_id: string, review: FormData) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.beach.editDetailsReview(review_id, review);
+            return response.data;
+        } catch (err) {
+            setError('Failed to edit reviews');
+            console.error('Error edit reviews:', err);
+        } finally {
+            setLoading(false);
+        }
     }
 
     const value = {
@@ -91,7 +119,9 @@ export const BeachProvider = ({ children }: { children: ReactNode }) => {
         getBeachDetails,
         getBeachReviews,
         getListOptions,
-        addBeachReviews
+        getDetailsReview,
+        addBeachReviews,
+        editDetailsReview
     };
 
     return (

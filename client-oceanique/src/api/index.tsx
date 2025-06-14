@@ -23,7 +23,9 @@ interface Api {
         getListOptions: () => Promise<any>;
         getBeachDetails: (id: string) => Promise<any>;
         getBeachReviews: (id: string) => Promise<any>;
+        getDetailsReview: (reviewId: string) => Promise<any>;
         addBeachReviews: (review: FormData) => Promise<any>;
+        editDetailsReview: (review_id: string, review: FormData) => Promise<any>;
     },
 
 }

@@ -44,7 +44,7 @@ type ReviewsSectionProps = {
 };
 
 export default function ReviewsSection({ reviewsData, currentUserId, onNavigate, beachId }: ReviewsSectionProps & { beachId: string }) {
-    console.log(beachId);
+    console.log('Data Review from tab:', reviewsData.reviews);
 
     // Check if there are no reviews (either empty array or error message)
     const hasNoReviews = !reviewsData.reviews || reviewsData.reviews.length === 0 || reviewsData.message;
@@ -101,6 +101,7 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate,
 
     // First, separate current user's reviews from others
     const currentUserReviews = reviews.filter(review => review.user_id === currentUserId);
+    console.log('Current User Reviews:', currentUserReviews);
     const otherReviews = reviews.filter(review => review.user_id !== currentUserId);
 
     const sortedReviews = useMemo(() => {

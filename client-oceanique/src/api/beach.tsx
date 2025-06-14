@@ -40,9 +40,27 @@ export const beachApi = {
         });
         return response.json();
     },
+    getDetailsReview: async (reviewId: string) => {
+        const response = await fetch(`${BASE_URL}/beaches/reviews/${reviewId}/edit`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: 'include',
+        });
+        return response.json();
+    },
     addBeachReviews: async (review: FormData) => {
         const response = await fetch(`${BASE_URL}/beaches/reviews`, {
             method: 'POST',
+            credentials: 'include',
+            body: review // Send FormData directly
+        });
+        return response.json();
+    },
+    editDetailsReview: async (review_id: string, review: FormData) => {
+        const response = await fetch(`${BASE_URL}/beaches/reviews/${review_id}`, {
+            method: 'PUT',
             credentials: 'include',
             body: review // Send FormData directly
         });

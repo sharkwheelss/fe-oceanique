@@ -4,20 +4,14 @@ import { ChevronLeft, Check, X } from 'lucide-react';
 import { useBeaches } from '../context/BeachContext';
 
 interface CreateEditReviewProps {
-    existingReview?: {
-        id: string;
-        rating: number;
-        comment: string;
-        optionVotes: number[]; // Changed to number[] to match option IDs
-        photos?: string[];
-    };
+    reviewId?: string; // Changed from existingReview object to reviewId string
     isLoading?: boolean;
 }
 
 interface ReviewFormData {
     rating: number;
     comment: string;
-    optionVotes: number[]; // Changed to number[] to match option IDs
+    optionVotes: number[];
     photos: File[];
 }
 
@@ -39,28 +33,39 @@ interface PopupState {
     message: string;
 }
 
+interface ReviewDetails {
+    id: number;
+    rating: number;
+    user_review: string;
+    beaches_id: number;
+    beach_name: string;
+    option_votes: string;
+    path: string | null;
+}
+
 /**
  * Dynamic Beach Review Form Component
  * Handles both adding new reviews and editing existing ones
  */
 export default function CreateEditReview({
-    existingReview,
     isLoading = false,
 }: CreateEditReviewProps) {
-    const isEditMode = !!existingReview;
+    const { beachId, reviewId } = useParams();
+    const isEditMode = !!reviewId;
 
-    const { beachId } = useParams();
-    console.log(beachId)
+    console.log(reviewId)
     // State for form data
     const [formData, setFormData] = useState<ReviewFormData>({
-        rating: existingReview?.rating || 5,
-        comment: existingReview?.comment || '',
-        optionVotes: existingReview?.optionVotes || [],
+        rating: 5,
+        comment: '',
+        optionVotes: [],
         photos: []
     });
 
     // State for photo previews
     const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+    const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
+    const [newPhotos, setNewPhotos] = useState<File[]>([]);
 
     // State for dropdown selection
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -68,6 +73,10 @@ export default function CreateEditReview({
     // State for dynamic categories and options
     const [categories, setCategories] = useState<Category[]>([]);
     const [optionsLoading, setOptionsLoading] = useState(true);
+
+    // State for review details (edit mode)
+    const [reviewDetails, setReviewDetails] = useState<ReviewDetails | null>(null);
+    const [reviewLoading, setReviewLoading] = useState(false);
 
     // State for submission
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +88,7 @@ export default function CreateEditReview({
         message: ''
     });
 
-    const { getListOptions, addBeachReviews } = useBeaches();
+    const { getListOptions, addBeachReviews, getDetailsReview, editDetailsReview } = useBeaches();
 
     // Category names mapping (you can adjust these based on your preference_categories)
     const categoryNames: { [key: number]: string } = {
@@ -92,13 +101,60 @@ export default function CreateEditReview({
         7: 'Weather'
     };
 
+    // Fetch review details if in edit mode
+    useEffect(() => {
+        const fetchReviewDetails = async () => {
+            if (!isEditMode || !reviewId) return;
+
+            try {
+                setReviewLoading(true);
+                const response = await getDetailsReview(reviewId);
+                console.log('Fetched review details:', response);
+
+                if (response) {
+                    setReviewDetails(response);
+
+                    // Parse option_votes string to array of numbers
+                    const optionVotesArray = response.option_votes
+                        ? response.option_votes.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+                        : [];
+
+                    // Set form data with fetched review details
+                    setFormData({
+                        rating: response.rating,
+                        comment: response.user_review,
+                        optionVotes: optionVotesArray,
+                        photos: [] // Keep this empty for new photos only
+                    });
+
+                    // Handle existing photos separately
+                    if (response.path) {
+                        const photoUrls = response.path.split(',').filter(url => url.trim());
+                        setExistingPhotos(photoUrls);
+                        setPhotoPreviews(photoUrls); // Show existing photos in preview
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching review details:', error);
+                setPopup({
+                    show: true,
+                    type: 'error',
+                    message: 'Failed to load review details. Please try again.'
+                });
+            } finally {
+                setReviewLoading(false);
+            }
+        };
+
+        fetchReviewDetails();
+    }, [reviewId, isEditMode]);
+
     // Fetch options from API on component mount
     useEffect(() => {
         const fetchOptions = async () => {
             try {
                 setOptionsLoading(true);
                 const response = await getListOptions();
-                // console.log(response)
 
                 if (response) {
                     // Group options by preference_categories_id
@@ -192,10 +248,10 @@ export default function CreateEditReview({
         if (!files) return;
 
         const newFiles = Array.from(files);
-        const updatedPhotos = [...formData.photos, ...newFiles];
+        const totalPhotos = existingPhotos.length + newPhotos.length + newFiles.length;
 
-        // Limit to 5 photos total
-        if (updatedPhotos.length > 5) {
+        // Limit to 5 photos total (existing + new)
+        if (totalPhotos > 5) {
             setPopup({
                 show: true,
                 type: 'error',
@@ -204,12 +260,16 @@ export default function CreateEditReview({
             return;
         }
 
+        const updatedNewPhotos = [...newPhotos, ...newFiles];
+        setNewPhotos(updatedNewPhotos);
+
+        // Update formData with new photos
         setFormData({
             ...formData,
-            photos: updatedPhotos
+            photos: updatedNewPhotos
         });
 
-        // Create preview URLs
+        // Create preview URLs for new files and combine with existing
         const newPreviews = newFiles.map(file => URL.createObjectURL(file));
         setPhotoPreviews(prev => [...prev, ...newPreviews]);
     };
@@ -218,16 +278,32 @@ export default function CreateEditReview({
      * Remove a photo
      */
     const removePhoto = (index: number): void => {
-        const updatedPhotos = formData.photos.filter((_, i) => i !== index);
+        const isExistingPhoto = index < existingPhotos.length;
+
+        if (isExistingPhoto) {
+            // Remove from existing photos
+            const updatedExistingPhotos = existingPhotos.filter((_, i) => i !== index);
+            setExistingPhotos(updatedExistingPhotos);
+        } else {
+            // Remove from new photos
+            const newPhotoIndex = index - existingPhotos.length;
+            const updatedNewPhotos = newPhotos.filter((_, i) => i !== newPhotoIndex);
+            setNewPhotos(updatedNewPhotos);
+
+            // Update formData
+            setFormData({
+                ...formData,
+                photos: updatedNewPhotos
+            });
+
+            // Revoke URL for new photo
+            if (photoPreviews[index].startsWith('blob:')) {
+                URL.revokeObjectURL(photoPreviews[index]);
+            }
+        }
+
+        // Update previews
         const updatedPreviews = photoPreviews.filter((_, i) => i !== index);
-
-        // Revoke the URL to prevent memory leaks
-        URL.revokeObjectURL(photoPreviews[index]);
-
-        setFormData({
-            ...formData,
-            photos: updatedPhotos
-        });
         setPhotoPreviews(updatedPreviews);
     };
 
@@ -251,30 +327,36 @@ export default function CreateEditReview({
         const submitData = new FormData();
 
         // Add text fields
-        submitData.append('beachId', beachId);
-        console.log('beachId:', beachId)
+        const currentBeachId = isEditMode && reviewDetails ? reviewDetails.beaches_id.toString() : (beachId ?? "");
+        submitData.append('beachId', currentBeachId);
         submitData.append('rating', formData.rating.toString());
         submitData.append('comment', formData.comment);
 
-        // Add option votes as individual form fields (send as numbers)
+        // Add option votes as individual form fields
         formData.optionVotes.forEach((optionId) => {
             submitData.append('optionVotes', optionId.toString());
         });
 
-        // Add photos
+        // Add new photos only
         formData.photos.forEach((photo) => {
-            submitData.append('files', photo); // Changed from 'photos' to 'files' to match your backend
+            submitData.append('files', photo);
         });
 
-        // If editing, add review ID
-        if (isEditMode && existingReview) {
-            submitData.append('reviewId', existingReview.id);
+        // IMPORTANT: Tell backend whether to keep existing files
+        if (isEditMode) {
+            // Keep existing files if user hasn't removed any existing photos
+            const keepExisting = existingPhotos.length > 0;
+            submitData.append('keepExistingFiles', keepExisting.toString());
+            submitData.append('reviewId', reviewId);
         }
 
         try {
-            await addBeachReviews(submitData);
+            if (isEditMode) {
+                await editDetailsReview(reviewId, submitData);
+            } else {
+                await addBeachReviews(submitData);
+            }
 
-            // Show success popup
             setPopup({
                 show: true,
                 type: 'success',
@@ -282,12 +364,8 @@ export default function CreateEditReview({
                     ? 'Review updated successfully!'
                     : 'Review submitted successfully!'
             });
-
-            console.log(submitData);
         } catch (error) {
             console.error('Error submitting review:', error);
-
-            // Show error popup
             setPopup({
                 show: true,
                 type: 'error',
@@ -301,17 +379,24 @@ export default function CreateEditReview({
     // Cleanup preview URLs on unmount
     useEffect(() => {
         return () => {
-            photoPreviews.forEach(url => URL.revokeObjectURL(url));
+            photoPreviews.forEach(url => {
+                if (url.startsWith('blob:')) {
+                    URL.revokeObjectURL(url);
+                }
+            });
         };
     }, []);
 
-    if (optionsLoading) {
+    // Show loading state
+    if (optionsLoading || (isEditMode && reviewLoading)) {
         return (
             <div className="max-w-4xl mx-auto p-4 bg-white">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading beach options...</p>
+                        <p className="text-gray-600">
+                            {isEditMode ? 'Loading review details...' : 'Loading beach options...'}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -365,7 +450,7 @@ export default function CreateEditReview({
                     <ChevronLeft size={24} className="text-white" />
                 </button>
                 <h1 className="text-xl text-gray-600">
-                    Pantai Pasir Putih / {isEditMode ? 'Edit Review' : 'Your Review'}
+                    {isEditMode && reviewDetails ? reviewDetails.beach_name : 'Pantai'} / {isEditMode ? 'Edit Review' : 'Your Review'}
                 </h1>
             </div>
 
@@ -380,7 +465,10 @@ export default function CreateEditReview({
                         {photoPreviews.map((preview, index) => (
                             <div key={index} className="relative">
                                 <img
-                                    src={preview}
+                                    src={preview.startsWith('http') || preview.startsWith('blob:')
+                                        ? preview
+                                        : `http://localhost:5000/uploads/contents/${preview}`
+                                    }
                                     alt={`Preview ${index + 1}`}
                                     className="w-32 h-32 object-cover rounded border"
                                 />
@@ -392,11 +480,17 @@ export default function CreateEditReview({
                                 >
                                     <X size={12} />
                                 </button>
+                                {/* Show indicator for existing vs new photos */}
+                                {index < existingPhotos.length && (
+                                    <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
+                                        Existing
+                                    </div>
+                                )}
                             </div>
                         ))}
 
                         {/* Add photo button */}
-                        {formData.photos.length < 5 && (
+                        {photoPreviews.length < 5 && (
                             <label className="w-32 h-32 bg-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-400 transition-colors">
                                 <input
                                     type="file"
@@ -411,7 +505,7 @@ export default function CreateEditReview({
                         )}
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
-                        {formData.photos.length}/5 photos selected
+                        {photoPreviews.length}/5 photos selected
                     </p>
                 </div>
 
@@ -535,7 +629,7 @@ export default function CreateEditReview({
                         type="button"
                         onClick={handleSubmit}
                         className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 rounded-full transition-colors disabled:bg-gray-400"
-                        disabled={isLoading || optionsLoading || isSubmitting}
+                        disabled={isLoading || optionsLoading || isSubmitting || (isEditMode && reviewLoading)}
                     >
                         {isSubmitting ? 'Saving...' : (isEditMode ? 'Update Review' : 'Save Review')}
                     </button>
