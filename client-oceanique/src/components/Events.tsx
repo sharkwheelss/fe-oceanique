@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Calendar, Clock, Users } from 'lucide-react';
+import { Search, MapPin, Calendar, Users } from 'lucide-react';
 import { useEvents } from '../context/EventContext';
+import { useNavigate } from 'react-router-dom';
 
 // Event type based on API response
 interface Event {
@@ -44,6 +45,7 @@ const EventsPage = () => {
         status: ''
     });
 
+    const navigate = useNavigate();
     const { getAllEvents } = useEvents();
 
     // Fetch events on component mount
@@ -294,7 +296,8 @@ const EventsPage = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredEvents.map((event) => (
-                            <div key={event.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+                            <div key={event.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
+                                onClick={() => { navigate(`/event-detail/${event.id}`); }}>
                                 {/* Event Image */}
                                 <div className="relative h-48">
                                     <img

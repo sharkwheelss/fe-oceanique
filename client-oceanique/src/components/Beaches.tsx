@@ -360,7 +360,6 @@ const Beaches = () => {
                                             key={beach.id}
                                             className="w-80 flex-shrink-0 cursor-pointer"
                                             onClick={() => {
-                                                // Replace with your navigation logic
                                                 console.log(`Navigate to beach detail: ${beach.id}`);
                                                 navigate(`/beach-detail/${beach.id}`);
                                             }}
@@ -411,7 +410,6 @@ const Beaches = () => {
                                             key={beach.id}
                                             className="w-80 flex-shrink-0 cursor-pointer"
                                             onClick={() => {
-                                                // Replace with your navigation logic
                                                 console.log(`Navigate to beach detail: ${beach.id}`);
                                                 navigate(`/beach-detail/${beach.id}`);
                                             }}

@@ -9,4 +9,14 @@ export const eventApi = {
         });
         return response.json();
     },
+    getEventDetails: async (eventId: string) => {
+        const response = await fetch(`${BASE_URL}/events/${eventId}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: 'include',
+        });
+        return response.json();
+    },
 }

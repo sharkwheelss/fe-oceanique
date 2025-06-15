@@ -87,7 +87,10 @@ export default function OceaniqueRoutes() {
                         <Events />
                     </EventProvider>
                 } />
-                <Route path="/event-detail/:id" element={<EventDetail />} />
+                <Route path="/event-detail/:eventId" element={
+                    <EventProvider>
+                        <EventDetail />
+                    </EventProvider>} />
                 <Route path="/purchase/:id" element={<MainPurchase />} />
 
                 <Route path="/wishlist" element={<Wishlist />} />

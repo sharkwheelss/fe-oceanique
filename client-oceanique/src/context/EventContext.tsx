@@ -6,6 +6,7 @@ interface EventContextType {
     loading: boolean;
     error: string | null;
     getAllEvents: () => Promise<any>;
+    getEventDetails: (eventId: string) => Promise<any>;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -27,11 +28,25 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
+    const getEventDetails = async (eventId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.event.getEventDetails(eventId);
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch event details');
+            console.error('Error fetching event details:', err);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const value = {
         loading,
         error,
-        getAllEvents
+        getAllEvents,
+        getEventDetails
     };
 
     return (

@@ -30,6 +30,7 @@ interface Api {
     },
     event: {
         getAllEvents: () => Promise<any>;
+        getEventDetails: (eventId: string) => Promise<any>;
     };
 }
 
