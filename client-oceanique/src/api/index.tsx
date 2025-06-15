@@ -1,6 +1,7 @@
 import { authApi } from './auth';
 import { recommendationApi } from './recommendation';
 import { beachApi } from './beach';
+import { eventApi } from './event';
 
 interface Api {
     auth: {
@@ -27,13 +28,16 @@ interface Api {
         addBeachReviews: (review: FormData) => Promise<any>;
         editDetailsReview: (review_id: string, review: FormData) => Promise<any>;
     },
-
+    event: {
+        getAllEvents: () => Promise<any>;
+    };
 }
 
 const api: Api = {
     auth: authApi,
     recommendation: recommendationApi,
     beach: beachApi,
+    event: eventApi,
 }
 
 export default api

@@ -2,7 +2,8 @@ import { Route, Routes, Navigate } from "react-router-dom"
 import Signin from './components/SignIn';
 import Signup from './components/SignUp';
 import { RecommendationProvider } from './context/RecommendationContext';
-import { BeachProvider } from './context/BeachContext'
+import { BeachProvider } from './context/BeachContext';
+import { EventProvider } from './context/EventContext';
 import NotFound from './components/NotFound';
 import { Home, WhyOceaniqueSection } from './components/Home';
 import Profile from './components/Profile';
@@ -81,7 +82,11 @@ export default function OceaniqueRoutes() {
                     </BeachProvider>
                 } />
 
-                <Route path="/events" element={<Events />} />
+                <Route path="/events" element={
+                    <EventProvider>
+                        <Events />
+                    </EventProvider>
+                } />
                 <Route path="/event-detail/:id" element={<EventDetail />} />
                 <Route path="/purchase/:id" element={<MainPurchase />} />
 

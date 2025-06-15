@@ -1,82 +1,115 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Search, MapPin, Star, Calendar, XCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, Calendar, Clock, Users } from 'lucide-react';
+import { useEvents } from '../context/EventContext';
 
-// Define the Filters type
-type Filters = {
+// Event type based on API response
+interface Event {
+    id: number;
+    name: string;
+    description: string;
+    is_active: number;
+    start_date: string;
+    end_date: string;
+    start_time: string;
+    end_time: string;
+    jenis: string;
+    beaches_id: number;
+    users_id: number;
+    beach_name: string;
     province: string;
     city: string;
     subdistrict: string;
-    priceRange: string;
-};
+    path: string;
+    status: string;
+    img_path: string;
+}
 
-const Events = () => {
+// Define the Filters type
+interface Filters {
+    province: string;
+    city: string;
+    subdistrict: string;
+    status: string;
+}
+
+const EventsPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const navigate = useNavigate();
-    const [filters, setFilters] = useState({
+    const [events, setEvents] = useState<Event[]>([]);
+    const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [filters, setFilters] = useState<Filters>({
         province: '',
         city: '',
         subdistrict: '',
         status: ''
     });
 
-    // Dummy events data
-    const events = [
-        {
-            id: 1,
-            title: 'Event Mid Sea Shore',
-            dateRange: '26 April - 3 May 2025',
-            description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard...',
-            status: 'ongoing',
-            isPublic: true,
-            image: '/api/placeholder/300/180'
-        },
-        {
-            id: 2,
-            title: 'Event Mid Sea Shore',
-            dateRange: '26 April - 3 May 2025',
-            description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard...',
-            status: 'ended',
-            isPublic: false,
-            image: '/api/placeholder/300/180'
-        },
-        {
-            id: 3,
-            title: 'Event Mid Sea Shore',
-            dateRange: '26 April - 3 May 2025',
-            description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard...',
-            status: 'ongoing',
-            isPublic: true,
-            image: '/api/placeholder/300/180'
-        },
-        {
-            id: 4,
-            title: 'Event Mid Sea Shore',
-            dateRange: '26 April - 3 May 2025',
-            description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard...',
-            status: 'ongoing',
-            isPublic: true,
-            image: '/api/placeholder/300/180'
-        },
-        {
-            id: 5,
-            title: 'Event Mid Sea Shore',
-            dateRange: '26 April - 3 May 2025',
-            description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard...',
-            status: 'ended',
-            isPublic: false,
-            image: '/api/placeholder/300/180'
-        },
-        {
-            id: 6,
-            title: 'Event Mid Sea Shore',
-            dateRange: '26 April - 3 May 2025',
-            description: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard...',
-            status: 'ongoing',
-            isPublic: true,
-            image: '/api/placeholder/300/180'
+    const { getAllEvents } = useEvents();
+
+    // Fetch events on component mount
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                setLoading(true);
+                const eventsResponse = await getAllEvents();
+
+                if (eventsResponse && eventsResponse) {
+                    setEvents(eventsResponse);
+                    setFilteredEvents(eventsResponse);
+                }
+            } catch (error) {
+                console.error('Error fetching events:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchEvents();
+    }, []);
+
+    // Filter events based on search and filters
+    useEffect(() => {
+        let filtered = events;
+
+        // Search filter
+        if (searchQuery) {
+            filtered = filtered.filter(event =>
+                event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                event.beach_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                event.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                event.province.toLowerCase().includes(searchQuery.toLowerCase())
+            );
         }
-    ];
+
+        // Province filter
+        if (filters.province) {
+            filtered = filtered.filter(event => event.province === filters.province);
+        }
+
+        // City filter
+        if (filters.city) {
+            filtered = filtered.filter(event => event.city === filters.city);
+        }
+
+        // Subdistrict filter
+        if (filters.subdistrict) {
+            filtered = filtered.filter(event => event.subdistrict === filters.subdistrict);
+        }
+
+        // Status filter
+        if (filters.status) {
+            filtered = filtered.filter(event => event.status === filters.status);
+        }
+
+        setFilteredEvents(filtered);
+    }, [searchQuery, filters, events]);
+
+    // Get unique values for filter dropdowns
+    const getUniqueProvinces = () => [...new Set(events.map(event => event.province))];
+    const getUniqueCities = () => [...new Set(events.map(event => event.city))];
+    const getUniqueSubdistricts = () => [...new Set(events.map(event => event.subdistrict))];
+    const getUniqueStatuses = () => [...new Set(events.map(event => event.status))];
 
     // Handler for search input changes
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -91,26 +124,34 @@ const Events = () => {
         }));
     };
 
+    // Clear all filters
+    const clearFilters = () => {
+        setFilters({
+            province: '',
+            city: '',
+            subdistrict: '',
+            status: ''
+        });
+        setSearchQuery('');
+    };
 
-    const FilterDropdown: React.FC<{ label: string; value: string; onChange: (value: string) => void }> = ({ label, value, onChange }) => {
+    const FilterDropdown: React.FC<{
+        label: string;
+        value: string;
+        onChange: (value: string) => void;
+        options: string[];
+    }> = ({ label, value, onChange, options }) => {
         const [isOpen, setIsOpen] = useState(false);
 
-        // Sample options for the dropdown
-        const options = ['Option 1adwd', 'Option 2', 'Option 3'];
+        const toggleDropdown = () => setIsOpen(!isOpen);
 
-        // Toggle dropdown open/close
-        const toggleDropdown = () => {
-            setIsOpen(!isOpen);
-        };
-
-        // Handle option selection
         const handleSelect = (option: string): void => {
             onChange(option);
             setIsOpen(false);
         };
 
         return (
-            <div>
+            <div className="relative">
                 <button
                     onClick={toggleDropdown}
                     className="bg-gray-200 text-gray-700 px-4 py-3 rounded-md min-w-36 flex items-center justify-between"
@@ -120,11 +161,13 @@ const Events = () => {
                 </button>
 
                 {isOpen && (
-                    <div
-                        className={`absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg transition-all duration-300 ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-                            }`}
-                        style={{ width: `${Math.max(...options.map(option => option.length)) * 10 + 20}px` }}
-                    >
+                    <div className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        <div
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => handleSelect('')}
+                        >
+                            All
+                        </div>
                         {options.map((option) => (
                             <div
                                 key={option}
@@ -138,15 +181,56 @@ const Events = () => {
                 )}
             </div>
         );
-    }
-    const [currentIndex, setCurrentIndex] = useState(0);
+    };
 
-    function handlePrev(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-        setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0));
-    }
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'ongoing':
+                return 'bg-green-500 text-white';
+            case 'ended soon':
+                return 'bg-yellow-500 text-white';
+            case 'ended':
+                return 'bg-red-500 text-white';
+            case 'upcoming':
+                return 'bg-blue-500 text-white';
+            default:
+                return 'bg-gray-500 text-white';
+        }
+    };
 
-    function handleNext(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-        setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, events.length - 1));
+    const getStatusText = (status: string) => {
+        switch (status) {
+            case 'ongoing':
+                return 'Ongoing';
+            case 'ended soon':
+                return 'Ended Soon';
+            case 'ended':
+                return 'Ended';
+            case 'upcoming':
+                return 'Ongoing';
+            default:
+                return 'Unknown';
+        }
+    };
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
+
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading events...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -158,70 +242,119 @@ const Events = () => {
                         <Search className="absolute left-3 top-3 text-gray-400" size={20} />
                         <input
                             type="text"
-                            placeholder="Search..."
+                            placeholder="Search events..."
                             className="pl-10 pr-4 py-3 bg-gray-200 rounded-md w-full outline-none"
                             value={searchQuery}
                             onChange={handleSearchChange}
                         />
                     </div>
 
-                    <FilterDropdown label="Province" value={filters.province} onChange={(val: string) => handleFilterChange('province', val)} />
-                    <FilterDropdown label="City" value={filters.city} onChange={(val: string) => handleFilterChange('city', val)} />
-                    <FilterDropdown label="Subdistrict" value={filters.subdistrict} onChange={(val: string) => handleFilterChange('subdistrict', val)} />
-                    <FilterDropdown label="Estimate Price" value={filters.status} onChange={(val: string) => handleFilterChange('priceRange', val)} />
+                    <FilterDropdown
+                        label="Province"
+                        value={filters.province}
+                        onChange={(val: string) => handleFilterChange('province', val)}
+                        options={getUniqueProvinces()}
+                    />
+                    <FilterDropdown
+                        label="City"
+                        value={filters.city}
+                        onChange={(val: string) => handleFilterChange('city', val)}
+                        options={getUniqueCities()}
+                    />
+                    <FilterDropdown
+                        label="Subdistrict"
+                        value={filters.subdistrict}
+                        onChange={(val: string) => handleFilterChange('subdistrict', val)}
+                        options={getUniqueSubdistricts()}
+                    />
+                    <FilterDropdown
+                        label="Status"
+                        value={filters.status}
+                        onChange={(val: string) => handleFilterChange('status', val)}
+                        options={getUniqueStatuses()}
+                    />
 
-                    <button className="bg-teal-500 text-white px-8 py-3 rounded-md font-medium hover:bg-teal-600 transition-colors">
-                        Filter
+                    <button
+                        className="bg-red-500 text-white px-6 py-3 rounded-md font-medium hover:bg-red-600 transition-colors"
+                        onClick={clearFilters}
+                    >
+                        Reset
                     </button>
                 </div>
             </div>
 
-            {/* Section Template Component */}
-            {[{ title: 'Near You' }, { title: 'Sabang to Merauke' }].map((section, idx) => (
-                <section key={idx} className="container mx-auto px-4 pt-4 pb-8">
-                    <h2 className="text-2xl font-bold mb-4 text-center">{section.title}</h2>
-                    <div className="border-t border-gray-200 pt-4">
-                        <div className="relative">
-                            <div className="flex justify-center overflow-hidden">
-                                <div
-                                    className="flex gap-6 transition-transform duration-300"
-                                    style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-                                >
-                                    {events.map((beach) => (
-                                        <div
-                                            key={beach.id}
-                                            className="w-full sm:w-1/2 md:w-1/3 flex-shrink-0 cursor-pointer"
-                                            onClick={() => navigate(`/event-detail/${beach.id}`)}
-                                        >
-                                            <EventCard beach={beach} />
+            {/* Events Grid */}
+            <div className="container mx-auto px-4 py-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">All Available Events</h2>
+
+                {filteredEvents.length === 0 ? (
+                    <div className="text-center py-12">
+                        <p className="text-gray-500 text-lg">No events found matching your criteria.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredEvents.map((event) => (
+                            <div key={event.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+                                {/* Event Image */}
+                                <div className="relative h-48">
+                                    <img
+                                        src={event.img_path}
+                                        alt={event.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+
+                                {/* Event Content */}
+                                <div className="p-4">
+                                    {/* Event Title */}
+                                    <h3 className="font-bold text-lg mb-2 text-gray-900">
+                                        {event.name}
+                                        <span className={`ml-2 top-3 left-3 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(event.status)}`}>
+                                            {getStatusText(event.status)}
+                                        </span>
+                                    </h3>
+
+
+                                    {/* Date and Time */}
+                                    <div className="flex items-center text-sm text-gray-600 mb-2">
+                                        <Calendar className="w-4 h-4 mr-2" />
+                                        <span>{formatDate(event.start_date)} - {formatDate(event.end_date)}</span>
+                                    </div>
+
+                                    {/* Location */}
+                                    <div className="flex items-center text-sm text-gray-600 mb-3">
+                                        <MapPin className="w-4 h-4 mr-2" />
+                                        <span>{event.beach_name}</span>
+                                    </div>
+
+                                    {/* Description */}
+                                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                                        {event.description}
+                                    </p>
+
+                                    {/* Action Button */}
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center text-sm">
+                                            <Users className="w-4 h-4 mr-1 text-gray-400" />
+                                            <span className={`px-2 py-1 rounded text-xs ${event.jenis === 'public' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                {event.jenis === 'public' ? 'Public' : 'Private'}
+                                            </span>
                                         </div>
-                                    ))}
+                                        <button className="px-4 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700 transition-colors duration-200">
+                                            See Details
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                            <button
-                                onClick={handlePrev}
-                                className="absolute left-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors"
-                            >
-                                <ChevronLeft size={24} />
-                            </button>
-                            <button
-                                onClick={handleNext}
-                                className="absolute right-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors"
-                            >
-                                <ChevronRight size={24} />
-                            </button>
-                        </div>
+                        ))}
                     </div>
-                </section>
-            ))}
+                )}
+            </div>
         </div>
     );
+};
 
-}
-
-
-
-// ChevronDown icon component (simplified)
+// ChevronDown icon component
 const ChevronDown = () => {
     return (
         <svg
@@ -238,67 +371,6 @@ const ChevronDown = () => {
             <path d="m6 9 6 6 6-6" />
         </svg>
     );
-}
-
-// Beach card component
-type Beach = {
-    id: number;
-    name: string;
-    price: string;
-    rating: number;
-    reviews: number;
-    location: string;
-    distance: number;
-    image: string;
-    hasEvent: boolean;
 };
 
-const EventCard: React.FC<{ beach: Beach }> = ({ beach }) => {
-    return (
-        <div className="bg-white rounded-xl shadow-md overflow-hidden w-80 flex flex-col">
-            <div className="relative h-48">
-                <img
-                    src='https://picsum.photos/id/20/3670/2462'
-                    alt={beach.name}
-                    className="h-full w-full object-cover"
-                />
-                <div className="absolute top-3 left-3 bg-white bg-opacity-80 rounded-full px-3 py-1 flex items-center">
-                    <span className="text-sm">{beach.distance} km</span>
-                </div>
-            </div>
-
-            <div className="p-4 flex-grow">
-                <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-lg">{beach.name}</h3>
-                    <span className="text-gray-700">{beach.price}</span>
-                </div>
-
-                <div className="flex items-center mb-2">
-                    <Star size={16} className="text-yellow-400 fill-current" />
-                    <span className="ml-1 text-sm">{beach.rating} ({beach.reviews} reviews)</span>
-                </div>
-
-                <div className="flex items-start">
-                    <MapPin size={16} className="text-red-500 mt-1 flex-shrink-0" />
-                    <span className="ml-1 text-sm text-gray-600">{beach.location}</span>
-                </div>
-            </div>
-
-            <div className="p-4 border-t border-gray-100">
-                {beach.hasEvent ? (
-                    <div className="flex items-center justify-center text-green-600">
-                        <Calendar size={16} className="mr-1" />
-                        <span className="text-sm">Event Available</span>
-                    </div>
-                ) : (
-                    <div className="flex items-center justify-center text-red-500">
-                        <XCircle size={16} className="mr-1" />
-                        <span className="text-sm">No Event</span>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}
-
-export default Events
+export default EventsPage;
