@@ -83,10 +83,10 @@ export type EventStatusConfig = {
 };
 
 // Private Code Modal Component
-const PrivateCodeModal = ({ isOpen, onClose, onSubmit, ticketName }) => {
+const PrivateCodeModal: React.FC<PrivateCodeModalProps> = ({ isOpen, onClose, onSubmit, ticketName }) => {
     const [privateCode, setPrivateCode] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (privateCode.trim()) {
             onSubmit(privateCode);
@@ -142,10 +142,10 @@ const PrivateCodeModal = ({ isOpen, onClose, onSubmit, ticketName }) => {
 // Main component for the Event Ticket Purchase page
 export default function EventTicketPage() {
     // State management
-    const [eventData, setEventData] = useState(null);
-    const [tickets, setTickets] = useState({});
+    const [eventData, setEventData] = useState<EventData | null>(null);
+    const [tickets, setTickets] = useState<TicketQuantities>({});
     const [showPrivateCodeModal, setShowPrivateCodeModal] = useState(false);
-    const [currentTicket, setCurrentTicket] = useState(null);
+    const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -187,15 +187,15 @@ export default function EventTicketPage() {
                 // Initialize ticket quantities
                 const initialTickets = {};
                 if (eventData.tickets && Array.isArray(eventData.tickets)) {
-                    eventData.tickets.forEach(ticket => {
+                    eventData.tickets.forEach((ticket: Ticket) => {
                         initialTickets[ticket.id] = 0;
                     });
                 }
                 setTickets(initialTickets);
 
-            } catch (err) {
+            } catch (err: unknown) {
                 console.error('Error in fetchEventData:', err);
-                setError(err.message || 'Failed to load event data');
+                setError(err instanceof Error ? err.message : 'Failed to load event data');
             } finally {
                 setLoading(false);
             }
@@ -205,7 +205,7 @@ export default function EventTicketPage() {
     }, [eventId]);
 
     // Format price to Indonesian Rupiah
-    const formatPrice = (price) => {
+    const formatPrice = (price: number) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
@@ -214,7 +214,7 @@ export default function EventTicketPage() {
     };
 
     // Format date
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('id-ID', {
             day: '2-digit',
             month: 'long',
@@ -223,12 +223,12 @@ export default function EventTicketPage() {
     };
 
     // Format time
-    const formatTime = (timeString) => {
+    const formatTime = (timeString: string) => {
         return timeString.slice(0, 5); // Extract HH:MM from HH:MM:SS
     };
 
     // Get status badge color and text
-    const getStatusBadge = (status) => {
+    const getStatusBadge = (status: EventData['status']) => {
         const statusConfig = {
             ongoing: { color: 'bg-green-100 text-green-600', text: 'Ongoing' },
             upcoming: { color: 'bg-blue-100 text-blue-600', text: 'Upcoming' },
@@ -239,10 +239,10 @@ export default function EventTicketPage() {
     };
 
     // Calculate total selected tickets
-    const totalSelectedTickets = Object.values(tickets).reduce((acc, curr) => acc + curr, 0);
+    const totalSelectedTickets = Object.values(tickets).reduce((acc: number, curr: number) => acc + curr, 0);
 
     // Handler for incrementing ticket quantity
-    const handleIncrement = (ticket) => {
+    const handleIncrement = (ticket: Ticket) => {
         if (ticket.private_code && tickets[ticket.id] === 0) {
             // Show private code modal for first increment of private tickets
             setCurrentTicket(ticket);
@@ -256,7 +256,7 @@ export default function EventTicketPage() {
     };
 
     // Handler for decrementing ticket quantity
-    const handleDecrement = (ticketId) => {
+    const handleDecrement = (ticketId: number) => {
         if (tickets[ticketId] > 0) {
             setTickets(prevTickets => ({
                 ...prevTickets,
@@ -266,7 +266,7 @@ export default function EventTicketPage() {
     };
 
     // Handler for private code submission
-    const handlePrivateCodeSubmit = (code) => {
+    const handlePrivateCodeSubmit = (code: string) => {
         // Here you would validate the private code with your API
         console.log('Private code submitted:', code, 'for ticket:', currentTicket?.name);
 
@@ -340,8 +340,9 @@ export default function EventTicketPage() {
                                 src={eventData.img_path}
                                 alt={eventData.name}
                                 className="rounded-lg w-full md:w-auto object-cover"
-                                onError={(e) => {
-                                    e.target.src = '/api/placeholder/400/300';
+                                onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/api/placeholder/400/300';
                                 }}
                             />
                         </div>
