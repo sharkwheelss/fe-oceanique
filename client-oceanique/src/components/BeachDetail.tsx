@@ -160,14 +160,14 @@ export default function BeachDetailPage() {
 
     if (loading || !beachData) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="max-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-xl">Loading details...</div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen pb-8">
+        <div className="max-h-screen pb-8">
             {/* Header with Navigation and Wishlist */}
             <div className="container mx-auto px-4 py-6">
                 <div className="flex justify-between items-center">

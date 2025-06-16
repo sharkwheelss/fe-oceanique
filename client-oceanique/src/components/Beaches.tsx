@@ -279,14 +279,14 @@ const Beaches = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="max-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-xl">Loading beaches...</div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="max-h-screen bg-gray-50">
             {/* Search and Filters */}
             <div className="container sticky top-[72px] z-40 bg-white mx-auto px-4 py-6">
                 <div className="flex flex-wrap justify-center gap-4">

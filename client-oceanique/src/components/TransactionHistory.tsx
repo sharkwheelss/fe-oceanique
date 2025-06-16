@@ -334,7 +334,7 @@ const TransactionHistoryPage = () => {
     };
 
     return (
-        <div className=" min-h-screen">
+        <div className=" max-h-screen">
             {/* Main content */}
             {/* Tabs */}
             <div className="flex border-b border-gray-200 sticky top-[72px] z-40 bg-white">

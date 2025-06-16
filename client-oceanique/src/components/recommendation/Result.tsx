@@ -266,7 +266,7 @@ export default function RecommendationResult() {
     // Loading state
     if (isLoading) {
         return (
-            <div className="max-w-4xl mx-auto p-6 flex justify-center items-center min-h-screen">
+            <div className="max-w-4xl mx-auto p-6 flex justify-center items-center max-h-screen">
                 <div className="text-center">
                     <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-gray-600">Loading recommendations...</p>
@@ -278,7 +278,7 @@ export default function RecommendationResult() {
     // Error state
     if (error) {
         return (
-            <div className="max-w-4xl mx-auto p-6 flex justify-center items-center min-h-screen">
+            <div className="max-w-4xl mx-auto p-6 flex justify-center items-center max-h-screen">
                 <div className="text-center">
                     <p className="text-red-600 mb-4">{error}</p>
                     <button
@@ -295,7 +295,7 @@ export default function RecommendationResult() {
     // No destinations available
     if (destinations.length === 0) {
         return (
-            <div className="max-w-4xl mx-auto p-6 flex justify-center items-center min-h-screen">
+            <div className="max-w-4xl mx-auto p-6 flex justify-center items-center max-h-screen">
                 <div className="text-center">
                     <p className="text-gray-600 mb-4">No recommendations found based on your preferences.</p>
                     <button

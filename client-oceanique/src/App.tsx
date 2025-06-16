@@ -8,7 +8,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-white">
+        <div className="max-h-screen bg-white">
           {/* Navigation Bar */}
           <Navbar />
 

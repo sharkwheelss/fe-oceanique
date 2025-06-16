@@ -99,7 +99,7 @@ export default function OceaniquePersonalityPage() {
     const shouldShowPersonalityGrid = !showConfirmDialog;
 
     return (
-        <div className="flex flex-col min-h-screen bg-white">
+        <div className="flex flex-col max-h-screen bg-white">
             <main className="flex-1 container mx-auto px-4 py-8">
                 <div className="text-center mb-12">
                     <h1 className="text-3xl font-bold mb-6">

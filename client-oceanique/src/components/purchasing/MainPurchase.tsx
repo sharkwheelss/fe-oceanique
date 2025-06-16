@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
     CheckCircle,
 } from 'lucide-react';
@@ -7,19 +8,33 @@ import PaymentMethodPage from './Payment';
 import SummaryPage from './Summary';
 
 // Main App component to manage routing between pages
-export default function App() {
-    // State for current page/step in the process
-    const [currentPage, setCurrentPage] = useState('booking'); 
+export default function MainPurchase() {
+    const location = useLocation();
+    const { tickets: selectedTicketIds, eventData } = location.state || {};
 
-    // State for ticket quantities
-    const [selectedTickets, setSelectedTickets] = useState({
-        "Ticket Apache Epic 1": 1,
-        "Ticket Laohi 2": 2,
-        "Ticket Laohi 3": 0
-    });
+    // State for current page/step in the process
+    const [currentPage, setCurrentPage] = useState('booking');
+
+    // State for ticket quantities (convert from ID-based to name-based)
+    const [selectedTickets, setSelectedTickets] = useState({});
 
     // Timer state for payment countdown (in seconds)
     const [paymentTimer, setPaymentTimer] = useState(59 * 60); // 59 minutes in seconds
+
+    // Initialize selectedTickets state based on passed data
+    useEffect(() => {
+        if (selectedTicketIds && eventData?.tickets) {
+            const ticketQuantities = {};
+
+            // Convert ID-based selection to name-based selection
+            eventData.tickets.forEach(ticket => {
+                const quantity = selectedTicketIds[ticket.id] || 0;
+                ticketQuantities[ticket.name] = quantity;
+            });
+
+            setSelectedTickets(ticketQuantities);
+        }
+    }, [selectedTicketIds, eventData]);
 
     // Function to format time as mm:ss
     const formatTime = (seconds) => {
@@ -48,13 +63,21 @@ export default function App() {
         }));
     };
 
-    // Calculate totals
+    // Get ticket details by name
+    const getTicketByName = (ticketName) => {
+        return eventData?.tickets?.find(ticket => ticket.name === ticketName);
+    };
+
+    // Calculate subtotals
     const calculateSubtotals = () => {
-        const subtotals = {
-            "Ticket Apache Epic 1": selectedTickets["Ticket Apache Epic 1"] * 220000,
-            "Ticket Laohi 2": selectedTickets["Ticket Laohi 2"] * 1000000,
-            "Ticket Laohi 3": selectedTickets["Ticket Laohi 3"] * 1000000
-        };
+        const subtotals = {};
+
+        Object.entries(selectedTickets).forEach(([ticketName, quantity]) => {
+            const ticket = getTicketByName(ticketName);
+            if (ticket) {
+                subtotals[ticketName] = quantity * ticket.price;
+            }
+        });
 
         return subtotals;
     };
@@ -69,6 +92,17 @@ export default function App() {
         return `Rp${amount.toLocaleString('id-ID')}`;
     };
 
+    // Show loading or error if data is not available
+    if (!eventData || !selectedTicketIds) {
+        return (
+            <div className="max-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-gray-600">Loading purchase data...</p>
+                </div>
+            </div>
+        );
+    }
+
     // Render current page based on state
     const renderCurrentPage = () => {
         switch (currentPage) {
@@ -80,12 +114,15 @@ export default function App() {
                     total={calculateTotal()}
                     formatCurrency={formatCurrency}
                     goToNextPage={goToNextPage}
+                    eventData={eventData}
+                    getTicketByName={getTicketByName}
                 />;
             case 'payment':
                 return <PaymentMethodPage
                     total={calculateTotal()}
                     formatCurrency={formatCurrency}
                     goToNextPage={goToNextPage}
+                    eventData={eventData}
                 />;
             case 'confirmation':
                 return <SummaryPage
@@ -94,84 +131,109 @@ export default function App() {
                     total={calculateTotal()}
                     formatCurrency={formatCurrency}
                     timer={formatTime(paymentTimer)}
+                    eventData={eventData}
+                    getTicketByName={getTicketByName}
                 />;
+            default:
+                return null;
         }
     };
 
     return (
-        <div className="min-h-screen px-4 py-6">
+        <div className="max-h-screen">
             {/* Header */}
-            <Header currentPage={currentPage} goToPreviousPage={goToPreviousPage} />
+            <Header currentPage={currentPage} goToPreviousPage={goToPreviousPage} eventData={eventData} />
 
             {/* Progress Indicator */}
             <ProgressIndicator currentPage={currentPage} />
 
             {/* Content */}
-            {renderCurrentPage()}
+            <div className="pt-6 pb-12">
+                {renderCurrentPage()}
+            </div>
         </div>
     );
 }
 
 // Header component
-function Header({ currentPage, goToPreviousPage }) {
-    // Function to get the appropriate breadcrumb based on the current page
-    const getBreadcrumb = () => {
-        if (currentPage === 'booking' || currentPage === 'payment') {
-            return (
-                <p className="text-gray-600 text-sm">
-                    <span className="text-gray-700 hover:text-teal-600 cursor-pointer">Event Mid Sea Shore</span>
-                    {' / '}
-                    <span className="text-gray-700 hover:text-teal-600 cursor-pointer">Ticket Purchase</span>
-                </p>
-            );
-        } else if (currentPage === 'confirmation') {
-            return (
-                <p className="text-gray-600 text-sm">
-                    <span className="text-gray-700 hover:text-teal-600 cursor-pointer">Transaction History</span>
-                    {' / '}
-                    <span className="text-gray-700 hover:text-teal-600 cursor-pointer">Ticket Purchase</span>
-                </p>
-            );
-        }
-    };
+function Header({ eventData }) {
+    return (
+        <div className="bg-white shadow-sm">
+            <div className="container mx-auto max-w-6xl px-4 py-4">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => window.history.back()}
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-teal-500 text-white hover:bg-teal-600 transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <div>
+                        <p className="text-gray-600 text-sm">
+                            <span className="text-gray-700 hover:text-teal-600 cursor-pointer underline">
+                                {eventData?.name || 'Event Mid Sea Shore'}
+                            </span>
+                            {' / '}
+                            <span className="text-gray-700">Ticket Purchase</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 // Progress Indicator component
 function ProgressIndicator({ currentPage }) {
     const steps = [
-        { id: 'booking', label: 'Booking', active: true, complete: currentPage !== 'selection' },
-        { id: 'payment', label: 'Payment', active: currentPage === 'payment' || currentPage === 'confirmation', complete: currentPage === 'confirmation' },
+        { id: 'booking', label: 'Booking', active: currentPage === 'booking', complete: currentPage === 'payment' || currentPage === 'confirmation' },
+        { id: 'payment', label: 'Payment', active: currentPage === 'payment', complete: currentPage === 'confirmation' },
         { id: 'ticket', label: 'Your Ticket', active: currentPage === 'confirmation', complete: false }
     ];
 
     return (
-        <div className="container mx-auto max-w-6xl px-4 py-6 sticky top-[72px] z-10">
-            <div className="flex items-center justify-center">
-                {steps.map((step, index) => (
-                    <div key={step.id} className="flex items-center">
-                        {/* Step node */}
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step.complete ? 'bg-teal-500' : (step.active ? 'bg-teal-500' : 'bg-gray-300')
-                            }`}>
-                            {step.complete ? (
-                                <CheckCircle className="h-5 w-5 text-white" />
-                            ) : (
-                                <div className="w-3 h-3 bg-white rounded-full"></div>
+        <div className="bg-white">
+            <div className="container mx-auto max-w-6xl px-4 py-8">
+                <div className="flex items-center justify-center">
+                    {steps.map((step, index) => (
+                        <div key={step.id} className="flex items-center">
+                            {/* Step node */}
+                            <div className="flex flex-col items-center">
+                                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${step.complete
+                                    ? 'bg-teal-500 border-teal-500'
+                                    : step.active
+                                        ? 'bg-teal-500 border-teal-500'
+                                        : 'bg-white border-gray-300'
+                                    }`}>
+                                    {step.complete ? (
+                                        <CheckCircle className="h-5 w-5 text-white" />
+                                    ) : (
+                                        <div className={`w-3 h-3 rounded-full ${step.active ? 'bg-white' : 'bg-gray-300'
+                                            }`}></div>
+                                    )}
+                                </div>
+
+                                {/* Step label */}
+                                <span className={`mt-2 text-sm font-medium ${step.active || step.complete ? 'text-teal-500' : 'text-gray-400'
+                                    }`}>
+                                    {step.label}
+                                </span>
+                            </div>
+
+                            {/* Connector line (not for the last item) */}
+                            {index < steps.length - 1 && (
+                                <div className="w-16 mx-4 mb-6">
+                                    <div className={`h-0.5 ${steps[index + 1].active || steps[index + 1].complete
+                                        ? 'bg-teal-500'
+                                        : 'bg-gray-300'
+                                        }`}></div>
+                                </div>
                             )}
                         </div>
-
-                        {/* Step label */}
-                        <span className={`ml-2 ${step.active || step.complete ? 'text-teal-500' : 'text-gray-400'
-                            }`}>{step.label}</span>
-
-                        {/* Connector line (not for the last item) */}
-                        {index < steps.length - 1 && (
-                            <div className="flex-grow mx-4">
-                                <div className={`h-px ${steps[index + 1].active || steps[index + 1].complete ? 'bg-teal-500' : 'bg-gray-300'
-                                    }`}></div>
-                            </div>
-                        )}
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
         </div>
     );

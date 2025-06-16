@@ -37,7 +37,7 @@ const BeachListingPage = () => {
     ];
 
     return (
-        <div className="bg-white min-h-screen">
+        <div className="bg-white max-h-screen">
 
             {/* Main content */}
             <main className="container mx-auto px-4 py-8">

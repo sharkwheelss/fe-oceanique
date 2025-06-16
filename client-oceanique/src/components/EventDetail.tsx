@@ -15,6 +15,7 @@ export interface Ticket {
     id: number;
     name: string;
     description: string;
+    date: string;
     quota: number;
     price: number;
     private_code: boolean;
@@ -297,7 +298,7 @@ export default function EventTicketPage() {
     // Error state
     if (error || !eventData) {
         return (
-            <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+            <div className="bg-gray-50 max-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <p className="text-red-600 text-lg mb-4">{error || 'Event not found'}</p>
                     <button
@@ -412,7 +413,7 @@ export default function EventTicketPage() {
                                                 {ticket.category.name}
                                             </span>
                                             <span className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-xs">
-                                                {formatDate(eventData.start_date)}
+                                                {formatDate(ticket.date)}
                                             </span>
                                         </div>
                                     </div>
@@ -481,7 +482,7 @@ export default function EventTicketPage() {
                                 }`}
                             disabled={totalSelectedTickets === 0}
                             onClick={() => {
-                                // navigate('/purchase/2', { state: { tickets, eventData } });
+                                navigate(`/purchase/${eventData.id}`, { state: { tickets, eventData } });
                                 console.log('Navigate to purchase page with:', { tickets, eventData });
                             }}
                         >

@@ -64,7 +64,7 @@ export default function ProfileEditor() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex flex-col">
+        <div className="max-h-screen bg-gray-100 flex flex-col">
             {/* Header section */}
             <header className="bg-gradient-to-r from-teal-400 to-gray-400 p-5 text-white relative">
                 <div className="container mx-auto flex items-center">
