@@ -6,6 +6,7 @@ interface EventContextType {
     loading: boolean;
     error: string | null;
     getAllEvents: () => Promise<any>;
+    getTransactionHistory: () => Promise<any>;
     getEventDetails: (eventId: string) => Promise<any>;
     newBooking: (booking: FormData) => Promise<any>;
 }
@@ -42,6 +43,19 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
+    const getTransactionHistory = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.event.getTransactionHistory();
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch events');
+            console.error('Error fetching events:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
     const newBooking = async (booking: FormData) => {
         try {
             setLoading(true);
@@ -60,6 +74,7 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
         loading,
         error,
         getAllEvents,
+        getTransactionHistory,
         getEventDetails,
         newBooking
     };

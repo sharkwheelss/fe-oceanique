@@ -99,7 +99,11 @@ export default function OceaniqueRoutes() {
 
                 <Route path="/wishlist" element={<Wishlist />} />
 
-                <Route path="/transaction-history" element={<TransactionHistory />} />
+                <Route path="/transaction-history" element={
+                    <EventProvider>
+                        <TransactionHistory />
+                    </EventProvider>
+                } />
             </Route>
 
             {/* Catch-all route for 404 Not Found */}

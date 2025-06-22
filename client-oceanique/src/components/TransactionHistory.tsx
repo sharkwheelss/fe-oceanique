@@ -1,109 +1,236 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Clock, ChevronDown } from 'lucide-react';
+import { useEvents } from '../context/EventContext';
+
+// QR Code Generator Component
+function QRCodeGenerator({ bookingId, size = 80 }) {
+    const canvasRef = useRef(null);
+    const [fallbackUrl, setFallbackUrl] = useState('');
+
+    useEffect(() => {
+        if (bookingId) {
+            // Try to use QRCode library if available
+            if (typeof window !== 'undefined' && window.QRCode) {
+                window.QRCode.toCanvas(canvasRef.current, bookingId, {
+                    width: size,
+                    margin: 1,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                }, (error) => {
+                    if (error) {
+                        console.error('QR Code generation error:', error);
+                        // Fallback to API
+                        setFallbackUrl(`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(bookingId)}`);
+                    }
+                });
+            } else {
+                // Fallback to API if QRCode library not available
+                setFallbackUrl(`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(bookingId)}`);
+            }
+        }
+    }, [bookingId, size]);
+
+    return (
+        <div className="w-full h-full flex items-center justify-center">
+            {fallbackUrl ? (
+                <img
+                    src={fallbackUrl}
+                    alt={`QR Code for booking ${bookingId}`}
+                    className="w-full h-full rounded"
+                    style={{ maxWidth: `${size}px`, maxHeight: `${size}px` }}
+                    onError={(e) => {
+                        // Final fallback to placeholder
+                        e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23666' font-size='12'%3EQR%3C/text%3E%3C/svg%3E";
+                    }}
+                />
+            ) : (
+                <canvas
+                    ref={canvasRef}
+                    className="w-full h-full rounded"
+                    style={{ maxWidth: `${size}px`, maxHeight: `${size}px` }}
+                />
+            )}
+        </div>
+    );
+}
 
 /**
  * TransactionHistoryPage - Main component for the transaction history page
- * Displays user's ticket transactions with different status tabs (Pending, Cancelled, Paid)
+ * Displays user's ticket transactions with different status tabs (Pending, Cancelled, Approved)
  */
 const TransactionHistoryPage = () => {
-    // State for active tab (Pending, Cancelled, Paid)
-    const [activeTab, setActiveTab] = useState('Pending');
+    // State for active tab (pending, cancelled, approved)
+    const [activeTab, setActiveTab] = useState('pending');
+    const [transactions, setTransactions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { getTransactionHistory } = useEvents();
 
-    // Sample transaction data based on the screenshots
-    const transactions = [
-        {
-            id: '52451434',
-            tickets: [
-                {
-                    name: 'Ticket Apache Epic 1',
-                    ticketId: '0105042501',
-                    type: 'Standard',
-                    date: '26 April 2025',
-                    quantity: 1,
-                    price: 220000,
-                    status: 'Pending',
-                    paymentMethod: 'BCA VA'
-                },
-                {
-                    name: 'Ticket Laohi 2',
-                    ticketId: '0105042502',
-                    type: 'VIP 1',
-                    date: '03 May 2025',
-                    quantity: 2,
-                    price: 2000000,
-                    status: 'Pending',
-                    paymentMethod: 'BCA VA'
-                }
-            ],
-            totalPrice: 2220000,
-            status: 'Pending',
-            timeRemaining: '59.00'
-        },
-        {
-            id: '32324345',
-            tickets: [
-                {
-                    name: 'Ticket Apache Epic 1',
-                    ticketId: '0105042501',
-                    type: 'Standard',
-                    date: '26 April 2025',
-                    quantity: 1,
-                    price: 220000,
-                    status: 'Cancelled',
-                    paymentMethod: 'BCA VA',
-                    cancelDate: '05-04-2025 13.29'
-                },
-                {
-                    name: 'Ticket Laohi 2',
-                    ticketId: '0105042502',
-                    type: 'VIP 1',
-                    date: '03 May 2025',
-                    quantity: 2,
-                    price: 2000000,
-                    status: 'Cancelled',
-                    paymentMethod: 'BCA VA',
-                    cancelDate: '05-04-2025 13.29'
-                }
-            ],
-            totalPrice: 2220000,
-            status: 'Cancelled'
-        },
-        {
-            id: '42342243',
-            tickets: [
-                {
-                    name: 'Ticket Apache Epic 1',
-                    ticketId: '0105042501',
-                    type: 'Standard',
-                    date: '26 April 2025',
-                    quantity: 1,
-                    price: 220000,
-                    status: 'Paid',
-                    paymentMethod: 'BCA VA',
-                    successDate: '05-04-2025 13.29'
-                },
-                {
-                    name: 'Ticket Laohi 2',
-                    ticketId: '0105042502',
-                    type: 'VIP 1',
-                    date: '03 May 2025',
-                    quantity: 2,
-                    price: 2000000,
-                    status: 'Paid',
-                    paymentMethod: 'BCA VA',
-                    successDate: '05-04-2025 13.29'
-                }
-            ],
-            totalPrice: 2220000,
-            status: 'Paid'
+    // API response interface
+    interface ApiTransaction {
+        id: number;
+        group_booking_id: number;
+        booked_at: string;
+        total_tickets: number;
+        subtotal: number;
+        status: 'pending' | 'rejected' | 'approved';
+        payment_method: string;
+        updated_at: string;
+        total_payment: number;
+        users_id: number;
+        tickets_id: number;
+    }
+
+    interface ApiResponse {
+        message: string;
+        data: ApiTransaction[];
+    }
+
+    // Internal interfaces
+    interface Ticket {
+        name: string;
+        ticketId: string;
+        type: string;
+        date: string;
+        quantity: number;
+        price: number;
+        status: 'pending' | 'rejected' | 'approved';
+        paymentMethod: string;
+        cancelDate?: string;
+        successDate?: string;
+        apiId: number;
+    }
+
+    interface Transaction {
+        id: string;
+        group_booking_id: number;
+        tickets: Ticket[];
+        totalPrice: number;
+        status: 'pending' | 'rejected' | 'approved';
+        timeRemaining?: string;
+        booked_at: string;
+        updated_at: string;
+    }
+
+
+    // Transform API data to component format
+    const transformApiData = (apiData: ApiTransaction[]): Transaction[] => {
+        // Group transactions by group_booking_id
+        const groupedTransactions = apiData.reduce((acc, transaction) => {
+            const groupId = transaction.group_booking_id.toString();
+            if (!acc[groupId]) {
+                acc[groupId] = [];
+            }
+            acc[groupId].push(transaction);
+            return acc;
+        }, {} as Record<string, ApiTransaction[]>);
+
+        // Transform grouped transactions
+        return Object.entries(groupedTransactions).map(([groupId, groupTransactions]) => {
+            const firstTransaction = groupTransactions[0];
+
+            // Create tickets from grouped transactions
+            const tickets: Ticket[] = groupTransactions.map((transaction, index) => ({
+                name: `Event Ticket ${transaction.tickets_id}`,
+                ticketId: transaction.id.toString(),
+                type: transaction.tickets_id === 2 ? 'Standard' : 'VIP',
+                date: new Date(transaction.booked_at).toLocaleDateString('en-US', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                }),
+                quantity: transaction.total_tickets,
+                price: transaction.total_payment,
+                status: transaction.status,
+                paymentMethod: transaction.payment_method,
+                cancelDate: transaction.status === 'rejected' ?
+                    new Date(transaction.updated_at).toLocaleString('en-US', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : undefined,
+                successDate: transaction.status === 'approved' ?
+                    new Date(transaction.updated_at).toLocaleString('en-US', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : undefined,
+                apiId: transaction.id
+            }));
+
+            // Calculate total price
+            const totalPrice = groupTransactions.reduce((sum, t) => sum + t.total_payment, 0);
+
+            return {
+                id: groupId,
+                group_booking_id: firstTransaction.group_booking_id,
+                tickets,
+                totalPrice,
+                status: firstTransaction.status,
+                timeRemaining: firstTransaction.status === 'pending' ? '59.00' : undefined,
+                booked_at: firstTransaction.booked_at,
+                updated_at: firstTransaction.updated_at
+            };
+        });
+    };
+
+    // Load QRCode library dynamically
+    useEffect(() => {
+        if (typeof window !== 'undefined' && !window.QRCode) {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js';
+            script.onload = () => {
+                // QRious is now available as window.QRious
+                window.QRCode = {
+                    toCanvas: (canvas, text, options, callback) => {
+                        try {
+                            const qr = new window.QRious({
+                                element: canvas,
+                                value: text,
+                                size: options.width || 128,
+                                background: options.color?.light || '#FFFFFF',
+                                foreground: options.color?.dark || '#000000'
+                            });
+                            if (callback) callback(null);
+                        } catch (error) {
+                            if (callback) callback(error);
+                        }
+                    }
+                };
+            };
+            document.head.appendChild(script);
         }
-    ];
+    }, []);
+
+    // Load transactions on component mount
+    useEffect(() => {
+        const loadTransactions = async () => {
+            try {
+                setLoading(true);
+                const response = await getTransactionHistory();
+                console.log('API Response:', response);
+                const transformedData = transformApiData(response);
+                setTransactions(transformedData);
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadTransactions();
+    }, []);
 
     /**
      * Filters transactions based on the active tab
      * @returns {Array} Filtered transactions based on status
      */
-    const getFilteredTransactions = () => {
+    const getFilteredTransactions = (): Transaction[] => {
         return transactions.filter(transaction => transaction.status === activeTab);
     };
 
@@ -112,27 +239,6 @@ const TransactionHistoryPage = () => {
      * @param {number} price - Price to format
      * @returns {string} Formatted price
      */
-    interface Ticket {
-        name: string;
-        ticketId: string;
-        type: string;
-        date: string;
-        quantity: number;
-        price: number;
-        status: 'Pending' | 'Cancelled' | 'Paid';
-        paymentMethod: string;
-        cancelDate?: string;
-        successDate?: string;
-    }
-
-    interface Transaction {
-        id: string;
-        tickets: Ticket[];
-        totalPrice: number;
-        status: 'Pending' | 'Cancelled' | 'Paid';
-        timeRemaining?: string;
-    }
-
     const formatPrice = (price: number): string => {
         return new Intl.NumberFormat('id-ID').format(price);
     };
@@ -142,17 +248,13 @@ const TransactionHistoryPage = () => {
      * @param {string} status - Transaction status
      * @returns {string} Tailwind CSS classes for the status badge
      */
-    interface StatusColorMap {
-        [key: string]: string;
-    }
-
-    type TransactionStatus = 'Pending' | 'Cancelled' | 'Paid';
+    type TransactionStatus = 'pending' | 'rejected' | 'approved';
 
     const getStatusColor = (status: TransactionStatus): string => {
-        const statusColorMap: StatusColorMap = {
-            Pending: 'bg-yellow-100 text-yellow-800',
-            Cancelled: 'bg-red-100 text-red-800',
-            Paid: 'bg-green-100 text-green-800',
+        const statusColorMap: Record<TransactionStatus, string> = {
+            pending: 'bg-yellow-100 text-yellow-800',
+            rejected: 'bg-red-100 text-red-800',
+            approved: 'bg-green-100 text-green-800',
         };
         return statusColorMap[status] || 'bg-gray-100 text-gray-800';
     };
@@ -161,11 +263,7 @@ const TransactionHistoryPage = () => {
      * Handle tab change
      * @param {string} tab - Tab name
      */
-    interface TabChangeHandler {
-        (tab: TransactionStatus): void;
-    }
-
-    const handleTabChange: TabChangeHandler = (tab) => {
+    const handleTabChange = (tab: TransactionStatus): void => {
         setActiveTab(tab);
     };
 
@@ -175,18 +273,13 @@ const TransactionHistoryPage = () => {
      * @param {string} transactionId - Parent transaction ID
      * @returns {JSX.Element} Ticket card component
      */
-    interface RenderTicketCardProps {
-        ticket: Ticket;
-        transactionId: string;
-    }
-
     const renderTicketCard = (ticket: Ticket, transactionId: string): JSX.Element => {
         const statusColor = getStatusColor(ticket.status);
 
         // Select accent color for left ticket border based on status
         const borderColor =
-            ticket.status === 'Pending' ? 'bg-yellow-500' :
-                ticket.status === 'Cancelled' ? 'bg-red-500' : 'bg-teal-500';
+            ticket.status === 'pending' ? 'bg-yellow-500' :
+                ticket.status === 'rejected' ? 'bg-red-500' : 'bg-green-500';
 
         return (
             <div key={ticket.ticketId} className="flex mb-4 border border-gray-300 border-opacity-50 rounded-lg overflow-hidden shadow-sm">
@@ -197,7 +290,10 @@ const TransactionHistoryPage = () => {
                     {/* QR Code */}
                     <div className="w-32 h-32 mr-4">
                         <div className="w-full h-full bg-white border border-gray-300 border-opacity-50 flex items-center justify-center">
-                            <img src="qr-code.jpg" alt="QR Code" className="w-28 h-28" />
+                            <QRCodeGenerator
+                                bookingId={ticket.ticketId}
+                                size={100}
+                            />
                         </div>
                     </div>
 
@@ -206,10 +302,10 @@ const TransactionHistoryPage = () => {
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="text-xl font-semibold">{ticket.name}</h3>
-                                {ticket.status !== 'Pending' && (
+                                {ticket.status !== 'pending' && (
                                     <div className="inline-flex items-center mt-1">
                                         <span className={`px-2 py-1 text-xs rounded-full ${statusColor}`}>
-                                            {ticket.status}
+                                            {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
                                         </span>
                                     </div>
                                 )}
@@ -222,7 +318,7 @@ const TransactionHistoryPage = () => {
                             </div>
                         </div>
 
-                        {/* Ticket description (Lorem ipsum placeholder) */}
+                        {/* Ticket description */}
                         <p className="text-gray-600 mt-2 text-sm">
                             Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem
                             ipsum has been the industry's standard dummy text ever since the 1500s, when an
@@ -247,11 +343,11 @@ const TransactionHistoryPage = () => {
 
                             {/* Payment info */}
                             <div className="text-right text-sm text-gray-600">
-                                <div>Payment Method: BCA VA</div>
-                                {ticket.status === 'Cancelled' && (
+                                <div>Payment Method: {ticket.paymentMethod}</div>
+                                {ticket.status === 'rejected' && ticket.cancelDate && (
                                     <div>Cancelled at {ticket.cancelDate}</div>
                                 )}
-                                {ticket.status === 'Paid' && (
+                                {ticket.status === 'approved' && ticket.successDate && (
                                     <div>Success at {ticket.successDate}</div>
                                 )}
                             </div>
@@ -272,25 +368,12 @@ const TransactionHistoryPage = () => {
      * @param {Object} transaction - Transaction data
      * @returns {JSX.Element} Transaction section component
      */
-    interface RenderTransactionProps {
-        transaction: Transaction;
-    }
-
     const renderTransaction = (transaction: Transaction): JSX.Element => {
         // Pending transactions show a payment countdown
-        const showCountdown = transaction.status === 'Pending';
+        const showCountdown = transaction.status === 'pending';
 
         return (
             <div key={transaction.id} className="mb-8 border border-gray-300 border-opacity-50 rounded-lg overflow-hidden">
-                {/* Payment countdown for pending transactions */}
-                {showCountdown && (
-                    <div className="text-center py-3 border-b border-gray-300 border-opacity-50 flex items-center justify-center">
-                        <div className="flex items-center">
-                            <span className="font-semibold">Complete Your Payment in </span>
-                            <span className="text-red-500 font-semibold ml-1">{transaction.timeRemaining}</span>
-                        </div>
-                    </div>
-                )}
 
                 {/* Transaction heading for pending transactions */}
                 {showCountdown && (
@@ -312,36 +395,30 @@ const TransactionHistoryPage = () => {
                         </div>
                     </div>
 
-                    {/* Action buttons for pending transactions */}
-                    {showCountdown && (
-                        <div className="flex justify-end mt-6 space-x-4">
-                            <button className="px-6 py-3 bg-red-500 text-white rounded-md font-medium hover:bg-red-600 transition">
-                                Cancel
-                            </button>
-                            <button className="px-6 py-3 bg-teal-500 text-white rounded-md font-medium hover:bg-teal-600 transition flex items-center">
-                                How to Pay
-                                <span className="ml-1 bg-white bg-opacity-20 rounded-full p-1">
-                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                                    </svg>
-                                </span>
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
         );
     };
 
+    // Loading state
+    if (loading) {
+        return (
+            <div className="max-h-screen">
+                <div className="flex justify-center items-center h-64">
+                    <div className="text-gray-500">Loading transactions...</div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className=" max-h-screen">
-            {/* Main content */}
+        <div className="max-h-screen">
             {/* Tabs */}
             <div className="flex border-b border-gray-200 sticky top-[72px] z-40 bg-white">
-                {(['Pending', 'Cancelled', 'Paid'] as TransactionStatus[]).map((tab) => (
+                {(['pending', 'rejected', 'approved'] as TransactionStatus[]).map((tab) => (
                     <button
                         key={tab}
-                        className={`px-6 py-3 font-medium ${activeTab === tab
+                        className={`px-6 py-3 font-medium capitalize ${activeTab === tab
                             ? 'text-teal-500 border-b-2 border-teal-500'
                             : 'text-gray-500 hover:text-gray-800'
                             }`}
@@ -363,7 +440,13 @@ const TransactionHistoryPage = () => {
 
             {/* Transactions list */}
             <div>
-                {getFilteredTransactions().map(transaction => renderTransaction(transaction))}
+                {getFilteredTransactions().length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                        No {activeTab} transactions found.
+                    </div>
+                ) : (
+                    getFilteredTransactions().map(transaction => renderTransaction(transaction))
+                )}
             </div>
         </div>
     );

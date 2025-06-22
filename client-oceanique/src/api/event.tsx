@@ -19,6 +19,14 @@ export const eventApi = {
         });
         return response.json();
     },
+    getTransactionHistory: async () => {
+        const response = await fetch(`${BASE_URL}/events/transaction-history`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
     newBooking: async (booking: FormData) => {
         const response = await fetch(`${BASE_URL}/events/booking`, {
             method: 'POST',
