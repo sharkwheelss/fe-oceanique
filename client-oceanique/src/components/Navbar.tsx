@@ -41,8 +41,8 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center" onClick={() => navigate('/home')}>
-          <img src="/logo.png" alt="Oceanique Logo" className="h-10 w-10 mr-2" />
-          <span className="text-teal-500 font-semibold text-xl font-sharemono">Oceanique</span>
+          <img src="/logo.png" alt="Oceanique Logo" className="h-10 w-10 mr-2 hover: cursor-pointer" />
+          <span className="text-teal-500 font-semibold text-xl font-sharemono hover: cursor-pointer">Oceanique</span>
         </div>
 
         {/* Desktop Navigation Menu */}

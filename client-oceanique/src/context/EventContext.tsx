@@ -7,6 +7,7 @@ interface EventContextType {
     error: string | null;
     getAllEvents: () => Promise<any>;
     getEventDetails: (eventId: string) => Promise<any>;
+    newBooking: (booking: FormData) => Promise<any>;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -40,13 +41,27 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setLoading(false);
         }
-    }
+    };
+    const newBooking = async (booking: FormData) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.event.newBooking(booking);
+            return response;
+        } catch (err) {
+            setError('Failed to add new booking');
+            console.error('Error add new booking:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const value = {
         loading,
         error,
         getAllEvents,
-        getEventDetails
+        getEventDetails,
+        newBooking
     };
 
     return (

@@ -7,8 +7,10 @@ import {
     AlertCircle,
     CreditCard,
     Building2,
-    Smartphone
+    Smartphone,
+    CheckCircle
 } from "lucide-react";
+import { useEvents } from '../../context/EventContext';
 
 function PaymentMethodPage({ total, formatCurrency, goToNextPage, eventData }) {
     const [selectedMethod, setSelectedMethod] = useState('');
@@ -16,6 +18,10 @@ function PaymentMethodPage({ total, formatCurrency, goToNextPage, eventData }) {
     const [previewUrl, setPreviewUrl] = useState('');
     const [isDragOver, setIsDragOver] = useState(false);
     const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
+    const [showConfirmation, setShowConfirmation] = useState(false);
+
+    const { newBooking } = useEvents();
 
     // Payment methods with their details
     const paymentMethods = [
@@ -24,9 +30,9 @@ function PaymentMethodPage({ total, formatCurrency, goToNextPage, eventData }) {
             name: 'Bank Transfer',
             icon: Building2,
             details: {
-                bankName: 'Bank Central Asia (BCA)',
-                accountNumber: '1234567890',
-                accountName: 'PT Oceanique Events'
+                bankName: eventData.bank_name,
+                accountNumber: eventData.account_number,
+                accountName: eventData.account_name
             }
         },
     ];
@@ -92,25 +98,75 @@ function PaymentMethodPage({ total, formatCurrency, goToNextPage, eventData }) {
         setErrors({});
     };
 
-    // Handle form submission
-    const handleSubmit = () => {
-        const newErrors = {};
-
+    // Show confirmation popup
+    const handleSubmitClick = () => {
+        // Validate before showing confirmation
         if (!selectedMethod) {
-            newErrors.method = 'Please select a payment method';
+            setErrors({ method: 'Please select a payment method' });
+            return;
         }
-
         if (!uploadedFile) {
-            newErrors.file = 'Please upload payment evidence';
-        }
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
+            setErrors({ file: 'Please upload payment evidence' });
             return;
         }
 
-        // Proceed to next page (confirmation/summary)
-        goToNextPage();
+        setErrors({});
+        setShowConfirmation(true);
+    };
+
+    // Handle actual form submission
+    const handleConfirmSubmit = async () => {
+        try {
+            setLoading(true);
+            setShowConfirmation(false);
+
+            // Prepare the booking data
+            const bookingData = {
+                paymentMethod: paymentMethods.find(method => method.id === selectedMethod)?.details.bankName,
+                status: 'pending',
+                totalPayment: total,
+                tickets: eventData.tickets.map(ticket => ({
+                    ticketId: ticket.id,
+                    quantity: ticket.quantity,
+                    subTotal: ticket.price * ticket.quantity
+                })),
+            };
+
+            // Create FormData
+            const formData = new FormData();
+
+            // Add each field to FormData
+            Object.keys(bookingData).forEach(key => {
+                if (key === 'tickets') {
+                    formData.append(key, JSON.stringify(bookingData[key]));
+                } else {
+                    formData.append(key, bookingData[key]);
+                }
+            });
+
+            // Add the uploaded file
+            formData.append('files', uploadedFile);
+
+            // Call the API function from context
+            const result = await newBooking(formData);
+            console.log('Booking result:', result);
+
+            if (result.message) {
+                console.log('Booking successful:', result);
+                setErrors({});
+                goToNextPage(result.data);
+            } else {
+                setErrors({ submit: result.message });
+            }
+
+        } catch (error) {
+            console.error('Booking submission error:', error);
+            setErrors({
+                submit: error.message || 'Failed to submit booking. Please try again.'
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const selectedPaymentMethod = paymentMethods.find(method => method.id === selectedMethod);
@@ -144,8 +200,8 @@ function PaymentMethodPage({ total, formatCurrency, goToNextPage, eventData }) {
                             <div
                                 key={method.id}
                                 className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${selectedMethod === method.id
-                                        ? 'border-teal-500 bg-teal-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-teal-500 bg-teal-50'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 onClick={() => setSelectedMethod(method.id)}
                             >
@@ -158,8 +214,8 @@ function PaymentMethodPage({ total, formatCurrency, goToNextPage, eventData }) {
                                         <span className="font-medium">{method.name}</span>
                                     </div>
                                     <div className={`w-4 h-4 rounded-full border-2 ${selectedMethod === method.id
-                                            ? 'border-teal-500 bg-teal-500'
-                                            : 'border-gray-300'
+                                        ? 'border-teal-500 bg-teal-500'
+                                        : 'border-gray-300'
                                         }`}>
                                         {selectedMethod === method.id && (
                                             <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5"></div>
@@ -229,8 +285,8 @@ function PaymentMethodPage({ total, formatCurrency, goToNextPage, eventData }) {
                 {!uploadedFile ? (
                     <div
                         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragOver
-                                ? 'border-teal-500 bg-teal-50'
-                                : 'border-gray-300 hover:border-gray-400'
+                            ? 'border-teal-500 bg-teal-50'
+                            : 'border-gray-300 hover:border-gray-400'
                             }`}
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
@@ -312,18 +368,100 @@ function PaymentMethodPage({ total, formatCurrency, goToNextPage, eventData }) {
 
             {/* Submit Button */}
             <div className="flex justify-end space-x-4">
+                {errors.submit && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center text-red-700">
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        <span className="text-sm">{errors.submit}</span>
+                    </div>
+                )}
+
                 <button
-                    onClick={handleSubmit}
-                    disabled={!selectedMethod || !uploadedFile}
-                    className={`px-8 py-3 rounded-lg flex items-center font-medium transition-all ${selectedMethod && uploadedFile
-                            ? 'bg-teal-500 hover:bg-teal-600 text-white shadow-md hover:shadow-lg'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    onClick={handleSubmitClick}
+                    disabled={loading}
+                    className={`px-8 py-3 rounded-lg flex items-center font-medium transition-all ${!loading
+                        ? 'bg-teal-500 hover:bg-teal-600 text-white shadow-md hover:shadow-lg'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                 >
-                    Submit Payment Evidence
-                    <DollarSign className="ml-2 h-5 w-5" />
+                    {loading ? (
+                        <>
+                            <span>Processing...</span>
+                            <div className="ml-2 w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        </>
+                    ) : (
+                        <>
+                            Submit Payment Evidence
+                            <DollarSign className="ml-2 h-5 w-5" />
+                        </>
+                    )}
                 </button>
             </div>
+
+            {/* Confirmation Popup */}
+            {showConfirmation && (
+                <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
+                        <div className="p-6">
+                            {/* Header */}
+                            <div className="flex items-center justify-center mb-4">
+                                <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+                                    <CheckCircle className="h-6 w-6 text-teal-600" />
+                                </div>
+                            </div>
+
+                            <h3 className="text-lg font-semibold text-center mb-2">Confirm Payment Submission</h3>
+                            <p className="text-gray-600 text-center mb-6">
+                                Are you sure you want to submit your payment evidence? Please make sure all information is correct.
+                            </p>
+
+                            {/* Summary */}
+                            <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-3">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Payment Method:</span>
+                                    <span className="font-medium">{selectedPaymentMethod?.name}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Total Amount:</span>
+                                    <span className="font-bold text-teal-600">{formatCurrency(total)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Evidence File:</span>
+                                    <span className="font-medium truncate max-w-32">{uploadedFile?.name}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Tickets:</span>
+                                    <span className="font-medium">{eventData.tickets?.length || 0} type(s)</span>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex space-x-3">
+                                <button
+                                    onClick={() => setShowConfirmation(false)}
+                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                    disabled={loading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConfirmSubmit}
+                                    disabled={loading}
+                                    className="flex-1 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        'Confirm & Submit'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

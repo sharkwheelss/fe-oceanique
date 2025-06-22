@@ -19,4 +19,12 @@ export const eventApi = {
         });
         return response.json();
     },
+    newBooking: async (booking: FormData) => {
+        const response = await fetch(`${BASE_URL}/events/booking`, {
+            method: 'POST',
+            credentials: 'include',
+            body: booking // Send FormData directly
+        });
+        return response.json();
+    },
 }

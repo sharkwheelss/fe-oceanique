@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
-import { ArrowLeft, MapPin, Calendar, Minus, Plus, ArrowRight, X } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Minus, Plus, ArrowRight, X, User } from 'lucide-react';
 
 // Interface for ticket category
 export interface TicketCategory {
@@ -40,7 +40,7 @@ export interface EventData {
     end_time: string; // HH:MM:SS format
     jenis: "public" | "private";
     beaches_id: number;
-    users_id: number;
+    held_by: string;
     beach_name: string;
     province: string;
     city: string;
@@ -375,6 +375,13 @@ export default function EventTicketPage() {
                                 <Calendar className="h-5 w-5 text-pink-500" />
                                 <span className="ml-2 text-sm">
                                     {formatDate(eventData.start_date)} {formatTime(eventData.start_time)} - {formatDate(eventData.end_date)} {formatTime(eventData.end_time)}
+                                </span>
+                            </div>
+
+                            <div className="mt-4 flex items-center text-gray-600">
+                                <User className="h-5 w-5 text-pink-500" />
+                                <span className="ml-2 text-sm">
+                                    Held by: {eventData.held_by}
                                 </span>
                             </div>
                         </div>

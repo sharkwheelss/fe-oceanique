@@ -31,6 +31,7 @@ interface Api {
     event: {
         getAllEvents: () => Promise<any>;
         getEventDetails: (eventId: string) => Promise<any>;
+        newBooking: (booking: FormData) => Promise<any>;
     };
 }
 

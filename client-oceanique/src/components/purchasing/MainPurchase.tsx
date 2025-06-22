@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     CheckCircle,
 } from 'lucide-react';
@@ -10,6 +10,7 @@ import SummaryPage from './Summary';
 // Main App component to manage routing between pages
 export default function MainPurchase() {
     const location = useLocation();
+    const navigate = useNavigate();
     const { tickets: selectedTicketIds, eventData } = location.state || {};
 
     // State for current page/step in the process
@@ -18,42 +19,58 @@ export default function MainPurchase() {
     // State for ticket quantities (convert from ID-based to name-based)
     const [selectedTickets, setSelectedTickets] = useState({});
 
-    // Timer state for payment countdown (in seconds)
-    const [paymentTimer, setPaymentTimer] = useState(59 * 60); // 59 minutes in seconds
+    // State to store enhanced ticket data with quantities
+    const [ticketsWithQuantities, setTicketsWithQuantities] = useState([]);
+
+    const [responseData, setResponseData] = useState(null);
 
     // Initialize selectedTickets state based on passed data
     useEffect(() => {
         if (selectedTicketIds && eventData?.tickets) {
             const ticketQuantities = {};
+            const enhancedTickets = [];
 
-            // Convert ID-based selection to name-based selection
-            eventData.tickets.forEach(ticket => {
+            // Convert ID-based selection to name-based selection and create enhanced ticket data
+            eventData.tickets.forEach((ticket) => {
                 const quantity = selectedTicketIds[ticket.id] || 0;
                 ticketQuantities[ticket.name] = quantity;
+
+                // Only include tickets with quantity > 0
+                if (quantity > 0) {
+                    enhancedTickets.push({
+                        ...ticket,
+                        quantity: quantity
+                    });
+                }
             });
 
             setSelectedTickets(ticketQuantities);
+            setTicketsWithQuantities(enhancedTickets);
         }
     }, [selectedTicketIds, eventData]);
 
-    // Function to format time as mm:ss
-    const formatTime = (seconds) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    };
+    // console.log('Selected Tickets:', selectedTickets);
+    // console.log('Tickets with Quantities:', ticketsWithQuantities);
+    // console.log('Event Data:', eventData);
 
     // Navigate to the next page
-    const goToNextPage = () => {
-        if (currentPage === 'booking') setCurrentPage('payment');
-        else if (currentPage === 'payment') setCurrentPage('confirmation');
+    const goToNextPage = (data) => {
+        if (currentPage === 'payment') {
+            setResponseData(data);
+            setCurrentPage('confirmation');
+        } else if (currentPage === 'booking') {
+            setCurrentPage('payment');
+        }
     };
 
-    // Navigate to the previous page
+    // Navigate to the previous page with modified logic for summary page
     const goToPreviousPage = () => {
-        if (currentPage === 'payment') setCurrentPage('booking');
-        else if (currentPage === 'confirmation') setCurrentPage('payment');
-    };
+        if (currentPage === 'payment') {
+            setCurrentPage('booking');
+        } else if (currentPage === 'confirmation' || currentPage === 'booking') {
+            navigate(-1); // Go back 2 steps in history to reach event detail page
+        };
+    }
 
     // Remove a ticket from selection
     const removeTicket = (ticketName) => {
@@ -61,6 +78,11 @@ export default function MainPurchase() {
             ...prev,
             [ticketName]: 0
         }));
+
+        // Also remove from ticketsWithQuantities
+        setTicketsWithQuantities(prev =>
+            prev.filter(ticket => ticket.name !== ticketName)
+        );
     };
 
     // Get ticket details by name
@@ -95,7 +117,7 @@ export default function MainPurchase() {
     // Show loading or error if data is not available
     if (!eventData || !selectedTicketIds) {
         return (
-            <div className="max-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <p className="text-gray-600">Loading purchase data...</p>
                 </div>
@@ -122,17 +144,13 @@ export default function MainPurchase() {
                     total={calculateTotal()}
                     formatCurrency={formatCurrency}
                     goToNextPage={goToNextPage}
-                    eventData={eventData}
+                    eventData={{ ...eventData, tickets: ticketsWithQuantities }} // Pass enhanced tickets
                 />;
             case 'confirmation':
                 return <SummaryPage
-                    selectedTickets={selectedTickets}
-                    subtotals={calculateSubtotals()}
-                    total={calculateTotal()}
+                    responseData={responseData}
                     formatCurrency={formatCurrency}
-                    timer={formatTime(paymentTimer)}
-                    eventData={eventData}
-                    getTicketByName={getTicketByName}
+                    getTicketById={(id) => eventData.tickets.find(ticket => ticket.id === id)}
                 />;
             default:
                 return null;
@@ -142,7 +160,11 @@ export default function MainPurchase() {
     return (
         <div className="max-h-screen">
             {/* Header */}
-            <Header currentPage={currentPage} goToPreviousPage={goToPreviousPage} eventData={eventData} />
+            <Header
+                currentPage={currentPage}
+                goToPreviousPage={goToPreviousPage}
+                eventData={eventData}
+            />
 
             {/* Progress Indicator */}
             <ProgressIndicator currentPage={currentPage} />
@@ -155,15 +177,24 @@ export default function MainPurchase() {
     );
 }
 
-// Header component
-function Header({ eventData }) {
+// Header component with modified back button behavior
+function Header({ eventData, goToPreviousPage, currentPage }) {
+    // Different button text based on current page
+    const getBackButtonText = () => {
+        if (currentPage === 'confirmation') {
+            return 'Back to Event';
+        }
+        return 'Back';
+    };
+
     return (
         <div className="bg-white shadow-sm">
             <div className="container mx-auto max-w-6xl px-4 py-4">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => window.history.back()}
+                        onClick={goToPreviousPage}
                         className="flex items-center justify-center w-10 h-10 rounded-full bg-teal-500 text-white hover:bg-teal-600 transition-colors"
+                        title={getBackButtonText()}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -172,11 +203,13 @@ function Header({ eventData }) {
 
                     <div>
                         <p className="text-gray-600 text-sm">
-                            <span className="text-gray-700 hover:text-teal-600 cursor-pointer underline">
-                                {eventData?.name || 'Event Mid Sea Shore'}
+                            <span className="text-gray-700 hover:text-teal-600 cursor-pointer">
+                                {eventData.name}
                             </span>
                             {' / '}
-                            <span className="text-gray-700">Ticket Purchase</span>
+                            <span className="text-gray-700">
+                                {currentPage === 'confirmation' ? 'Purchase Complete' : 'Ticket Purchase'}
+                            </span>
                         </p>
                     </div>
                 </div>
@@ -185,12 +218,27 @@ function Header({ eventData }) {
     );
 }
 
-// Progress Indicator component
+// Progress Indicator component with modified step completion logic
 function ProgressIndicator({ currentPage }) {
     const steps = [
-        { id: 'booking', label: 'Booking', active: currentPage === 'booking', complete: currentPage === 'payment' || currentPage === 'confirmation' },
-        { id: 'payment', label: 'Payment', active: currentPage === 'payment', complete: currentPage === 'confirmation' },
-        { id: 'ticket', label: 'Your Ticket', active: currentPage === 'confirmation', complete: false }
+        {
+            id: 'booking',
+            label: 'Booking',
+            active: currentPage === 'booking',
+            complete: currentPage === 'payment' || currentPage === 'confirmation'
+        },
+        {
+            id: 'payment',
+            label: 'Payment',
+            active: currentPage === 'payment',
+            complete: currentPage === 'confirmation'
+        },
+        {
+            id: 'ticket',
+            label: 'Your Ticket',
+            active: currentPage === 'confirmation',
+            complete: false
+        }
     ];
 
     return (
