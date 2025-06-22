@@ -50,6 +50,14 @@ export const beachApi = {
         });
         return response.json();
     },
+    getWishlist: async () => {
+        const response = await fetch(`${BASE_URL}/beaches/wishlist`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
     addBeachReviews: async (review: FormData) => {
         const response = await fetch(`${BASE_URL}/beaches/reviews`, {
             method: 'POST',

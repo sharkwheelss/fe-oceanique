@@ -22,6 +22,7 @@ interface Api {
     beach: {
         getAllBeaches: () => Promise<any>;
         getListOptions: () => Promise<any>;
+        getWishlist: () => Promise<any>;
         getBeachDetails: (id: string) => Promise<any>;
         getBeachReviews: (id: string) => Promise<any>;
         getDetailsReview: (reviewId: string) => Promise<any>;

@@ -103,8 +103,15 @@ export interface BeachReviewsResponse {
 
 // Main BeachDetailPage component
 export default function BeachDetailPage() {
-    // Get beach data from context
-    const { getBeachDetails, getBeachReviews, loading } = useBeaches();
+    // Get beach data from context - Added wishlist methods
+    const {
+        getBeachDetails,
+        getBeachReviews,
+        addToWishlist,
+        removeFromWishlist,
+        checkWishlistStatus,
+        loading
+    } = useBeaches();
     const { user } = useAuth();
     const navigate = useNavigate();
 
@@ -113,6 +120,7 @@ export default function BeachDetailPage() {
     const [beachData, setBeachData] = useState<Beach | null>(null);
     const [beachReviews, setBeachReviews] = useState<BeachReviewsResponse | null>(null);
     const [isWishlisted, setIsWishlisted] = useState(false);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
 
     // Get beachId from URL params (you might need to adjust this based on your routing)
     const beachId = new URLSearchParams(window.location.search).get('id') ||
@@ -133,24 +141,66 @@ export default function BeachDetailPage() {
 
                 setBeachData(beach);
                 setBeachReviews(reviews);
+
+                // Check wishlist status after beach data is loaded
+                if (user?.id && beach?.id) {
+                    await checkWishlistStatusHandler(beach.id.toString());
+                }
             } catch (error) {
                 console.error('Error fetching beaches:', error);
             }
         };
 
         fetchBeachData();
-    }, [beachId]);
+    }, [beachId, user?.id]);
 
     console.log('beach data:', beachData?.id)
     console.log('review data:', beachReviews)
 
     // Wishlist management functions
-    const checkWishlistStatus = async (beachId: string) => {
-        console.log('Check status: ', beachId)
+    const checkWishlistStatusHandler = async (beachId: string) => {
+        if (!user?.id) return;
+
+        try {
+            console.log('Check status: ', beachId);
+            // Assuming checkWishlistStatus returns boolean or an object indicating wishlist status
+            const status = await checkWishlistStatus(user.id, parseInt(beachId));
+            setIsWishlisted(!!status); // Convert to boolean
+        } catch (error) {
+            console.error('Error checking wishlist status:', error);
+        }
     };
 
     const toggleWishlist = async () => {
-        console.log('toogle wishlist clicked')
+        if (!user?.id || !beachData?.id) {
+            // Redirect to login if user is not authenticated
+            navigate('/login');
+            return;
+        }
+
+        setWishlistLoading(true);
+
+        try {
+            console.log('Toggle wishlist clicked');
+
+            if (isWishlisted) {
+                // Remove from wishlist
+                await removeFromWishlist(user.id, beachData.id);
+                setIsWishlisted(false);
+                console.log('Removed from wishlist');
+            } else {
+                // Add to wishlist
+                await addToWishlist(user.id, beachData.id);
+                setIsWishlisted(true);
+                console.log('Added to wishlist');
+            }
+        } catch (error) {
+            console.error('Error toggling wishlist:', error);
+            // Optionally show error message to user
+            alert('Failed to update wishlist. Please try again.');
+        } finally {
+            setWishlistLoading(false);
+        }
     };
 
     // Handler for changing active tab
@@ -187,11 +237,23 @@ export default function BeachDetailPage() {
                     {/* Wishlist button */}
                     <button
                         onClick={toggleWishlist}
-                        className={`flex items-center px-6 py-3 rounded-full ${isWishlisted ? 'bg-red-500' : 'bg-teal-500'
-                            } text-white font-medium hover:bg-opacity-90 transition-colors`}
+                        disabled={wishlistLoading}
+                        className={`flex items-center px-6 py-3 rounded-full ${isWishlisted
+                                ? 'bg-red-500 hover:bg-red-600'
+                                : 'bg-teal-500 hover:bg-teal-600'
+                            } text-white font-medium transition-colors ${wishlistLoading ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                     >
-                        <Heart size={20} className={`mr-2 ${isWishlisted ? 'fill-current' : ''}`} />
-                        {isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                        <Heart
+                            size={20}
+                            className={`mr-2 ${isWishlisted ? 'fill-current' : ''}`}
+                        />
+                        {wishlistLoading
+                            ? 'Updating...'
+                            : isWishlisted
+                                ? 'Remove from wishlist'
+                                : 'Save to wishlist'
+                        }
                     </button>
                 </div>
             </div>
