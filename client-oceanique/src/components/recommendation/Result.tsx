@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useRecommendation } from '../../context/RecommendationContext';
+import { useBeaches } from '../../context/BeachContext';
 
 interface BeachesView {
     id: number;
@@ -22,9 +23,8 @@ interface BeachesView {
     image: string;
     description?: string;
     amenities: Array<{
-        type: string;
-        count: number;
-        icon: string;
+        option_name: string;
+        id: number;
     }>;
 }
 
@@ -47,27 +47,45 @@ interface ApiBeachData {
 }
 
 interface Review {
-    id: number;
+    review_id: number;
+    user_id: number;
     username: string;
-    userType: string;
+    join_date: number;
     rating: number;
-    date: string;
-    content: string;
-    images: string[];
-    tags: string[];
-    experienced?: boolean;
+    user_review: string;
+    posted: string;
+    experience: number;
+    contents: Array<{
+        id: number;
+        path: string;
+        img_path: string;
+    }>;
+    option_votes: Array<{
+        id: number;
+        option_name: string;
+        reviews_id: number;
+    }>;
+    user_profile?: {
+        id: number;
+        path: string;
+        img_path: string;
+    };
 }
 
-// interface RecommendationData {
-//     destinations: Destination[];
-//     reviews: Review[];
-//     // Add other fields that your API returns
-// }
+interface ReviewApiResponse {
+    message: string;
+    data: Array<{
+        users_vote: number;
+        rating_average: number;
+        reviews: Review[];
+    }>;
+}
 
 export default function RecommendationResult() {
     const navigate = useNavigate();
     const location = useLocation();
     const { beachRecommendation } = useRecommendation();
+    const { getBeachReviews } = useBeaches();
 
     // State for current active destination (for pagination)
     const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
@@ -86,20 +104,32 @@ export default function RecommendationResult() {
                 const stateData = location.state?.recommendationData;
                 const userOptions = location.state?.userOptions;
 
-                console.log('stateData: ', stateData)
-                console.log('userOptions: ', userOptions)
+                // console.log('stateData: ', stateData);
+                // console.log('userOptions: ', userOptions);
+
+                let recommendationData;
+                let reviewData;
 
                 if (stateData) {
                     // Use data from navigation state
-                    processRecommendationData(stateData);
+                    recommendationData = stateData;
                 } else if (userOptions) {
                     // Fetch data using userOptions
-                    const recommendationData = await beachRecommendation({ userOptions });
-                    processRecommendationData(recommendationData);
+                    recommendationData = await beachRecommendation({ userOptions });
                 } else {
                     // No data available, might need to redirect back to questions
                     setError('No recommendation data available. Please complete the questionnaire first.');
+                    return;
                 }
+
+                // Fetch reviews for the first beach (or you can fetch for all beaches)
+                if (recommendationData?.data && recommendationData.data.length > 0) {
+                    const firstBeachId = recommendationData.data[0].beach_id;
+                    reviewData = await getBeachReviews(firstBeachId);
+                    console.log('Review data:', reviewData);
+                }
+
+                processRecommendationData(recommendationData, reviewData);
             } catch (error) {
                 console.error('Error loading recommendation data:', error);
                 setError('Failed to load recommendations. Please try again.');
@@ -112,19 +142,30 @@ export default function RecommendationResult() {
     }, [location.state, beachRecommendation]);
 
     // Transform API beach data to component format
-    const transformApiBeachToDestination = (apiBeach: ApiBeachData): BeachesView => {
+    const transformApiBeachToDestination = (apiBeach: ApiBeachData, reviewOptions: any[] = []): BeachesView => {
+        // Get unique option votes for amenities
+        const uniqueOptions = reviewOptions.reduce((acc, option) => {
+            if (!acc.find(item => item.option_name === option.option_name)) {
+                acc.push({
+                    option_name: option.option_name,
+                    id: option.id
+                });
+            }
+            return acc;
+        }, [] as Array<{ option_name: string; id: number }>);
+
         return {
             id: apiBeach.id,
             name: apiBeach.beach_name,
             location: `${apiBeach.kecamatan}, ${apiBeach.kota}, ${apiBeach.province}`,
-            rating: apiBeach.rating_average || 4.0, // Default to 4.0 if 0
-            reviews: Math.floor(Math.random() * 100) + 50, // Generate random review count since not provided
+            rating: apiBeach.rating_average,
+            reviews: Math.floor(Math.random() * 100) + 50,
             priceRange: apiBeach.estimate_price,
             matchPercentage: apiBeach.match_percentage,
-            distance: calculateDistance(apiBeach.latitude, apiBeach.longitude), // You may want to implement this
-            amenities: generateSampleAmenities(), // Generate sample amenities since not provided by API
-            eventAvailable: Math.random() > 0.5, // Random event availability
-            image: 'https://picsum.photos/id/13/2500/1667', // Generate placeholder image
+            distance: calculateDistance(parseFloat(apiBeach.latitude), parseFloat(apiBeach.longitude)),
+            amenities: uniqueOptions,
+            eventAvailable: Math.random() > 0.5,
+            image: 'https://picsum.photos/id/13/2500/1667',
             description: apiBeach.descriptions
         };
     };
@@ -140,39 +181,35 @@ export default function RecommendationResult() {
         return Math.floor(Math.random() * 100) + 5;
     };
 
-    // // Generate sample amenities since not provided by API
-    const generateSampleAmenities = () => {
-        const possibleAmenities = [
-            { type: 'Restaurant', count: Math.floor(Math.random() * 5) + 1, icon: '🍽️' },
-            { type: 'Parking', count: Math.floor(Math.random() * 3) + 1, icon: '🅿️' },
-            { type: 'Toilet', count: Math.floor(Math.random() * 4) + 1, icon: '🚻' },
-            { type: 'Shower', count: Math.floor(Math.random() * 3) + 1, icon: '🚿' },
-            { type: 'Shop', count: Math.floor(Math.random() * 3) + 1, icon: '🏪' },
-            { type: 'Mosque', count: Math.floor(Math.random() * 2) + 1, icon: '🕌' }
-        ];
-
-        // Return 4-6 random amenities
-        const shuffled = possibleAmenities.sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, Math.floor(Math.random() * 3) + 4);
-    };
 
     // Process the API response data
-    const processRecommendationData = (data: any) => {
+    const processRecommendationData = (data: any, reviewData: any) => {
         console.log('Processing API data:', data);
+        console.log('Processing review data:', reviewData[0]?.reviews);
 
         try {
             let processedDestinations: BeachesView[] = [];
+            let allReviews: Review[] = [];
+
+            // Extract reviews if available
+            if (Array.isArray(reviewData) && reviewData.length > 0 && Array.isArray(reviewData[0].reviews)) {
+                allReviews = reviewData[0].reviews;
+                setReviews(allReviews);
+            }
+
+            // Get all option votes from reviews for amenities
+            const allOptionVotes = allReviews.flatMap(review => review.option_votes || []);
 
             // Handle different possible response structures
             if (data.data && Array.isArray(data.data)) {
                 // API returns { data: [...] }
                 processedDestinations = data.data.map((beach: ApiBeachData) =>
-                    transformApiBeachToDestination(beach)
+                    transformApiBeachToDestination(beach, allOptionVotes)
                 );
             } else if (Array.isArray(data)) {
                 // API returns array directly
                 processedDestinations = data.map((beach: ApiBeachData) =>
-                    transformApiBeachToDestination(beach)
+                    transformApiBeachToDestination(beach, allOptionVotes)
                 );
             } else if (data.destinations && Array.isArray(data.destinations)) {
                 // Legacy format support
@@ -180,7 +217,7 @@ export default function RecommendationResult() {
             } else if (data.results && Array.isArray(data.results)) {
                 // Another possible format
                 processedDestinations = data.results.map((beach: ApiBeachData) =>
-                    transformApiBeachToDestination(beach)
+                    transformApiBeachToDestination(beach, allOptionVotes)
                 );
             } else {
                 console.warn('Unexpected API response format:', data);
@@ -193,43 +230,28 @@ export default function RecommendationResult() {
             console.log('Processed destinations:', processedDestinations);
             setDestinations(processedDestinations);
 
-            // Handle reviews
-            if (data.reviews && Array.isArray(data.reviews)) {
-                setReviews(data.reviews);
-            } else {
-                // Use sample reviews if not provided by API
-                setReviews(getSampleReviews());
-            }
         } catch (error) {
             console.error('Error processing recommendation data:', error);
             setError('Failed to process recommendation data.');
         }
     };
 
-    // Sample reviews fallback
-    const getSampleReviews = (): Review[] => [
-        {
-            id: 1,
-            username: "Abi 123",
-            userType: "The Adventurer",
-            rating: 5,
-            date: "05 March 2024",
-            content: "Amazing place to visit! The scenery was breathtaking and the facilities were well-maintained. Highly recommend for anyone looking for a great getaway.",
-            images: ["https://picsum.photos/id/13/2500/1667", "https://picsum.photos/id/13/2500/1667"],
-            tags: ["Swimming", "Big Bus", "Surfing", "Toilet", "Mosque", "Rainy", "Rp 25k"]
-        },
-        {
-            id: 2,
-            username: "Rudi 456",
-            userType: "The Scenic Soul",
-            rating: 4,
-            date: "05 March 2024",
-            content: "Great experience overall. The location is perfect and the amenities are satisfactory. Would definitely come back again with family.",
-            images: ["https://picsum.photos/id/13/2500/1667", "https://picsum.photos/id/13/2500/1667"],
-            tags: ["Swimming", "Big Bus", "Surfing", "Toilet", "Mosque", "Rainy", "Rp 25k"],
-            experienced: true
-        }
-    ];
+    // Transform API review to component format
+    const transformApiReviewToComponent = (review: Review) => {
+        return {
+            id: review.review_id,
+            username: review.username,
+            userType: review.experience > 0 ? "Experienced User" : "Regular User",
+            rating: review.rating,
+            date: review.posted,
+            content: review.user_review,
+            images: review.contents?.map(content => content.img_path) || [],
+            tags: review.option_votes?.map(vote => vote.option_name) || [],
+            experienced: review.experience > 0
+        };
+    };
+
+
 
     // Function to handle navigation between destinations
     const handleNavigation = (direction: 'next' | 'prev') => {
@@ -428,20 +450,20 @@ export default function RecommendationResult() {
                     </div>
                 )}
 
-                {/* Amenities */}
+                {/* Amenities/Options */}
                 {amenityRows.length > 0 && (
                     <div className="mb-6">
                         {amenityRows.map((row, rowIndex) => (
                             <div key={`row-${rowIndex}`} className="flex gap-2 mb-2">
                                 {row.map((amenity, index) => (
                                     <div
-                                        key={`${amenity.type}-${rowIndex}-${index}`}
+                                        key={`${amenity.option_name}-${rowIndex}-${index}`}
                                         className="flex-1 border border-gray-200 rounded-md py-2 px-4 flex items-center justify-center gap-2"
                                     >
                                         <span className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
                                             <span className="text-green-600 text-xs">✓</span>
                                         </span>
-                                        <span className="text-sm">{amenity.type} {amenity.count && `(${amenity.count})`}</span>
+                                        <span className="text-sm">{amenity.option_name}</span>
                                     </div>
                                 ))}
                             </div>
@@ -460,74 +482,83 @@ export default function RecommendationResult() {
                     </div>
 
                     {/* Review Cards */}
-                    {reviews.map(review => (
-                        <div key={review.id} className="p-4 border-b">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
-                                        {/* User avatar would go here */}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold">{review.username}</p>
-                                        <div className="bg-gray-100 rounded-full px-3 py-1 text-xs text-gray-700 mt-1">
-                                            {review.userType}
+                    {reviews.map(review => {
+                        // Transform API review to component format if needed
+                        const displayReview = review.review_id ? transformApiReviewToComponent(review) : review;
+
+                        return (
+                            <div key={displayReview.id} className="p-4 border-b">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+                                            {review.user_profile?.img_path ? (
+                                                <img
+                                                    src={review.user_profile.img_path}
+                                                    alt="User profile"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : null}
                                         </div>
-                                        {review.experienced && (
-                                            <div className="flex items-center gap-1 mt-1 text-xs text-blue-600">
-                                                <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                                                <span>from experienced user</span>
+                                        <div>
+                                            <p className="font-bold">{displayReview.username}</p>
+                                            <div className="bg-gray-100 rounded-full px-3 py-1 text-xs text-gray-700 mt-1">
+                                                {displayReview.userType}
                                             </div>
-                                        )}
+                                            {displayReview.experienced && (
+                                                <div className="flex items-center gap-1 mt-1 text-xs text-blue-600">
+                                                    <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                                                    <span>from experienced user</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col items-end gap-1">
+                                        <div className="flex items-center gap-1">
+                                            {renderStarRating(displayReview.rating)}
+                                            <span className="text-sm">{displayReview.rating} / 5</span>
+                                        </div>
+                                        <p className="text-xs text-gray-500">(Posted at {displayReview.date})</p>
+                                        
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col items-end gap-1">
-                                    <div className="flex items-center gap-1">
-                                        {renderStarRating(review.rating)}
-                                        <span className="text-sm">{review.rating} / 5</span>
-                                    </div>
-                                    <p className="text-xs text-gray-500">(Posted at {review.date})</p>
-                                    <button className="mt-2">
-                                        <ThumbsUp size={20} />
-                                    </button>
+                                {/* Review Content */}
+                                <div className="mb-4">
+                                    {displayReview.images && displayReview.images.length > 0 && (
+                                        <div className="flex gap-2 mb-3">
+                                            {displayReview.images.map((img, index) => (
+                                                <img
+                                                    key={index}
+                                                    src={img}
+                                                    alt={`Review image ${index + 1}`}
+                                                    className="w-16 h-16 rounded object-cover"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = "/api/placeholder/100/100";
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                    <p className="text-sm text-gray-700">{displayReview.content}</p>
                                 </div>
-                            </div>
 
-                            {/* Review Content */}
-                            <div className="mb-4">
-                                {review.images && review.images.length > 0 && (
-                                    <div className="flex gap-2 mb-3">
-                                        {review.images.map((img, index) => (
-                                            <img
-                                                key={index}
-                                                src={img}
-                                                alt={`Review image ${index + 1}`}
-                                                className="w-16 h-16 rounded object-cover"
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).src = "/api/placeholder/100/100";
-                                                }}
-                                            />
+                                {/* Review Tags */}
+                                {displayReview.tags && displayReview.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {displayReview.tags.map((tag, index) => (
+                                            <div key={index} className="flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs">
+                                                <span className="w-3 h-3 bg-green-100 rounded-full flex items-center justify-center">
+                                                    <span className="text-green-600 text-xs">✓</span>
+                                                </span>
+                                                <span>{tag}</span>
+                                            </div>
                                         ))}
                                     </div>
                                 )}
-                                <p className="text-sm text-gray-700">{review.content}</p>
                             </div>
-
-                            {/* Review Tags */}
-                            {review.tags && review.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                    {review.tags.map((tag, index) => (
-                                        <div key={index} className="flex items-center gap-1 bg-gray-50 rounded-full px-3 py-1 text-xs">
-                                            <span className="w-3 h-3 bg-green-100 rounded-full flex items-center justify-center">
-                                                <span className="text-green-600 text-xs">✓</span>
-                                            </span>
-                                            <span>{tag}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

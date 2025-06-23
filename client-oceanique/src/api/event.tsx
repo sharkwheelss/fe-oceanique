@@ -35,4 +35,13 @@ export const eventApi = {
         });
         return response.json();
     },
+    verifyPrivateCode: async (privateCode: string, ticketId: number) => {
+        const response = await fetch(`${BASE_URL}/events/verify-private-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ privateCode, ticketId })
+        });
+        return response.json();
+    }
 }

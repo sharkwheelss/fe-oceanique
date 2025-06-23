@@ -98,9 +98,7 @@ export default function UserProfilePage() {
             <div className="rounded-lg overflow-hidden mb-6">
                 {/* Gradient header */}
                 <div className="h-16 bg-gradient-to-r from-teal-400 to-gray-400 flex justify-end items-center px-4">
-                    <button className="text-white flex items-center text-sm font-medium">
-                        Log out <ChevronRight size={16} className="ml-1" />
-                    </button>
+                    
                 </div>
 
                 {/* Profile info */}

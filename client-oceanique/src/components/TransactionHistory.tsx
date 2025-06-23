@@ -311,7 +311,7 @@ const TransactionHistoryPage = () => {
                                 )}
                             </div>
                             <div className="text-right">
-                                <div className="text-gray-700">Payment ID: {transactionId}</div>
+                                <div className="text-gray-700">GRPTRX-{transactionId}</div>
                                 <div className="text-orange-500 mt-1">
                                     {ticket.quantity} ticket(s)
                                 </div>
@@ -355,7 +355,7 @@ const TransactionHistoryPage = () => {
 
                         {/* ID */}
                         <div className="mt-2 text-sm text-gray-500">
-                            ID: {ticket.ticketId}
+                            IDTRX-{ticket.ticketId}
                         </div>
                     </div>
                 </div>

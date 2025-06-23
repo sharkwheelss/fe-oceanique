@@ -8,7 +8,7 @@ interface User {
     email: string;
     user_types_id: number;
     user_personality_id?: number | null;
-    avatar?: string;
+    imgProfile?: string;
 }
 
 interface AuthContextType {

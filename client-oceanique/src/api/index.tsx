@@ -34,6 +34,7 @@ interface Api {
         getTransactionHistory: () => Promise<any>;
         getEventDetails: (eventId: string) => Promise<any>;
         newBooking: (booking: FormData) => Promise<any>;
+        verifyPrivateCode: (privateCode: string, ticketId: number) => Promise<any>;
     };
 }
 

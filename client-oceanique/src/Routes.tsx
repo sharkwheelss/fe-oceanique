@@ -56,9 +56,11 @@ export default function OceaniqueRoutes() {
                     </RecommendationProvider>
                 } />
                 <Route path="/recommendation-result" element={
-                    <RecommendationProvider>
-                        <Result />
-                    </RecommendationProvider>
+                    <BeachProvider>
+                        <RecommendationProvider>
+                            <Result />
+                        </RecommendationProvider>
+                    </BeachProvider>
                 } />
 
                 <Route path="/beaches" element={

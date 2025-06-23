@@ -68,6 +68,8 @@ export interface PrivateCodeModalProps {
     onClose: () => void;
     onSubmit: (code: string) => void;
     ticketName: string;
+    isLoading: boolean;
+    error: string | null;
 }
 
 // Interface for event ticket page props (if needed)
@@ -84,31 +86,62 @@ export type EventStatusConfig = {
 };
 
 // Private Code Modal Component
-const PrivateCodeModal: React.FC<PrivateCodeModalProps> = ({ isOpen, onClose, onSubmit, ticketName }) => {
+const PrivateCodeModal: React.FC<PrivateCodeModalProps> = ({
+    isOpen,
+    onClose,
+    onSubmit,
+    ticketName,
+    isLoading,
+    error
+}) => {
     const [privateCode, setPrivateCode] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (privateCode.trim()) {
+        if (privateCode.trim() && !isLoading) {
             onSubmit(privateCode);
-            setPrivateCode('');
         }
     };
+
+    const handleClose = () => {
+        if (!isLoading) {
+            setPrivateCode('');
+            onClose();
+        }
+    };
+
+    // Reset error when code changes
+    useEffect(() => {
+        if (privateCode && error) {
+            // Clear error when user starts typing again
+        }
+    }, [privateCode]);
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white border border-gray-300 rounded-lg max-w-md w-full p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">Enter Private Code</h3>
-                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
+                    <button
+                        onClick={handleClose}
+                        className="p-1 rounded-full hover:bg-gray-100"
+                        disabled={isLoading}
+                    >
                         <X className="h-5 w-5" />
                     </button>
                 </div>
                 <p className="text-gray-600 text-sm mb-4">
                     {ticketName} requires a private code to purchase.
                 </p>
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-red-600 text-sm">{error}</p>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     <input
                         type="text"
@@ -117,21 +150,27 @@ const PrivateCodeModal: React.FC<PrivateCodeModalProps> = ({ isOpen, onClose, on
                         placeholder="Enter private code"
                         className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 mb-4"
                         autoFocus
+                        disabled={isLoading}
                     />
                     <div className="flex gap-3">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                            disabled={isLoading}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            disabled={!privateCode.trim()}
-                            className="flex-1 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 disabled:bg-gray-300"
+                            disabled={!privateCode.trim() || isLoading}
+                            className="flex-1 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 disabled:bg-gray-300 flex items-center justify-center"
                         >
-                            Submit
+                            {isLoading ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : (
+                                'Submit'
+                            )}
                         </button>
                     </div>
                 </form>
@@ -149,9 +188,11 @@ export default function EventTicketPage() {
     const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [privateCodeLoading, setPrivateCodeLoading] = useState(false);
+    const [privateCodeError, setPrivateCodeError] = useState<string | null>(null);
 
     const navigate = useNavigate();
-    const { getEventDetails } = useEvents();
+    const { getEventDetails, verifyPrivateCode } = useEvents();
     const { eventId } = useParams();
 
     // Fetch event data and initialize ticket quantities
@@ -247,6 +288,7 @@ export default function EventTicketPage() {
         if (ticket.private_code && tickets[ticket.id] === 0) {
             // Show private code modal for first increment of private tickets
             setCurrentTicket(ticket);
+            setPrivateCodeError(null); // Clear any previous errors
             setShowPrivateCodeModal(true);
         } else if (!ticket.is_sold_out && tickets[ticket.id] < ticket.remaining_tickets) {
             setTickets(prevTickets => ({
@@ -267,20 +309,44 @@ export default function EventTicketPage() {
     };
 
     // Handler for private code submission
-    const handlePrivateCodeSubmit = (code: string) => {
-        // Here you would validate the private code with your API
-        console.log('Private code submitted:', code, 'for ticket:', currentTicket?.name);
+    const handlePrivateCodeSubmit = async (code: string) => {
+        if (!currentTicket) return;
 
-        // For now, we'll assume the code is valid and increment the ticket
-        if (currentTicket) {
-            setTickets(prevTickets => ({
-                ...prevTickets,
-                [currentTicket.id]: prevTickets[currentTicket.id] + 1
-            }));
+        try {
+            setPrivateCodeLoading(true);
+            setPrivateCodeError(null);
+
+            console.log('Verifying private code:', code, 'for ticket:', currentTicket.id);
+
+            const response = await verifyPrivateCode(code.toString(), currentTicket.id);
+
+            // Check if verification was successful
+            // Adjust this condition based on your API response structure
+            if (response && (response.success || response.valid || response.message === 'Private code is valid')) {
+                // Code is valid, increment the ticket
+                setTickets(prevTickets => ({
+                    ...prevTickets,
+                    [currentTicket.id]: prevTickets[currentTicket.id] + 1
+                }));
+
+                // Close modal and reset state
+                setShowPrivateCodeModal(false);
+                setCurrentTicket(null);
+                setPrivateCodeError(null);
+
+                console.log('Private code verified successfully');
+            } else {
+                // Code is invalid
+                const errorMessage = response?.message || 'Invalid private code. Please try again.';
+                setPrivateCodeError(errorMessage);
+                console.log('Private code verification failed:', errorMessage);
+            }
+        } catch (err) {
+            console.error('Error verifying private code:', err);
+            setPrivateCodeError('Failed to verify private code. Please try again.');
+        } finally {
+            setPrivateCodeLoading(false);
         }
-
-        setShowPrivateCodeModal(false);
-        setCurrentTicket(null);
     };
 
     // Loading state
@@ -506,9 +572,12 @@ export default function EventTicketPage() {
                 onClose={() => {
                     setShowPrivateCodeModal(false);
                     setCurrentTicket(null);
+                    setPrivateCodeError(null);
                 }}
                 onSubmit={handlePrivateCodeSubmit}
-                ticketName={currentTicket?.name}
+                ticketName={currentTicket?.name || ''}
+                isLoading={privateCodeLoading}
+                error={privateCodeError}
             />
         </div>
     );

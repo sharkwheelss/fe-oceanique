@@ -25,6 +25,7 @@ export interface Beach {
     province: string;
     path: string;
     img_path: string;
+    count_reviews: number;
     activities: Activity[];
     facilities: Facility[];
     contents: BeachContent[];
@@ -276,7 +277,7 @@ export default function BeachDetailPage() {
                         <div className="flex items-center mb-2">
                             <Star size={20} className="text-yellow-400 fill-current" />
                             <span className="ml-2 font-semibold">
-                                {beachData.rating_average} ({beachData.reviews?.length || 0} reviews)
+                                {beachData.rating_average} ({beachData.count_reviews} reviews)
                             </span>
                         </div>
 

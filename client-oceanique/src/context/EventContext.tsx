@@ -9,6 +9,7 @@ interface EventContextType {
     getTransactionHistory: () => Promise<any>;
     getEventDetails: (eventId: string) => Promise<any>;
     newBooking: (booking: FormData) => Promise<any>;
+    verifyPrivateCode: (privateCode: string, ticketId: number) => Promise<any>;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -69,6 +70,19 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
+    const verifyPrivateCode = async (privateCode: string, ticketId: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.event.verifyPrivateCode(privateCode, ticketId);
+            return response;
+        } catch (err) {
+            setError('Failed to verify private code');
+            console.error('Error verifying private code:', err);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const value = {
         loading,
@@ -76,7 +90,8 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
         getAllEvents,
         getTransactionHistory,
         getEventDetails,
-        newBooking
+        newBooking,
+        verifyPrivateCode
     };
 
     return (
