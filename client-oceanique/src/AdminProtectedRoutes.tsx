@@ -6,7 +6,7 @@ interface AdminProtectedRouteProps {
     adminType?: 'cms' | 'event';
 }
 
-const AdminProtectedRoute = ({ adminType }: AdminProtectedRouteProps) => {
+const AdminProtectedRoute = ({ adminType = 'event' }: AdminProtectedRouteProps) => {
     const { isAuthenticated, isLoading, isAdminCMS, isAdminEvent } = useAuth();
     const location = useLocation();
 

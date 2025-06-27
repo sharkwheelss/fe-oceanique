@@ -15,7 +15,7 @@ const navItems = [
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, isAdminCMS, isAdminEvent, isCust } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -40,30 +40,33 @@ const Navbar: React.FC = () => {
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center" onClick={() => navigate('/home')}>
-          <img src="/logo.png" alt="Oceanique Logo" className="h-10 w-10 mr-2 hover: cursor-pointer" />
-          <span className="text-teal-500 font-semibold text-xl font-sharemono hover: cursor-pointer">Oceanique</span>
-        </div>
+        {isCust && (
+          <div className="flex items-center" onClick={() => navigate('/home')}>
+            <img src="/logo.png" alt="Oceanique Logo" className="h-10 w-10 mr-2 hover: cursor-pointer" />
+            <span className="text-teal-500 font-semibold text-xl font-sharemono hover: cursor-pointer">Oceanique</span>
+          </div>
+        )}
 
         {/* Desktop Navigation Menu */}
         <nav className="hidden md:flex space-x-8">
-          {navItems.map(({ label, path }) => {
-            const isActive = location.pathname === path;
-            return (
-              <a
-                key={path}
-                href={path}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(path);
-                }}
-                className={`hover:text-teal-500 text-shadow-xs transition-colors duration-200 ${isActive ? 'text-teal-500 text-shadow-xs' : 'text-gray-400'
-                  }`}
-              >
-                {label}
-              </a>
-            );
-          })}
+          {isCust &&
+            navItems.map(({ label, path }: { label: string; path: string }) => {
+              const isActive = location.pathname === path;
+              return (
+                <a
+                  key={path}
+                  href={path}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(path);
+                  }}
+                  className={`hover:text-teal-500 text-shadow-xs transition-colors duration-200 ${isActive ? 'text-teal-500 text-shadow-xs' : 'text-gray-400'
+                    }`}
+                >
+                  {label}
+                </a>
+              );
+            })}
         </nav>
 
         {/* Desktop User Section */}
@@ -76,7 +79,7 @@ const Navbar: React.FC = () => {
                   className="flex items-center space-x-2"
                 >
                   <img
-                    src={user?.imgProfile || 'profile-placeholder.png'}
+                    src={user?.imgProfile}
                     alt="Profile"
                     className="w-8 h-8 rounded-full"
                   />
@@ -158,21 +161,25 @@ const Navbar: React.FC = () => {
         }`}>
         <div className="px-4 py-2 space-y-1">
           {/* Navigation Items */}
-          {navItems.map(({ label, path }) => {
-            const isActive = location.pathname === path;
-            return (
-              <button
-                key={path}
-                onClick={() => handleMobileNavClick(path)}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${isActive
-                  ? 'text-teal-500 bg-teal-50'
-                  : 'text-gray-700 hover:text-teal-500 hover:bg-gray-50'
-                  }`}
-              >
-                {label}
-              </button>
-            );
-          })}
+          {isCust &&
+            navItems.map(
+              ({ label, path }: { label: string; path: string }) => {
+                const isActive = location.pathname === path;
+                return (
+                  <button
+                    key={path}
+                    onClick={() => handleMobileNavClick(path)}
+                    className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 ${isActive
+                      ? 'text-teal-500 bg-teal-50'
+                      : 'text-gray-700 hover:text-teal-500 hover:bg-gray-50'
+                      }`}
+                  >
+                    {label}
+                  </button>
+                );
+              }
+            )
+          }
 
           {/* Divider */}
           <div className="border-t border-gray-200 my-2"></div>
@@ -182,7 +189,7 @@ const Navbar: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center px-3 py-2">
                 <img
-                  src={user?.avatar || 'profile-placeholder.png'}
+                  src={user?.imgProfile}
                   alt="Profile"
                   className="w-8 h-8 rounded-full mr-3"
                 />
@@ -239,33 +246,34 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
-          <div
-            className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-popup"
-            style={{
-              animation: 'popup 0.3s cubic-bezier(0.22, 1, 0.36, 1)'
-            }}
-          >
-            <h3 className="text-2xl font-bold mb-4 text-gray-800">Confirm Logout</h3>
-            <p className="mb-6 text-gray-700">Are you sure you want to logout?</p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={confirmLogout}
-                className="px-6 py-2 text-white rounded transition-colors bg-teal-500 hover:bg-teal-600"
-              >
-                Yes, Logout
-              </button>
-              <button
-                onClick={() => setShowLogoutConfirm(false)}
-                className="px-6 py-2 text-gray-700 rounded transition-colors bg-gray-200 hover:bg-gray-300"
-              >
-                Cancel
-              </button>
+      {
+        showLogoutConfirm && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
+            <div
+              className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-popup"
+              style={{
+                animation: 'popup 0.3s cubic-bezier(0.22, 1, 0.36, 1)'
+              }}
+            >
+              <h3 className="text-2xl font-bold mb-4 text-gray-800">Confirm Logout</h3>
+              <p className="mb-6 text-gray-700">Are you sure you want to logout?</p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={confirmLogout}
+                  className="px-6 py-2 text-white rounded transition-colors bg-teal-500 hover:bg-teal-600"
+                >
+                  Yes, Logout
+                </button>
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="px-6 py-2 text-gray-700 rounded transition-colors bg-gray-200 hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
-          <style>
-            {`
+            <style>
+              {`
             @keyframes popup {
               0% {
                 opacity: 0;
@@ -280,10 +288,11 @@ const Navbar: React.FC = () => {
               animation: popup 0.3s cubic-bezier(0.22, 1, 0.36, 1);
             }
           `}
-          </style>
-        </div>
-      )}
-    </header>
+            </style>
+          </div>
+        )
+      }
+    </header >
   );
 };
 

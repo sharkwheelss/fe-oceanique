@@ -15,7 +15,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     user: User | null;
-    isAdmin: boolean; // Any admin
+    isCust: boolean; // customer
     isAdminCMS: boolean; // CMS admin
     isAdminEvent: boolean; // Event admin
     checkSession: () => Promise<User | null>;
@@ -29,7 +29,8 @@ interface AuthContextType {
     login: (
         emailOrUsername: string,
         password: string
-    ) => Promise<{ success: boolean; message?: string }>;
+    ) => Promise<{ success: boolean; message?: string; user?: User; token?: string }>;
+    completeLogin: (user: User, token: string) => void;
     logout: () => void;
 }
 
@@ -45,9 +46,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<User | null>(null);
 
     // Helper functions to determine user roles based on user_types_id
+    const isCust = user?.user_types_id === 1; // customer
     const isAdminCMS = user?.user_types_id === 2; // admin cms
     const isAdminEvent = user?.user_types_id === 3; // admin event
-    const isAdmin = isAdminCMS || isAdminEvent; // Any admin
 
     useEffect(() => {
         checkSession();
@@ -109,7 +110,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const login = async (
         emailOrUsername: string,
         password: string
-    ): Promise<{ success: boolean; message?: string }> => {
+    ): Promise<{ success: boolean; message?: string; user?: User; token?: string }> => {
         try {
             const data = await api.auth.login({
                 login: emailOrUsername,
@@ -122,17 +123,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 throw new Error(message);
             }
 
-            setIsAuthenticated(true);
-            setUser(data.user);
-            localStorage.setItem('token', data.token);
-
-            return { success: true };
+            // Don't set auth state yet - return data for validation
+            return {
+                success: true,
+                user: data.user,
+                token: data.token
+            };
         } catch (error: any) {
             return {
                 success: false,
                 message: error.message || 'Something went wrong. Please try again.',
             };
         }
+    };
+
+    // Add method to complete login after validation
+    const completeLogin = (user: User, token: string) => {
+        setIsAuthenticated(true);
+        setUser(user);
+        localStorage.setItem('token', token);
     };
 
     const logout = async () => {
@@ -152,12 +161,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
             isAuthenticated,
             isLoading,
             user,
-            isAdmin,
+            isCust,
             isAdminCMS,
             isAdminEvent,
             checkSession,
             signup,
             login,
+            completeLogin,
             logout
         }}>
             {children}
