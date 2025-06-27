@@ -44,6 +44,8 @@ export default function OceaniqueRoutes() {
                 </div>
             } />
             <Route path="/signin" element={<Signin />} />
+            <Route path="/admincms-signin" element={<Signin />} />
+            <Route path="/adminevent-signin" element={<Signin />} />
             <Route path="/signup" element={<Signup />} />
 
             {/* Protected routes for regular users */}

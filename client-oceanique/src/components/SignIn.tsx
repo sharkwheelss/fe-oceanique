@@ -8,10 +8,36 @@ const Signin = () => {
     const [emailOrUsername, setEmailOrUsername] = useState('');
     const [password, setPassword] = useState('');
     const { login } = useAuth();
+    const navigate = useNavigate();
 
     const [showSuccess, setShowSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
+    // Function to get title based on current path
+    const getPageTitle = () => {
+        switch (location.pathname) {
+            case '/signin':
+                return {
+                    title: 'Discover Breathtaking Indonesian Shores with ',
+                    subtitle: '– Try our recommendation now!',
+                    img: '/cust-signin.png'
+                };
+            case '/admincms-signin':
+                return {
+                    title: 'Content Management System of ',
+                    subtitle: '- Manage the content effortlessly!',
+                    img: '/admincms-signin.png'
+                };
+            case '/adminevent-signin':
+                return {
+                    title: 'Event Admin Hub of ',
+                    subtitle: '- Share your events with the world!',
+                    img: '/adminevent-signin.png'
+                };
+        }
+    };
+
+    const { title, subtitle, img } = getPageTitle();
 
     const handleSubmit = async () => {
         const result = await login(emailOrUsername, password);
@@ -30,12 +56,12 @@ const Signin = () => {
             {/* Left side */}
             <div className="md:w-1/2 flex flex-col justify-center p-8">
                 <h1 className="text-3xl font-bold mb-4">
-                    Discover Breathtaking Indonesian Shores with <span className="text-teal-500 font-sharemono">Oceanique</span>
+                    {title}<span className="text-teal-500 font-sharemono">Oceanique</span>
                 </h1>
-                <p className="text-xl mb-6">– Try our recommendation now!</p>
+                <p className="text-xl mb-6 italic">{subtitle}</p>
                 <div className="max-w-md mx-auto">
                     <img
-                        src="/cust-signin.png"
+                        src={img}
                         alt="Beach illustration"
                         className="w-full h-auto"
                     />
@@ -78,19 +104,29 @@ const Signin = () => {
                         Sign in
                     </button>
 
-                    <div className="text-center mt-6">
-                        <p>
-                            Don't have an account?
-                            <Link to="/signup" className="text-teal-500 ml-1 hover:underline">
-                                Register here
-                            </Link>
-                        </p>
-                    </div>
+                    {location.pathname === '/signin' && (
+                        <div className="text-center mt-6">
+                            <p>
+                                Don't have an account?
+                                <Link to="/signup" className="text-teal-500 ml-1 hover:underline">
+                                    Register here
+                                </Link>
+                            </p>
+                        </div>
+                    )}
 
-                    {/* <div className="mt-6 text-center">
-                        <p className="text-gray-500">or continue with</p>
-                        <GoogleBtn text="Sign in with Google" />
-                    </div> */}
+                    {location.pathname === '/signin' && (
+                        <div className="mt-6 text-center">
+                            <p className="text-gray-500 mb-6">Are you the one who held event?</p>
+                            <button
+                                onClick={() => navigate('/adminevent-signin')}
+                                className="w-full py-3 bg-gray-300 text-gray-700 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                            >
+                                Sign in here!
+                            </button>
+                        </div>
+                    )}
+
 
                     {/* Pop-up Messages */}
                     {showSuccess && (
