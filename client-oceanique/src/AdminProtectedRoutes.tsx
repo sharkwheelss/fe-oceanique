@@ -2,12 +2,9 @@ import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import NotFound from './components/NotFound';
 
-interface AdminProtectedRouteProps {
-    adminType?: 'cms' | 'event';
-}
 
-const AdminProtectedRoute = ({ adminType = 'event' }: AdminProtectedRouteProps) => {
-    const { isAuthenticated, isLoading, isAdminCMS, isAdminEvent } = useAuth();
+const AdminProtectedRoute = ({ adminType = 'any' }) => {
+    const { isAuthenticated, isLoading, isAdminCMS, isAdminEvent, isAdmin } = useAuth();
     const location = useLocation();
 
     if (isLoading) {
@@ -32,6 +29,9 @@ const AdminProtectedRoute = ({ adminType = 'event' }: AdminProtectedRouteProps) 
             break;
         case 'event':
             hasAccess = isAdminEvent;
+            break;
+        default:
+            hasAccess = isAdmin;
             break;
     }
 

@@ -23,14 +23,12 @@ import Questions from './components/recommendation/Questions';
 import ProtectedRoutes from './ProtectedRoutes';
 import AdminProtectedRoute from './AdminProtectedRoutes';
 
-// Import your admin components
+// admin components
 import AdminDashboard from './components/admin_page/AdminDashboard';
-// import AdminUsers from './components/admin_page/AdminUsers';
-// import AdminBeaches from './components/admin_page/AdminBeaches';
-// import AdminEvents from './components/admin_page/AdminEvents';
-// import AdminReviews from './components/admin_page/AdminReviews';
-// import AdminCMSDashboard from './components/admin_page/AdminCMSDashboard';
-// import AdminEventDashboard from './components/admin_page/AdminEventDashboard';
+import AdminEvent from './components/admin_page/admin_event/Events';
+import AdminTicket from './components/admin_page/admin_event/Tickets';
+import AdminTransReport from './components/admin_page/admin_event/TransactionReport';
+
 
 export default function OceaniqueRoutes() {
     return (
@@ -146,19 +144,11 @@ export default function OceaniqueRoutes() {
             </Route> */}
 
             {/* Admin Event routes - Only for Event admins */}
-            {/* <Route element={<AdminProtectedRoute adminType="event" />}>
-                <Route path="/admin/events" element={<AdminEventDashboard />} />
-                <Route path="/admin/events/manage" element={
-                    <EventProvider>
-                        <AdminEvents />
-                    </EventProvider>
-                } />
-                <Route path="/admin/events/create" element={
-                    <EventProvider>
-                        <AdminEvents />
-                    </EventProvider>
-                } />
-            </Route> */}
+            <Route element={<AdminProtectedRoute adminType="event" />}>
+                <Route path="/admin/events" element={<AdminEvent />} />
+                <Route path="/admin/events/tickets" element={<AdminTicket />} />
+                <Route path="/admin/events/transactions-report" element={<AdminTransReport />} />
+            </Route>
 
             {/* Catch-all route for 404 Not Found */}
             <Route path="*" element={<NotFound />} />

@@ -18,6 +18,7 @@ interface AuthContextType {
     isCust: boolean; // customer
     isAdminCMS: boolean; // CMS admin
     isAdminEvent: boolean; // Event admin
+    isAdmin: boolean;
     checkSession: () => Promise<User | null>;
     signup: (
         username: string,
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const isCust = user?.user_types_id === 1; // customer
     const isAdminCMS = user?.user_types_id === 2; // admin cms
     const isAdminEvent = user?.user_types_id === 3; // admin event
+    const isAdmin = isAdminCMS || isAdminEvent;
 
     useEffect(() => {
         checkSession();
@@ -164,6 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             isCust,
             isAdminCMS,
             isAdminEvent,
+            isAdmin,
             checkSession,
             signup,
             login,
