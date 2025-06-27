@@ -6,7 +6,9 @@ import { eventApi } from './event';
 interface Api {
     auth: {
         checkSession: () => Promise<any>;
-        signup: (userData: { username: string; email: string; password: string; confirmPassword: string }) => Promise<any>;
+        signup: (userData:
+            { username: string; email: string; password: string; confirmPassword: string; userTypesId: number }
+        ) => Promise<any>;
         login: (credentials: { login: string; password: string }) => Promise<any>;
         logout: () => Promise<any>;
     };

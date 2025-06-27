@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import GoogleBtn from './GoogleBtn';
 import PassInput from './PassInput';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Signup = () => {
@@ -14,9 +14,38 @@ const Signup = () => {
     const [showSuccess, setShowSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // Function to get page content and userTypeId based on current path
+    const getPageContent = () => {
+        switch (location.pathname) {
+            case '/signup':
+                return {
+                    title: 'Your Indonesian Beach Escape Starts Here',
+                    subtitle: '– Join Oceanique Now!',
+                    img: '/cust-signup.png',
+                    userTypeId: 1,
+                    signinLink: '/signin',
+                    signinText: 'Sign in here'
+                };
+            case '/adminevent-signup':
+                return {
+                    title: 'Join as Event Organizer',
+                    subtitle: '– Share your events with the world!',
+                    img: '/adminevent-signin.png',
+                    userTypeId: 3,
+                    signinLink: '/adminevent-signin',
+                    signinText: 'Sign in as event organizer'
+                };
+        }
+    };
+
+    const { title, subtitle, img, userTypeId, signinLink, signinText } = getPageContent();
+
     // Handle form submission
     const handleSubmit = async () => {
-        const result = await signup(username, email, password, confirmPassword);
+        const result = await signup(username, email, password, confirmPassword, userTypeId);
         if (result.success) {
             setShowSuccess(true);
             setErrorMessage('');
@@ -85,34 +114,49 @@ const Signup = () => {
                     <div className="text-center mt-6">
                         <p>
                             Already have an account?
-                            <Link to="/signin" className="text-teal-500 ml-1 hover:underline">
-                                Sign in here
+                            <Link to={signinLink} className="text-teal-500 ml-1 hover:underline">
+                                {signinText}
                             </Link>
                         </p>
                     </div>
 
-                    {/* Or continue with */}
-                    <div className="mt-6 text-center">
-                        <p className="text-gray-500">or continue with</p>
-
-                        {/* Google Sign Up */}
-                        {/* <GoogleBtn text='Sign up with Google' /> */}
-                    </div>
+                    {/* Additional navigation for customer signup */}
+                    {location.pathname === '/signup' && (
+                        <div className="mt-6 text-center">
+                            <p className="text-gray-500 mb-6">Are you organizing events?</p>
+                            <button
+                                onClick={() => navigate('/adminevent-signup')}
+                                className="w-full py-3 bg-gray-300 text-gray-700 rounded hover:bg-gray-500 hover:text-white transition-colors"
+                            >
+                                Sign up as event organizer!
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Right side with illustration and text */}
             <div className="md:w-1/2 flex flex-col justify-center p-8">
                 <h1 className="text-3xl font-bold mb-4">
-                    Your Indonesian Beach Escape Starts Here
+                    {title}
                 </h1>
-                <p className="text-xl mb-6">– Join <span className="text-teal-500 font-sharemono">Oceanique</span> Now!</p>
+                <p className="text-xl mb-6">
+                    {subtitle.includes('Oceanique') ? (
+                        <>
+                            {subtitle.split('Oceanique')[0]}
+                            <span className="text-teal-500 font-sharemono">Oceanique</span>
+                            {subtitle.split('Oceanique')[1]}
+                        </>
+                    ) : (
+                        subtitle
+                    )}
+                </p>
 
-                {/* Beach vacation illustration */}
+                {/* Illustration */}
                 <div className="max-w-md ml-auto">
                     <img
-                        src="/cust-signup.png"
-                        alt="Beach vacation illustration"
+                        src={img}
+                        alt="Signup illustration"
                         className="w-full h-auto"
                     />
                 </div>
@@ -124,7 +168,7 @@ const Signup = () => {
                     type="success"
                     title="Sign Up Successful!"
                     message={`Welcome to Oceanique!`}
-                    navigate='/signin'
+                    navigate={signinLink}
                     handleResponse={() => setShowSuccess(false)}
                 />
             )}
@@ -133,7 +177,7 @@ const Signup = () => {
                     type="error"
                     title="Sign Up Failed!"
                     message={errorMessage}
-                    navigate='/signup'
+                    navigate={location.pathname}
                     handleResponse={() => setErrorMessage('')}
                 />
             )}
@@ -179,7 +223,7 @@ const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, nav
                     onClick={() => {
                         handleResponse();
                         if (type === 'success') {
-                            window.location.href = '/signin';
+                            window.location.href = navigate;
                         }
                     }}
                     className={`px-6 py-2 text-white rounded transition-colors ${styles[type].button}`}

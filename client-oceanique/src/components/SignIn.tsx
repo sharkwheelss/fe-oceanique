@@ -104,16 +104,14 @@ const Signin = () => {
                         Sign in
                     </button>
 
-                    {location.pathname === '/signin' && (
-                        <div className="text-center mt-6">
-                            <p>
-                                Don't have an account?
-                                <Link to="/signup" className="text-teal-500 ml-1 hover:underline">
-                                    Register here
-                                </Link>
-                            </p>
-                        </div>
-                    )}
+                    <div className="text-center mt-6">
+                        <p>
+                            Don't have an account?
+                            <Link to="/signup" className="text-teal-500 ml-1 hover:underline">
+                                Register here
+                            </Link>
+                        </p>
+                    </div>
 
                     {location.pathname === '/signin' && (
                         <div className="mt-6 text-center">

@@ -46,7 +46,9 @@ export default function OceaniqueRoutes() {
             <Route path="/signin" element={<Signin />} />
             <Route path="/admincms-signin" element={<Signin />} />
             <Route path="/adminevent-signin" element={<Signin />} />
+
             <Route path="/signup" element={<Signup />} />
+            <Route path="/adminevent-signup" element={<Signup />} />
 
             {/* Protected routes for regular users */}
             <Route element={<ProtectedRoutes />}>
@@ -123,7 +125,7 @@ export default function OceaniqueRoutes() {
             </Route>
 
             {/* Admin routes - General admin access */}
-            <Route element={<AdminProtectedRoute adminType="any" />}>
+            <Route element={<AdminProtectedRoute />}>
                 <Route path="/admin" element={<AdminDashboard />} />
             </Route>
 

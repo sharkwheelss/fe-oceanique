@@ -23,7 +23,8 @@ interface AuthContextType {
         username: string,
         email: string,
         password: string,
-        confirmPassword: string
+        confirmPassword: string,
+        userTypesId: number
     ) => Promise<{ success: boolean; message?: string }>;
     login: (
         emailOrUsername: string,
@@ -78,7 +79,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         username: string,
         email: string,
         password: string,
-        confirmPassword: string
+        confirmPassword: string,
+        userTypesId: number
     ): Promise<{ success: boolean; message?: string }> => {
         try {
             const data = await api.auth.signup({
@@ -86,6 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 email,
                 password,
                 confirmPassword,
+                userTypesId
             });
 
             if (data.errors || !data.user) {

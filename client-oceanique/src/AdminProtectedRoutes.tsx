@@ -1,12 +1,13 @@
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import NotFound from './components/NotFound';
 
 interface AdminProtectedRouteProps {
-    adminType?: 'cms' | 'event' | 'any';
+    adminType?: 'cms' | 'event';
 }
 
-const AdminProtectedRoute = ({ adminType = 'any' }: AdminProtectedRouteProps) => {
-    const { isAuthenticated, isLoading, isAdmin, isAdminCMS, isAdminEvent } = useAuth();
+const AdminProtectedRoute = ({ adminType }: AdminProtectedRouteProps) => {
+    const { isAuthenticated, isLoading, isAdminCMS, isAdminEvent } = useAuth();
     const location = useLocation();
 
     if (isLoading) {
@@ -17,8 +18,10 @@ const AdminProtectedRoute = ({ adminType = 'any' }: AdminProtectedRouteProps) =>
         );
     }
 
-    if (!isAuthenticated) {
-        return <Navigate to="/signin" state={{ from: location }} replace />;
+    if (!isAuthenticated && !isAdminEvent) {
+        return <Navigate to="/adminevent-signin" state={{ from: location }} replace />;
+    } else if (!isAuthenticated && !isAdminCMS) {
+        return <Navigate to="/admincms-signin" state={{ from: location }} replace />;
     }
 
     // Check specific admin permissions
@@ -30,17 +33,10 @@ const AdminProtectedRoute = ({ adminType = 'any' }: AdminProtectedRouteProps) =>
         case 'event':
             hasAccess = isAdminEvent;
             break;
-        case 'any':
-        default:
-            hasAccess = isAdmin;
-            break;
     }
 
     if (!hasAccess) {
-        // Redirect non-admin users to home or show unauthorized page
-        return <Navigate to="/home" replace />;
-        // Or you could show an unauthorized component:
-        // return <Unauthorized />;
+        return <NotFound />;
     }
 
     return <Outlet />;

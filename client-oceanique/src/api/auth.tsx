@@ -1,7 +1,7 @@
 const BASE_URL = 'http://localhost:5000/api';
 
 export const authApi = {
-    signup: async (userData: { username: string; email: string; password: string; confirmPassword: string }) => {
+    signup: async (userData: { username: string; email: string; password: string; confirmPassword: string, userTypesId: number }) => {
         const response = await fetch(`${BASE_URL}/auth/signup`, {
             method: 'POST',
             headers: {
@@ -12,7 +12,8 @@ export const authApi = {
                 username: userData.username,
                 email: userData.email,
                 password: userData.password,
-                confirmPassword: userData.confirmPassword
+                confirmPassword: userData.confirmPassword,
+                userTypesId: userData.userTypesId
             })
         });
         return response.json();
