@@ -8,13 +8,16 @@ interface User {
     email: string;
     user_types_id: number;
     user_personality_id?: number | null;
-    imgProfile?: string;
+    avatar?: string;
 }
 
 interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     user: User | null;
+    isAdmin: boolean; // Any admin
+    isAdminCMS: boolean; // CMS admin
+    isAdminEvent: boolean; // Event admin
     checkSession: () => Promise<User | null>;
     signup: (
         username: string,
@@ -39,6 +42,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
+
+    // Helper functions to determine user roles based on user_types_id
+    const isAdminCMS = user?.user_types_id === 2; // admin cms
+    const isAdminEvent = user?.user_types_id === 3; // admin event
+    const isAdmin = isAdminCMS || isAdminEvent; // Any admin
 
     useEffect(() => {
         checkSession();
@@ -137,7 +145,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, isLoading, user, checkSession, signup, login, logout }}>
+        <AuthContext.Provider value={{
+            isAuthenticated,
+            isLoading,
+            user,
+            isAdmin,
+            isAdminCMS,
+            isAdminEvent,
+            checkSession,
+            signup,
+            login,
+            logout
+        }}>
             {children}
         </AuthContext.Provider>
     );

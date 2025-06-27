@@ -485,7 +485,7 @@ const BeachCard: React.FC<{ beach: Beach }> = ({ beach }) => {
                     <Star size={16} className="text-yellow-400 fill-current" />
                     <span className="ml-1 text-sm">
                         {beach.rating_average > 0 ? beach.rating_average.toFixed(1) : 'No rating'}
-                        {beach.rating_average > 0 && ' (Reviews)'}
+                        {beach.rating_average > 0 && ' / 5.0'}
                     </span>
                 </div>
 

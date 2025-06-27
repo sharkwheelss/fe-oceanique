@@ -96,7 +96,7 @@ const Signup = () => {
                         <p className="text-gray-500">or continue with</p>
 
                         {/* Google Sign Up */}
-                        <GoogleBtn text='Sign up with Google' />
+                        {/* <GoogleBtn text='Sign up with Google' /> */}
                     </div>
                 </div>
             </div>

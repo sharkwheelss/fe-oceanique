@@ -21,6 +21,16 @@ import EditProfile from './components/EditProfile';
 import PreferenceRank from './components/recommendation/PreferenceRank';
 import Questions from './components/recommendation/Questions';
 import ProtectedRoutes from './ProtectedRoutes';
+import AdminProtectedRoute from './AdminProtectedRoutes';
+
+// Import your admin components
+import AdminDashboard from './components/admin_page/AdminDashboard';
+// import AdminUsers from './components/admin_page/AdminUsers';
+// import AdminBeaches from './components/admin_page/AdminBeaches';
+// import AdminEvents from './components/admin_page/AdminEvents';
+// import AdminReviews from './components/admin_page/AdminReviews';
+// import AdminCMSDashboard from './components/admin_page/AdminCMSDashboard';
+// import AdminEventDashboard from './components/admin_page/AdminEventDashboard';
 
 export default function OceaniqueRoutes() {
     return (
@@ -36,7 +46,7 @@ export default function OceaniqueRoutes() {
             <Route path="/signin" element={<Signin />} />
             <Route path="/signup" element={<Signup />} />
 
-            {/* Protected routes */}
+            {/* Protected routes for regular users */}
             <Route element={<ProtectedRoutes />}>
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/edit-profile" element={<EditProfile />} />
@@ -56,11 +66,9 @@ export default function OceaniqueRoutes() {
                     </RecommendationProvider>
                 } />
                 <Route path="/recommendation-result" element={
-                    <BeachProvider>
-                        <RecommendationProvider>
-                            <Result />
-                        </RecommendationProvider>
-                    </BeachProvider>
+                    <RecommendationProvider>
+                        <Result />
+                    </RecommendationProvider>
                 } />
 
                 <Route path="/beaches" element={
@@ -111,6 +119,42 @@ export default function OceaniqueRoutes() {
                     </EventProvider>
                 } />
             </Route>
+
+            {/* Admin routes - General admin access */}
+            <Route element={<AdminProtectedRoute adminType="any" />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+
+            {/* Admin CMS routes - Only for CMS admins */}
+            {/* <Route element={<AdminProtectedRoute adminType="cms" />}>
+                <Route path="/admin/cms" element={<AdminCMSDashboard />} />
+                <Route path="/admin/cms/users" element={<AdminUsers />} />
+                <Route path="/admin/cms/beaches" element={
+                    <BeachProvider>
+                        <AdminBeaches />
+                    </BeachProvider>
+                } />
+                <Route path="/admin/cms/reviews" element={
+                    <BeachProvider>
+                        <AdminReviews />
+                    </BeachProvider>
+                } />
+            </Route> */}
+
+            {/* Admin Event routes - Only for Event admins */}
+            {/* <Route element={<AdminProtectedRoute adminType="event" />}>
+                <Route path="/admin/events" element={<AdminEventDashboard />} />
+                <Route path="/admin/events/manage" element={
+                    <EventProvider>
+                        <AdminEvents />
+                    </EventProvider>
+                } />
+                <Route path="/admin/events/create" element={
+                    <EventProvider>
+                        <AdminEvents />
+                    </EventProvider>
+                } />
+            </Route> */}
 
             {/* Catch-all route for 404 Not Found */}
             <Route path="*" element={<NotFound />} />

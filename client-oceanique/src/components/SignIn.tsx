@@ -87,10 +87,10 @@ const Signin = () => {
                         </p>
                     </div>
 
-                    <div className="mt-6 text-center">
+                    {/* <div className="mt-6 text-center">
                         <p className="text-gray-500">or continue with</p>
                         <GoogleBtn text="Sign in with Google" />
-                    </div>
+                    </div> */}
 
                     {/* Pop-up Messages */}
                     {showSuccess && (
