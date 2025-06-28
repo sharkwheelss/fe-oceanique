@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Search, Check, X, Eye, Calendar, Users, CreditCard, Clock, CheckCircle, XCircle, ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Check, X, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 interface Transaction {
     id: string;
@@ -23,15 +24,19 @@ interface Transaction {
     rejectionReason?: string;
 }
 
-const TransactionReport: React.FC = () => {
-    const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
-    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-    const [searchTerm, setSearchTerm] = useState('');
+const TransactionDetail = () => {
+    const navigate = useNavigate();
+    const { transactionId } = useParams(); // Get transaction ID from URL parameters
+
+    // State variables
+    const [transaction, setTransaction] = useState<Transaction | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
 
-    // Sample data
-    const [transactions, setTransactions] = useState<Transaction[]>([
+    // Sample data - replace with actual API call
+    const sampleTransactions: Transaction[] = [
         {
             id: '1',
             paymentId: '5245143414',
@@ -82,109 +87,63 @@ const TransactionReport: React.FC = () => {
             ],
             totalPayment: 300000,
             totalTickets: 2
-        },
-        {
-            id: '3',
-            paymentId: '5245143412',
-            createdAt: '02 Februari 09:00',
-            bookedBy: 'Ryyan Ramadhan',
-            status: 'approved',
-            bookedAt: '02 Februari 2025',
-            paymentMethod: 'BCA VA',
-            tickets: [
-                {
-                    bookingId: '078340554',
-                    ticketName: 'Ticket JKL',
-                    ticketCategory: 'VIP 1',
-                    ticketPrice: 200000,
-                    totalTickets: 1,
-                    subtotal: 200000
-                }
-            ],
-            totalPayment: 200000,
-            totalTickets: 1
-        },
-        {
-            id: '4',
-            paymentId: '0123781741',
-            createdAt: '01 Januari 13:30',
-            bookedBy: 'Ryyan Ramadhan',
-            status: 'rejected',
-            bookedAt: '01 Januari 2024',
-            paymentMethod: 'BCA VA',
-            tickets: [
-                {
-                    bookingId: '078340555',
-                    ticketName: 'Ticket MNO',
-                    ticketCategory: 'Regular',
-                    ticketPrice: 100000,
-                    totalTickets: 1,
-                    subtotal: 100000
-                }
-            ],
-            totalPayment: 100000,
-            totalTickets: 1,
-            rejectionReason: 'Invalid payment evidence provided'
         }
-    ]);
+    ];
 
-    const handleStatusChange = (transactionId: string, newStatus: 'approved' | 'rejected', reason?: string) => {
-        setTransactions(prev =>
-            prev.map(transaction =>
-                transaction.id === transactionId
-                    ? { ...transaction, status: newStatus, rejectionReason: reason }
-                    : transaction
-            )
-        );
+    useEffect(() => {
+        const fetchTransactionDetails = async () => {
+            if (!transactionId) {
+                setError('Transaction ID is required');
+                setLoading(false);
+                return;
+            }
 
-        if (selectedTransaction?.id === transactionId) {
-            setSelectedTransaction(prev => prev ? { ...prev, status: newStatus, rejectionReason: reason } : null);
+            try {
+                setLoading(true);
+                setError(null);
+
+                // Simulate API call - replace with actual API call
+                setTimeout(() => {
+                    const foundTransaction = sampleTransactions.find(t => t.id === transactionId);
+                    if (foundTransaction) {
+                        setTransaction(foundTransaction);
+                    } else {
+                        setError('Transaction not found');
+                    }
+                    setLoading(false);
+                }, 1000);
+
+            } catch (error) {
+                console.error('Error fetching transaction details:', error);
+                setError('Failed to load transaction details. Please try again.');
+                setLoading(false);
+            }
+        };
+
+        fetchTransactionDetails();
+    }, [transactionId]);
+
+    const handleStatusChange = (newStatus: 'approved' | 'rejected', reason?: string) => {
+        if (transaction) {
+            const updatedTransaction = {
+                ...transaction,
+                status: newStatus,
+                rejectionReason: reason
+            };
+            setTransaction(updatedTransaction);
+
+            // Here you would typically make an API call to update the transaction status
+            console.log('Updating transaction status:', { transactionId, newStatus, reason });
         }
     };
 
     const handleReject = () => {
-        if (selectedTransaction && rejectionReason.trim()) {
-            handleStatusChange(selectedTransaction.id, 'rejected', rejectionReason);
+        if (transaction && rejectionReason.trim()) {
+            handleStatusChange('rejected', rejectionReason);
             setShowRejectModal(false);
             setRejectionReason('');
         }
     };
-
-    const handleView = (transaction: Transaction) => {
-        setSelectedTransaction(transaction);
-        setCurrentView('detail');
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'approved':
-                return 'bg-green-100 text-green-800';
-            case 'rejected':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'pending':
-                return <Clock className="w-4 h-4" />;
-            case 'approved':
-                return <CheckCircle className="w-4 h-4" />;
-            case 'rejected':
-                return <XCircle className="w-4 h-4" />;
-            default:
-                return <Clock className="w-4 h-4" />;
-        }
-    };
-
-    const filteredTransactions = transactions.filter(transaction =>
-        transaction.paymentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.bookedBy.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -194,125 +153,123 @@ const TransactionReport: React.FC = () => {
         }).format(amount);
     };
 
-    const TransactionListView = () => (
-        <div className="px-8 py-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <h1 className="text-2xl font-semibold text-gray-900">Transaction Report</h1>
-            </div>
-
-            {/* Search Bar */}
-            <div className="mb-6">
-                <div className="relative w-80">
-                    <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                    />
-                </div>
-            </div>
-
-            {/* Table */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    PAYMENT ID
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    CREATED AT
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    BOOKED BY
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    TOTAL AMOUNT
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    STATUS
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    ACTIONS
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white">
-                            {filteredTransactions.length === 0 ? (
-                                <tr>
-                                    <td colSpan="6" className="px-6 py-16 text-center text-gray-500">
-                                        No transactions found
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredTransactions.map((transaction, index) => (
-                                    <tr key={transaction.id} className={`border-b border-gray-100 hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                            {transaction.paymentId}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">
-                                            {transaction.createdAt}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-900">
-                                            {transaction.bookedBy}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                                            {formatCurrency(transaction.totalPayment)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center">
-                                                <div className={`w-2 h-2 rounded-full mr-2 ${transaction.status === 'approved' ? 'bg-green-500' :
-                                                    transaction.status === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'
-                                                    }`}></div>
-                                                <span className="text-sm text-gray-700 capitalize">
-                                                    {transaction.status}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => handleView(transaction)}
-                                                    className="p-1 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded"
-                                                    title="View Details"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    );
-
-    const TransactionDetailView = () => {
-        if (!selectedTransaction) return null;
-
+    // Loading state
+    if (loading) {
         return (
-            <div className="px-8 py-6">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+            <div className="flex-1 bg-gray-50">
+                <div className="bg-white border-b border-gray-200 px-8 py-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <button
+                                onClick={() => navigate('/admin/tickets/transactions-report')}
+                                className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <h1 className="text-2xl font-semibold text-gray-800">Transaction Detail</h1>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-8">
+                    <div className="bg-white rounded-lg shadow-sm p-8">
+                        <div className="animate-pulse">
+                            <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+                            <div className="h-8 bg-gray-200 rounded mb-6"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+                            <div className="h-20 bg-gray-200 rounded mb-6"></div>
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="h-8 bg-gray-200 rounded"></div>
+                                <div className="h-8 bg-gray-200 rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="flex-1 bg-gray-50">
+                <div className="bg-white border-b border-gray-200 px-8 py-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <button
+                                onClick={() => navigate('/admin/tickets/transactions-report')}
+                                className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <h1 className="text-2xl font-semibold text-gray-800">Transaction Detail</h1>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-8">
+                    <div className="bg-white rounded-lg shadow-sm p-8">
+                        <div className="text-center py-12">
+                            <div className="text-red-500 text-lg font-medium mb-2">Error</div>
+                            <div className="text-gray-600 mb-4">{error}</div>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // No transaction data
+    if (!transaction) {
+        return (
+            <div className="flex-1 bg-gray-50">
+                <div className="bg-white border-b border-gray-200 px-8 py-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <button
+                                onClick={() => navigate('/admin/tickets/transactions-report')}
+                                className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                            </button>
+                            <h1 className="text-2xl font-semibold text-gray-800">Transaction Detail</h1>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-8">
+                    <div className="bg-white rounded-lg shadow-sm p-8">
+                        <div className="text-center py-12">
+                            <div className="text-gray-500 text-lg">Transaction not found</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Main component render
+    return (
+        <div className="flex-1 bg-gray-50">
+            <div className="bg-white border-b border-gray-200 px-8 py-6">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center">
                         <button
-                            onClick={() => setCurrentView('list')}
+                            onClick={() => navigate('/admin/tickets/transactions-report')}
                             className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5 text-gray-600" />
                         </button>
-                        <h1 className="text-2xl font-semibold text-gray-900">Transaction Detail</h1>
+                        <h1 className="text-2xl font-semibold text-gray-800">Transaction Detail</h1>
                     </div>
                 </div>
+            </div>
 
-                <div className="bg-white rounded-lg border border-gray-200 p-8">
+            <div className="p-8">
+                <div className="bg-white rounded-lg shadow-sm p-8">
                     <div className="space-y-8">
                         {/* Transaction Basic Info */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -320,21 +277,21 @@ const TransactionReport: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Payment ID
                                 </label>
-                                <div className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-700 border border-gray-200">
-                                    {selectedTransaction.paymentId}
+                                <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
+                                    {transaction.paymentId}
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Status
                                 </label>
-                                <div className="w-full px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="w-full px-3 py-2 bg-gray-100 rounded-lg border border-gray-200">
                                     <div className="flex items-center">
-                                        <div className={`w-2 h-2 rounded-full mr-2 ${selectedTransaction.status === 'approved' ? 'bg-green-500' :
-                                            selectedTransaction.status === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'
+                                        <div className={`w-2 h-2 rounded-full mr-2 ${transaction.status === 'approved' ? 'bg-green-500' :
+                                            transaction.status === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'
                                             }`}></div>
                                         <span className="text-sm text-gray-700 capitalize">
-                                            {selectedTransaction.status}
+                                            {transaction.status}
                                         </span>
                                     </div>
                                 </div>
@@ -343,8 +300,8 @@ const TransactionReport: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Created At
                                 </label>
-                                <div className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-700 border border-gray-200">
-                                    {selectedTransaction.createdAt}
+                                <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
+                                    {transaction.createdAt}
                                 </div>
                             </div>
                         </div>
@@ -354,30 +311,30 @@ const TransactionReport: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Booked by
                                 </label>
-                                <div className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-700 border border-gray-200">
-                                    {selectedTransaction.bookedBy}
+                                <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
+                                    {transaction.bookedBy}
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Booked at
                                 </label>
-                                <div className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-700 border border-gray-200">
-                                    {selectedTransaction.bookedAt}
+                                <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
+                                    {transaction.bookedAt}
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Payment Method
                                 </label>
-                                <div className="w-full px-3 py-2 bg-gray-50 rounded-lg text-gray-700 border border-gray-200">
-                                    {selectedTransaction.paymentMethod}
+                                <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
+                                    {transaction.paymentMethod}
                                 </div>
                             </div>
                         </div>
 
                         {/* Payment Evidence Section */}
-                        {selectedTransaction.paymentEvidence && selectedTransaction.status === 'pending' && (
+                        {transaction.paymentEvidence && transaction.status === 'pending' && (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-4">
                                     Payment Evidence
@@ -385,7 +342,7 @@ const TransactionReport: React.FC = () => {
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     <div>
                                         <img
-                                            src={selectedTransaction.paymentEvidence}
+                                            src={transaction.paymentEvidence}
                                             alt="Payment Evidence"
                                             className="w-full max-w-md rounded-lg border border-gray-200 shadow-sm"
                                         />
@@ -398,7 +355,7 @@ const TransactionReport: React.FC = () => {
                                             </p>
                                             <div className="flex gap-3">
                                                 <button
-                                                    onClick={() => handleStatusChange(selectedTransaction.id, 'approved')}
+                                                    onClick={() => handleStatusChange('approved')}
                                                     className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
                                                 >
                                                     <Check className="w-4 h-4" />
@@ -419,13 +376,13 @@ const TransactionReport: React.FC = () => {
                         )}
 
                         {/* Rejection Reason Display */}
-                        {selectedTransaction.status === 'rejected' && selectedTransaction.rejectionReason && (
+                        {transaction.status === 'rejected' && transaction.rejectionReason && (
                             <div>
                                 <label className="block text-sm font-medium text-red-700 mb-2">
                                     Rejection Reason
                                 </label>
                                 <div className="w-full px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-red-800">
-                                    {selectedTransaction.rejectionReason}
+                                    {transaction.rejectionReason}
                                 </div>
                             </div>
                         )}
@@ -448,7 +405,7 @@ const TransactionReport: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white">
-                                        {selectedTransaction.tickets.map((ticket, index) => (
+                                        {transaction.tickets.map((ticket, index) => (
                                             <tr key={index} className={`border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                                                 <td className="px-4 py-3 text-sm text-gray-900">{ticket.bookingId}</td>
                                                 <td className="px-4 py-3 text-sm text-gray-900">{ticket.ticketName}</td>
@@ -470,29 +427,14 @@ const TransactionReport: React.FC = () => {
                             </label>
                             <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                                 <div className="flex justify-between items-center text-lg font-semibold text-gray-900">
-                                    <span>Total Payment: {formatCurrency(selectedTransaction.totalPayment)}</span>
-                                    <span>Total Tickets: {selectedTransaction.totalTickets}</span>
+                                    <span>Total Payment: {formatCurrency(transaction.totalPayment)}</span>
+                                    <span>Total Tickets: {transaction.totalTickets}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        );
-    };
-
-    const renderCurrentView = () => {
-        switch (currentView) {
-            case 'detail':
-                return <TransactionDetailView />;
-            default:
-                return <TransactionListView />;
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-gray-50">
-            {renderCurrentView()}
 
             {/* Rejection Modal */}
             {showRejectModal && (
@@ -541,4 +483,4 @@ const TransactionReport: React.FC = () => {
     );
 };
 
-export default TransactionReport;
+export default TransactionDetail;

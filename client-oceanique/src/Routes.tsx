@@ -29,10 +29,14 @@ import AdminEvent from './components/admin_page/admin_event/events/Events';
 import AdminEventDetail from './components/admin_page/admin_event/events/EventDetails';
 import AdminAddEditEvent from './components/admin_page/admin_event/events/AddEditEvent';
 
+import AdminTicket from './components/admin_page/admin_event/tickets/Tickets';
+import AdminTicketDetail from './components/admin_page/admin_event/tickets/TicketDetails';
+import AdminAddEditTicketDetail from './components/admin_page/admin_event/tickets/AddEditTicket';
 
-import AdminTicket from './components/admin_page/admin_event/Tickets';
-import AdminTicketCategory from './components/admin_page/admin_event/TicketCategory';
-import AdminTransReport from './components/admin_page/admin_event/TransactionReport';
+import AdminTicketCategory from './components/admin_page/admin_event/tickets/TicketCategory';
+
+import AdminTransReport from './components/admin_page/admin_event/transaction_report/TransactionReport';
+import AdminTransDetails from './components/admin_page/admin_event/transaction_report/TransactionReportDetails';
 
 
 export default function OceaniqueRoutes() {
@@ -172,10 +176,15 @@ export default function OceaniqueRoutes() {
                     </EventProvider>
                 } />
 
+                <Route path="/admin/tickets" element={<AdminTicket />} />
+                <Route path="/admin/tickets/:ticketId" element={<AdminTicketDetail />} />
+                <Route path="/admin/tickets/create" element={<AdminAddEditTicketDetail />} />
+                <Route path="/admin/tickets/:ticketId/edit" element={<AdminAddEditTicketDetail />} />
 
-                <Route path="/admin/events/tickets" element={<AdminTicket />} />
-                <Route path="/admin/events/tickets/category" element={<AdminTicketCategory />} />
-                <Route path="/admin/events/transactions-report" element={<AdminTransReport />} />
+
+                <Route path="/admin/tickets/category" element={<AdminTicketCategory />} />
+                <Route path="/admin/tickets/transactions-report" element={<AdminTransReport />} />
+                <Route path="/admin/tickets/transactions-report/:transactionId" element={<AdminTransDetails />} />
             </Route>
 
             {/* Catch-all route for 404 Not Found */}

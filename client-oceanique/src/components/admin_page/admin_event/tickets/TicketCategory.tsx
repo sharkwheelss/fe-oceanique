@@ -1,29 +1,106 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 
 // Types
 interface TicketCategory {
     id: string;
     name: string;
-    createdAt: string;
-    updatedAt: string;
+    created_at: string;
+    updated_at: string;
 }
 
-// Mock data
-const initialCategories: TicketCategory[] = [
-    {
-        id: '1',
-        name: 'Regular',
-        createdAt: '07 Mei 2025',
-        updatedAt: '07 Mei 2025'
+// API Service (you can replace these with your actual API endpoints)
+const categoryAPI = {
+    // Fetch all categories
+    getCategories: async (): Promise<{ data: TicketCategory[] }> => {
+        try {
+            const response = await fetch('/api/admin/ticket-categories', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Adjust based on your auth
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch categories');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            throw error;
+        }
     },
-    {
-        id: '2',
-        name: 'VIP',
-        createdAt: '01 Januari 2025',
-        updatedAt: '01 Januari 2025'
+
+    // Create new category
+    createCategory: async (name: string): Promise<{ message: string; data?: TicketCategory }> => {
+        try {
+            const response = await fetch('/api/admin/ticket-categories', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: JSON.stringify({ name }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create category');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error creating category:', error);
+            throw error;
+        }
+    },
+
+    // Update category
+    updateCategory: async (id: string, name: string): Promise<{ message: string; data?: TicketCategory }> => {
+        try {
+            const response = await fetch(`/api/admin/ticket-categories/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: JSON.stringify({ name }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update category');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error updating category:', error);
+            throw error;
+        }
+    },
+
+    // Delete category
+    deleteCategory: async (id: string): Promise<{ message: string }> => {
+        try {
+            const response = await fetch(`/api/admin/ticket-categories/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete category');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error deleting category:', error);
+            throw error;
+        }
     }
-];
+};
 
 // Header component matching events page style
 const Header: React.FC<{ title: string; showBack?: boolean; onBack?: () => void }> = ({
@@ -60,7 +137,6 @@ const AddTicketCategory: React.FC<{
     const handleSave = () => {
         if (categoryName.trim()) {
             onSave(categoryName.trim());
-            setCategoryName('');
         }
     };
 
@@ -190,6 +266,16 @@ const ListTicketCategories: React.FC<{
 }> = ({ categories, onAdd, onEdit, onDelete, loading = false, error = '' }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
+    const formatDate = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
+
     const filteredCategories = categories.filter(category =>
         category.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -211,7 +297,7 @@ const ListTicketCategories: React.FC<{
                                 <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                                 <input
                                     type="text"
-                                    placeholder="Search..."
+                                    placeholder="Search categories..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 w-80"
@@ -223,7 +309,7 @@ const ListTicketCategories: React.FC<{
                                 disabled={loading}
                             >
                                 <Plus className="w-4 h-4 mr-2" />
-                                Add
+                                Add Category
                             </button>
                         </div>
                     </div>
@@ -256,7 +342,7 @@ const ListTicketCategories: React.FC<{
                                     {filteredCategories.length === 0 ? (
                                         <tr>
                                             <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                                                No categories found
+                                                {loading ? 'Loading...' : 'No categories found'}
                                             </td>
                                         </tr>
                                     ) : (
@@ -266,22 +352,24 @@ const ListTicketCategories: React.FC<{
                                                     {category.name}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {category.createdAt}
+                                                    {formatDate(category.created_at)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {category.updatedAt}
+                                                    {formatDate(category.updated_at)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     <div className="flex space-x-2">
                                                         <button
                                                             onClick={() => onEdit(category)}
                                                             className="text-teal-600 hover:text-teal-900 transition-colors"
+                                                            title="Edit category"
                                                         >
                                                             <Edit className="w-4 h-4" />
                                                         </button>
                                                         <button
                                                             onClick={() => onDelete(category.id)}
                                                             className="text-red-600 hover:text-red-900 transition-colors"
+                                                            title="Delete category"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
@@ -303,12 +391,41 @@ const ListTicketCategories: React.FC<{
 // Main Ticket Category Component
 const TicketCategoryManagement: React.FC = () => {
     const [currentView, setCurrentView] = useState<'list' | 'add' | 'edit'>('list');
-    const [categories, setCategories] = useState<TicketCategory[]>(initialCategories);
+    const [categories, setCategories] = useState<TicketCategory[]>([]);
     const [editingCategory, setEditingCategory] = useState<TicketCategory | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    // Fetch categories on component mount
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                setLoading(true);
+                setError('');
+                const response = await categoryAPI.getCategories();
+                console.log('Categories response:', response);
+
+                // Handle response structure similar to your events page
+                if (response && response.data) {
+                    setCategories(response.data);
+                } else if (Array.isArray(response)) {
+                    setCategories(response);
+                } else {
+                    setCategories([]);
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                setError('Failed to load categories. Please try again.');
+                setCategories([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCategories();
+    }, []);
 
     const resetForm = () => {
         setEditingCategory(null);
@@ -320,21 +437,26 @@ const TicketCategoryManagement: React.FC = () => {
         setSubmitError('');
 
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const result = await categoryAPI.createCategory(name);
 
-            const newCategory: TicketCategory = {
-                id: Date.now().toString(),
-                name,
-                createdAt: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
-                updatedAt: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
-            };
+            if (result?.message?.toLowerCase().includes('success') || result.data) {
+                // Refresh the categories list
+                const response = await categoryAPI.getCategories();
+                if (response && response.data) {
+                    setCategories(response.data);
+                }
 
-            setCategories([...categories, newCategory]);
-            setCurrentView('list');
-            resetForm();
+                setCurrentView('list');
+                resetForm();
+
+                // Success notification (you can integrate with toast here)
+                console.log('✅ Category added successfully');
+            } else {
+                setSubmitError('Failed to add category');
+            }
         } catch (error) {
-            setSubmitError('Failed to add category');
+            console.error('Add category error:', error);
+            setSubmitError('An error occurred while adding the category.');
         } finally {
             setIsSubmitting(false);
         }
@@ -345,31 +467,51 @@ const TicketCategoryManagement: React.FC = () => {
         setSubmitError('');
 
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const result = await categoryAPI.updateCategory(id, name);
 
-            setCategories(categories.map(cat =>
-                cat.id === id
-                    ? { ...cat, name, updatedAt: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) }
-                    : cat
-            ));
+            if (result?.message?.toLowerCase().includes('success') || result.data) {
+                // Refresh the categories list
+                const response = await categoryAPI.getCategories();
+                if (response && response.data) {
+                    setCategories(response.data);
+                }
 
-            setCurrentView('list');
-            resetForm();
+                setCurrentView('list');
+                resetForm();
+
+                // Success notification
+                console.log('✅ Category updated successfully');
+            } else {
+                setSubmitError('Failed to update category');
+            }
         } catch (error) {
-            setSubmitError('Failed to update category');
+            console.error('Update category error:', error);
+            setSubmitError('An error occurred while updating the category.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleDeleteCategory = async (id: string) => {
-        if (window.confirm('Are you sure you want to delete this category?')) {
-            try {
-                setCategories(categories.filter(cat => cat.id !== id));
-            } catch (error) {
-                alert('Failed to delete category');
+        const confirmed = window.confirm('🗑️ Are you sure you want to delete this category?\nThis action cannot be undone.');
+        if (!confirmed) return;
+
+        try {
+            const result = await categoryAPI.deleteCategory(id);
+
+            if (result?.message?.toLowerCase().includes('success')) {
+                // Remove from local state
+                setCategories(prev => prev.filter(category => category.id !== id));
+
+                // Success notification
+                console.log('✅ Category deleted successfully');
+            } else {
+                console.error('Delete failed:', result);
+                alert('❌ Failed to delete category. Please try again.');
             }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('🚫 An error occurred while deleting the category.');
         }
     };
 
