@@ -25,8 +25,13 @@ import AdminProtectedRoute from './AdminProtectedRoutes';
 
 // admin components
 import AdminDashboard from './components/admin_page/AdminDashboard';
-import AdminEvent from './components/admin_page/admin_event/Events';
+import AdminEvent from './components/admin_page/admin_event/events/Events';
+import AdminEventDetail from './components/admin_page/admin_event/events/EventDetails';
+import AdminAddEditEvent from './components/admin_page/admin_event/events/AddEditEvent';
+
+
 import AdminTicket from './components/admin_page/admin_event/Tickets';
+import AdminTicketCategory from './components/admin_page/admin_event/TicketCategory';
 import AdminTransReport from './components/admin_page/admin_event/TransactionReport';
 
 
@@ -145,8 +150,20 @@ export default function OceaniqueRoutes() {
 
             {/* Admin Event routes - Only for Event admins */}
             <Route element={<AdminProtectedRoute adminType="event" />}>
-                <Route path="/admin/events" element={<AdminEvent />} />
+                <Route path="/admin/events" element={
+                    <EventProvider>
+                        <AdminEvent />
+                    </EventProvider>} />
+                <Route path="/admin/events/:eventId" element={
+                    <EventProvider>
+                        <AdminEventDetail />
+                    </EventProvider>} />
+                <Route path="/admin/events/create" element={<AdminAddEditEvent />} />
+                <Route path="/admin/events/:eventId/edit" element={<AdminAddEditEvent />} />
+
+
                 <Route path="/admin/events/tickets" element={<AdminTicket />} />
+                <Route path="/admin/events/tickets/category" element={<AdminTicketCategory />} />
                 <Route path="/admin/events/transactions-report" element={<AdminTransReport />} />
             </Route>
 

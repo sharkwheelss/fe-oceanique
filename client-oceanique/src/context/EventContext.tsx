@@ -6,8 +6,10 @@ interface EventContextType {
     loading: boolean;
     error: string | null;
     getAllEvents: () => Promise<any>;
+    getAdminEvents: () => Promise<any>;
     getTransactionHistory: () => Promise<any>;
     getEventDetails: (eventId: string) => Promise<any>;
+    getAdminEventDetails: (eventId: string) => Promise<any>;
     newBooking: (booking: FormData) => Promise<any>;
     verifyPrivateCode: (privateCode: string, ticketId: number) => Promise<any>;
 }
@@ -82,14 +84,44 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setLoading(false);
         }
-    }
+    };
+
+    // Admin section
+    const getAdminEvents = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.event.getAdminEvents();
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch events');
+            console.error('Error fetching events:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const getAdminEventDetails = async (eventId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.event.getAdminEventDetails(eventId);
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch event details');
+            console.error('Error fetching event details:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const value = {
         loading,
         error,
         getAllEvents,
+        getAdminEvents,
         getTransactionHistory,
         getEventDetails,
+        getAdminEventDetails,
         newBooking,
         verifyPrivateCode
     };

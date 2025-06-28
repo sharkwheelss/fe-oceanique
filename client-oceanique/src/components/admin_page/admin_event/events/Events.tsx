@@ -1,0 +1,248 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
+import { useEvents } from '../../../../context/EventContext';
+
+const EventList = () => {
+    const navigate = useNavigate();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const { getAdminEvents } = useEvents();
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const eventsResponse = await getAdminEvents();
+                console.log(eventsResponse);
+
+                // Assuming the response structure - adjust based on your actual API response
+                if (eventsResponse && eventsResponse.data) {
+                    setEvents(eventsResponse.data);
+                } else if (Array.isArray(eventsResponse)) {
+                    setEvents(eventsResponse);
+                } else {
+                    setEvents([]);
+                }
+            } catch (error) {
+                console.error('Error fetching events:', error);
+                setError('Failed to load events. Please try again.');
+                setEvents([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchEvents();
+    }, []);
+
+
+    const handleDelete = async (eventId) => {
+        if (window.confirm('Are you sure you want to delete this event?')) {
+            try {
+                // TODO: Add your deleteEvent function from context
+                // const result = await deleteEvent(eventId);
+                // if (result.success) {
+                // Remove from local state
+                setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+                console.log('Event deleted successfully');
+                // } else {
+                //     console.error('Failed to delete event');
+                // }
+            } catch (error) {
+                console.error('Failed to delete event:', error);
+                setError('Failed to delete event. Please try again.');
+            }
+        }
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).replace(' pukul', ', ');
+    };
+
+    const formatTime = (timeString) => {
+        if (!timeString) return '';
+        // If timeString is already in HH:MM format, return as is
+        if (typeof timeString === 'string' && timeString.includes(':')) {
+            return timeString;
+        }
+        // If it's a full datetime string, extract time
+        const date = new Date(timeString);
+        return date.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const filteredEvents = events?.filter(event =>
+        event.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+
+    return (
+        <div className="flex-1 bg-gray-50">
+            <div className="bg-white border-b border-gray-200 px-8 py-6">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-semibold text-gray-800">Event List</h1>
+                </div>
+            </div>
+
+            <div className="p-8">
+                {error && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-red-600">Error: {error}</p>
+                    </div>
+                )}
+
+                <div className="bg-white rounded-lg shadow-sm">
+                    <div className="p-6 border-b border-gray-200">
+                        <div className="flex justify-between items-center">
+                            <div className="relative">
+                                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    placeholder="Search events..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 w-80"
+                                />
+                            </div>
+                            <button
+                                onClick={() => navigate('/admin/events/create')}
+                                className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors flex items-center"
+                                disabled={loading}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Event
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        {loading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+                                <span className="ml-2 text-gray-600">Loading events...</span>
+                            </div>
+                        ) : (
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Event Name
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Start Date & Time
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            End Date & Time
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Type
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Location
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {filteredEvents.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                                                {loading ? 'Loading...' : 'No events found'}
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filteredEvents.map((event) => (
+                                            <tr key={event.id} className="hover:bg-gray-50">
+                                                <td
+                                                    className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer hover:text-teal-600"
+                                                    onClick={() => navigate(`/admin/events/${event.id}`)}
+                                                >
+                                                    {event.name || 'Untitled Event'}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {formatDate(event.start_datetime)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {formatDate(event.end_datetime)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <span
+                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${event.jenis === 'private'
+                                                            ? 'bg-red-100 text-red-700'
+                                                            : event.jenis === 'public'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : 'bg-slate-100 text-slate-600' // fallback
+                                                            }`}
+                                                    >
+                                                        {event.jenis.charAt(0).toUpperCase() + event.jenis.slice(1)}
+                                                    </span>
+
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {event.beach_name}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-xs font-medium ${event.status === 'ongoing' ? 'bg-teal-100 text-teal-700'
+                                                            : event.status === 'upcoming' ? 'bg-gray-200 text-gray-600'
+                                                                : event.status === 'ended_soon' ? 'bg-yellow-100 text-yellow-800'
+                                                                    : event.status === 'ended' ? 'bg-red-100 text-red-600'
+                                                                        : 'bg-slate-100 text-slate-600' // fallback
+                                                            }`}
+                                                    >
+                                                        {event.status === 'ended_soon' ? 'Ended Soon' : event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                                                    </span>
+                                                </td>
+
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            onClick={() => navigate(`/admin/events/${event.id}/edit`)}
+                                                            className="text-teal-600 hover:text-teal-900 transition-colors"
+                                                            title="Edit event"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(event.id)}
+                                                            className="text-red-600 hover:text-red-900 transition-colors"
+                                                            title="Delete event"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default EventList;

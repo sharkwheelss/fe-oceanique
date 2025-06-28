@@ -43,5 +43,23 @@ export const eventApi = {
             body: JSON.stringify({ privateCode, ticketId })
         });
         return response.json();
-    }
+    },
+
+    // admin section
+    getAdminEvents: async () => {
+        const response = await fetch(`${BASE_URL}/events/admin/all`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
+    getAdminEventDetails: async (eventId: number) => {
+        const response = await fetch(`${BASE_URL}/events/admin/${eventId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
 }

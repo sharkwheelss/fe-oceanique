@@ -50,6 +50,25 @@ const mockTickets: Ticket[] = [
 
 const categories = ['Regular', 'VIP', 'Exclusive', 'Premium'];
 
+// Move Header component outside to prevent re-creation on each render
+const Header = ({ title, showBack = false, onBack }: { title: string; showBack?: boolean; onBack?: () => void }) => (
+    <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <div className="flex items-center justify-between">
+            <div className="flex items-center">
+                {showBack && (
+                    <button
+                        onClick={onBack}
+                        className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+                )}
+                <h1 className="text-2xl font-semibold text-gray-800">{title}</h1>
+            </div>
+        </div>
+    </div>
+);
+
 const AdminTicketSystem: React.FC = () => {
     const [currentView, setCurrentView] = useState<'list' | 'add' | 'edit' | 'detail'>('list');
     const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
@@ -139,6 +158,11 @@ const AdminTicketSystem: React.FC = () => {
         setSubmitError('');
     };
 
+    const handleBackToList = () => {
+        setCurrentView('list');
+        resetForm();
+    };
+
     const filteredTickets = tickets.filter(ticket =>
         ticket.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -160,27 +184,6 @@ const AdminTicketSystem: React.FC = () => {
             year: 'numeric'
         });
     };
-
-    const Header = ({ title, showBack = false }) => (
-        <div className="bg-white border-b border-gray-200 px-8 py-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    {showBack && (
-                        <button
-                            onClick={() => {
-                                setCurrentView('list');
-                                resetForm();
-                            }}
-                            className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                            <ArrowLeft className="w-5 h-5 text-gray-600" />
-                        </button>
-                    )}
-                    <h1 className="text-2xl font-semibold text-gray-800">{title}</h1>
-                </div>
-            </div>
-        </div>
-    );
 
     const TicketListView = () => (
         <div className="flex-1 bg-gray-50">
@@ -239,7 +242,7 @@ const AdminTicketSystem: React.FC = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredTickets.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
+                                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                                             No tickets found
                                         </td>
                                     </tr>
@@ -296,7 +299,7 @@ const AdminTicketSystem: React.FC = () => {
 
     const TicketForm = ({ isEdit = false }) => (
         <div className="flex-1 bg-gray-50">
-            <Header title={isEdit ? "Edit Ticket" : "Add Ticket"} showBack={true} />
+            <Header title={isEdit ? "Edit Ticket" : "Add Ticket"} showBack={true} onBack={handleBackToList} />
             <div className="p-8">
                 <div className="bg-white rounded-lg shadow-sm p-8">
                     {submitError && (
@@ -416,10 +419,7 @@ const AdminTicketSystem: React.FC = () => {
 
                         <div className="flex justify-end space-x-4">
                             <button
-                                onClick={() => {
-                                    setCurrentView('list');
-                                    resetForm();
-                                }}
+                                onClick={handleBackToList}
                                 className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                                 disabled={isSubmitting}
                             >
@@ -442,7 +442,7 @@ const AdminTicketSystem: React.FC = () => {
 
     const TicketDetailView = () => (
         <div className="flex-1 bg-gray-50">
-            <Header title="Ticket Detail" showBack={true} />
+            <Header title="Ticket Detail" showBack={true} onBack={handleBackToList} />
             <div className="p-8">
                 <div className="bg-white rounded-lg shadow-sm p-8">
                     <div className="space-y-6">

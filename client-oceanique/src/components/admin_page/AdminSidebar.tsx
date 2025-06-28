@@ -79,7 +79,7 @@ const AdminSidebar = () => {
                                 {/* Child Link (Indented) */}
                                 <Link
                                     to="/admin/events/tickets/category"
-                                    className={`block ml-4 px-4 py-2 rounded-lg transition-colors text-sm
+                                    className={`block ml-4 px-4 py-2 rounded-lg transition-colors text-sm 
       ${isActive('/admin/events/tickets/category') ? 'bg-teal-100 text-teal-800' : 'text-gray-600 hover:bg-gray-50'}`}
                                 >
                                     Tickets Category
@@ -87,7 +87,7 @@ const AdminSidebar = () => {
                             </div>
                             <Link
                                 to="/admin/events/transactions-report"
-                                className={`block px-4 py-2 rounded-lg transition-colors ${isActive('/admin/events/transactions')
+                                className={`block px-4 py-2 rounded-lg transition-colors font-medium ${isActive('/admin/events/transactions')
                                     ? 'bg-teal-50 text-teal-700'
                                     : 'text-gray-600 hover:bg-gray-50'
                                     }`}
