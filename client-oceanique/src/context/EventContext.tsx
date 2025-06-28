@@ -9,9 +9,12 @@ interface EventContextType {
     getAdminEvents: () => Promise<any>;
     getTransactionHistory: () => Promise<any>;
     getEventDetails: (eventId: string) => Promise<any>;
-    getAdminEventDetails: (eventId: string) => Promise<any>;
+    getAdminEventDetails: (eventId: number) => Promise<any>;
     newBooking: (booking: FormData) => Promise<any>;
     verifyPrivateCode: (privateCode: string, ticketId: number) => Promise<any>;
+    adminCreateNewEvent: (newEvent: FormData) => Promise<any>;
+    adminUpdateEvent: (updateEvent: FormData, eventId: number) => Promise<any>;
+    adminDeleteEvent: (eventId: number) => Promise<any>;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -100,7 +103,7 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
-    const getAdminEventDetails = async (eventId: string) => {
+    const getAdminEventDetails = async (eventId: number) => {
         try {
             setLoading(true);
             setError(null);
@@ -109,6 +112,45 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
         } catch (err) {
             setError('Failed to fetch event details');
             console.error('Error fetching event details:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const adminCreateNewEvent = async (newEvent: FormData) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.event.adminCreateNewEvent(newEvent);
+            return response;
+        } catch (err) {
+            setError('Failed to add event');
+            console.error('Error when add event:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const adminUpdateEvent = async (eventId: number, updateEvent: FormData) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.event.adminUpdateEvent(updateEvent, eventId);
+            return response;
+        } catch (err) {
+            setError('Failed to edit event');
+            console.error('Error edit event:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const adminDeleteEvent = async (eventId: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.event.adminDeleteEvent(eventId);
+            return response;
+        } catch (err) {
+            setError('Failed to delete events');
+            console.error('Error edit event:', err);
         } finally {
             setLoading(false);
         }
@@ -123,7 +165,10 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
         getEventDetails,
         getAdminEventDetails,
         newBooking,
-        verifyPrivateCode
+        verifyPrivateCode,
+        adminCreateNewEvent,
+        adminUpdateEvent,
+        adminDeleteEvent,
     };
 
     return (

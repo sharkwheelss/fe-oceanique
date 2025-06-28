@@ -35,10 +35,13 @@ interface Api {
         getAllEvents: () => Promise<any>;
         getTransactionHistory: () => Promise<any>;
         getEventDetails: (eventId: string) => Promise<any>;
-        getAdminEventDetails: (eventId: string) => Promise<any>;
+        getAdminEventDetails: (eventId: number) => Promise<any>;
         newBooking: (booking: FormData) => Promise<any>;
         verifyPrivateCode: (privateCode: string, ticketId: number) => Promise<any>;
         getAdminEvents: () => Promise<any>;
+        adminCreateNewEvent: (newEvent: FormData) => Promise<any>;
+        adminUpdateEvent: (updateEvent: FormData, eventId: number) => Promise<any>;
+        adminDeleteEvent: (eventId: number) => Promise<any>;
     };
 }
 

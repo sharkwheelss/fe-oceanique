@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { useEvents } from '../../../../context/EventContext';
+import { toast } from 'react-toastify';
 
 const EventList = () => {
     const navigate = useNavigate();
@@ -10,7 +11,7 @@ const EventList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const { getAdminEvents } = useEvents();
+    const { getAdminEvents, adminDeleteEvent } = useEvents();
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -42,21 +43,24 @@ const EventList = () => {
 
 
     const handleDelete = async (eventId) => {
-        if (window.confirm('Are you sure you want to delete this event?')) {
-            try {
-                // TODO: Add your deleteEvent function from context
-                // const result = await deleteEvent(eventId);
-                // if (result.success) {
-                // Remove from local state
-                setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
-                console.log('Event deleted successfully');
-                // } else {
-                //     console.error('Failed to delete event');
-                // }
-            } catch (error) {
-                console.error('Failed to delete event:', error);
-                setError('Failed to delete event. Please try again.');
+        const confirmed = window.confirm('🗑️ Are you sure you want to delete this event?\nThis action cannot be undone.');
+        if (!confirmed) return;
+
+        try {
+            const result = await adminDeleteEvent(eventId);
+
+            if (result?.message?.toLowerCase().includes('success')) {
+                setEvents(prev => prev.filter(event => event.id !== eventId));
+
+                // Modern success notification
+                toast.success('✅ Event deleted successfully');
+            } else {
+                console.error('Delete failed:', result);
+                toast.error('❌ Failed to delete event. Please try again.');
             }
+        } catch (error) {
+            console.error('Delete error:', error);
+            toast.error('🚫 An error occurred while deleting the event.');
         }
     };
 
@@ -174,10 +178,12 @@ const EventList = () => {
                                         filteredEvents.map((event) => (
                                             <tr key={event.id} className="hover:bg-gray-50">
                                                 <td
-                                                    className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer hover:text-teal-600"
-                                                    onClick={() => navigate(`/admin/events/${event.id}`)}
+                                                    className={`px-6 py-4 whitespace-nowrap text-sm font-medium 'text-gray-900 cursor-pointer hover:text-teal-600`}
+                                                    onClick={() => {
+                                                        navigate(`/admin/events/${event.id}`);
+                                                    }}
                                                 >
-                                                    {event.name || 'Untitled Event'}
+                                                    {event.name}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {formatDate(event.start_datetime)}
@@ -217,19 +223,37 @@ const EventList = () => {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     <div className="flex space-x-2">
                                                         <button
-                                                            onClick={() => navigate(`/admin/events/${event.id}/edit`)}
-                                                            className="text-teal-600 hover:text-teal-900 transition-colors"
-                                                            title="Edit event"
+                                                            onClick={() => {
+                                                                if (event.status !== 'ended') {
+                                                                    navigate(`/admin/events/${event.id}/edit`);
+                                                                }
+                                                            }}
+                                                            className={`transition-colors ${event.status === 'ended'
+                                                                ? 'text-gray-400 cursor-not-allowed'
+                                                                : 'text-teal-600 hover:text-teal-900'
+                                                                }`}
+                                                            title={event.status === 'ended' ? 'Editing is disabled for ended events' : 'Edit event'}
+                                                            disabled={event.status === 'ended'}
                                                         >
                                                             <Edit className="w-4 h-4" />
                                                         </button>
+
                                                         <button
-                                                            onClick={() => handleDelete(event.id)}
-                                                            className="text-red-600 hover:text-red-900 transition-colors"
-                                                            title="Delete event"
+                                                            onClick={() => {
+                                                                if (event.status === 'ended') {
+                                                                    handleDelete(event.id);
+                                                                }
+                                                            }}
+                                                            className={`transition-colors ${event.status === 'ended'
+                                                                ? 'text-red-600 hover:text-red-900 cursor-pointer'
+                                                                : 'text-gray-400 cursor-not-allowed'
+                                                                }`}
+                                                            title={event.status === 'ended' ? 'Delete event' : 'You can only delete ended events'}
+                                                            disabled={event.status !== 'ended'}
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
+
                                                     </div>
                                                 </td>
                                             </tr>

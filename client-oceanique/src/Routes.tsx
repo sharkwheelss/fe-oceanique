@@ -158,8 +158,19 @@ export default function OceaniqueRoutes() {
                     <EventProvider>
                         <AdminEventDetail />
                     </EventProvider>} />
-                <Route path="/admin/events/create" element={<AdminAddEditEvent />} />
-                <Route path="/admin/events/:eventId/edit" element={<AdminAddEditEvent />} />
+                <Route path="/admin/events/create" element={
+                    <EventProvider>
+                        <BeachProvider>
+                            <AdminAddEditEvent />
+                        </BeachProvider>
+                    </EventProvider>} />
+                <Route path="/admin/events/:eventId/edit" element={
+                    <EventProvider>
+                        <BeachProvider>
+                            <AdminAddEditEvent />
+                        </BeachProvider>
+                    </EventProvider>
+                } />
 
 
                 <Route path="/admin/events/tickets" element={<AdminTicket />} />
@@ -169,6 +180,6 @@ export default function OceaniqueRoutes() {
 
             {/* Catch-all route for 404 Not Found */}
             <Route path="*" element={<NotFound />} />
-        </Routes>
+        </Routes >
     );
 }

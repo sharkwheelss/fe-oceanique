@@ -62,4 +62,28 @@ export const eventApi = {
         });
         return response.json();
     },
+    adminCreateNewEvent: async (newEvent: FormData) => {
+        const response = await fetch(`${BASE_URL}/events/admin/create`, {
+            method: 'POST',
+            credentials: 'include',
+            body: newEvent
+        });
+        return response.json();
+    },
+    adminUpdateEvent: async (updateEvent: FormData, eventId: number) => {
+        const response = await fetch(`${BASE_URL}/events/admin/edit/${eventId}`, {
+            method: 'PUT',
+            credentials: 'include',
+            body: updateEvent
+        });
+        return response.json();
+    },
+    adminDeleteEvent: async (eventId: number) => {
+        const response = await fetch(`${BASE_URL}/events/admin/delete/${eventId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
 }
