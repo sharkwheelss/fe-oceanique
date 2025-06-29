@@ -16,6 +16,10 @@ interface TicketContextType {
     adminCreateNewTicket: (name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => Promise<any>;
     adminUpdateTicket: (id: number, name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => Promise<any>;
     adminDeleteTicket: (id: number) => Promise<any>;
+
+    getAdminTRansactionReport: () => Promise<any>;
+    getAdminTransactionReportById: (id: number) => Promise<any>;
+    adminUpdateTransactionReport: (id: number, status: string, rejection_reason: string) => Promise<any>;
 }
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -157,6 +161,47 @@ export const TicketProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
+    const getAdminTRansactionReport = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.ticket.getAdminTRansactionReport();
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch tickets');
+            console.error('Error fetching tickets:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const getAdminTransactionReportById = async (id: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.ticket.getAdminTransactionReportById(id);
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch tickets details');
+            console.error('Error fetching tickets details:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const adminUpdateTransactionReport = async (id: number, status: string, rejection_reason: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.ticket.adminUpdateTransactionReport(id, status, rejection_reason);
+            return response;
+        } catch (err) {
+            setError('Failed to edit ticket');
+            console.error('Error edit ticket:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     const value = {
         loading,
         error,
@@ -171,6 +216,10 @@ export const TicketProvider = ({ children }: { children: ReactNode }) => {
         adminCreateNewTicket,
         adminUpdateTicket,
         adminDeleteTicket,
+
+        getAdminTRansactionReport,
+        getAdminTransactionReportById,
+        adminUpdateTransactionReport,
     };
 
     return (

@@ -87,4 +87,31 @@ export const ticketApi = {
         });
         return response.json();
     },
+
+    
+    getAdminTRansactionReport: async () => {
+        const response = await fetch(`${BASE_URL}/tickets/admin/transaction-report`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
+    getAdminTransactionReportById: async (id: number) => {
+        const response = await fetch(`${BASE_URL}/tickets/admin/transaction-report/${id}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
+    adminUpdateTransactionReport: async (id: number, status: string, rejection_reason: string) => {
+        const response = await fetch(`${BASE_URL}/tickets/admin/transaction-report/${id}/edit`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ status, rejection_reason })
+        });
+        return response.json();
+    },
 }

@@ -207,8 +207,16 @@ export default function OceaniqueRoutes() {
                     </TicketProvider>
                 } />
 
-                <Route path="/admin/tickets/transactions-report" element={<AdminTransReport />} />
-                <Route path="/admin/tickets/transactions-report/:transactionId" element={<AdminTransDetails />} />
+                <Route path="/admin/tickets/transactions-report" element={
+                    <TicketProvider>
+                        <AdminTransReport />
+                    </TicketProvider>
+                } />
+                <Route path="/admin/tickets/transactions-report/:id" element={
+                    <TicketProvider>
+                        <AdminTransDetails />
+                    </TicketProvider>
+                } />
             </Route>
 
             {/* Catch-all route for 404 Not Found */}

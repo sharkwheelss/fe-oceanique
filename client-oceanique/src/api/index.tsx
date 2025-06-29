@@ -56,6 +56,10 @@ interface Api {
         adminCreateNewTicket: (name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => Promise<any>;
         adminUpdateTicket: (id: number, name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => Promise<any>;
         adminDeleteTicket: (id: number) => Promise<any>;
+
+        getAdminTRansactionReport: () => Promise<any>;
+        getAdminTransactionReportById: (id: number) => Promise<any>;
+        adminUpdateTransactionReport: (id: number, status: string, rejection_reason: string) => Promise<any>;
     }
 }
 

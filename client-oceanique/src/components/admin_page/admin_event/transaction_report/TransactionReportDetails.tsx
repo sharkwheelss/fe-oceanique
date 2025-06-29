@@ -1,32 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, X, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useTickets } from '../../../../context/TicketContext';
+
+// Define the transaction interface based on API response
+interface TicketDetail {
+    booking_id: number;
+    ticket_name: string;
+    category: string;
+    price: number;
+    total_tickets: number;
+    subtotal: number;
+}
 
 interface Transaction {
-    id: string;
-    paymentId: string;
-    createdAt: string;
-    bookedBy: string;
-    status: 'pending' | 'approved' | 'rejected';
-    bookedAt: string;
-    paymentMethod: string;
-    tickets: {
-        bookingId: string;
-        ticketName: string;
-        ticketCategory: string;
-        ticketPrice: number;
-        totalTickets: number;
-        subtotal: number;
-    }[];
-    totalPayment: number;
-    totalTickets: number;
-    paymentEvidence?: string;
-    rejectionReason?: string;
+    id: number;
+    group_booking_id: number;
+    booked_at: string;
+    booked_by: string;
+    payment_method: string;
+    total_payment: number;
+    total_tickets: number;
+    status: string;
+    rejection_reason: string | null;
+    payment_evidence_path: string;
+    ticket_details: TicketDetail[];
 }
 
 const TransactionDetail = () => {
     const navigate = useNavigate();
-    const { transactionId } = useParams(); // Get transaction ID from URL parameters
+    const { id } = useParams();
 
     // State variables
     const [transaction, setTransaction] = useState<Transaction | null>(null);
@@ -34,66 +37,14 @@ const TransactionDetail = () => {
     const [error, setError] = useState<string | null>(null);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [updating, setUpdating] = useState(false);
 
-    // Sample data - replace with actual API call
-    const sampleTransactions: Transaction[] = [
-        {
-            id: '1',
-            paymentId: '5245143414',
-            createdAt: '07 Mei 13:00',
-            bookedBy: 'Ryyan Ramadhan',
-            status: 'pending',
-            bookedAt: '07 Mei 2025',
-            paymentMethod: 'BCA VA',
-            tickets: [
-                {
-                    bookingId: '078340551',
-                    ticketName: 'Ticket ABC',
-                    ticketCategory: 'VIP 1',
-                    ticketPrice: 200000,
-                    totalTickets: 1,
-                    subtotal: 200000
-                },
-                {
-                    bookingId: '078340552',
-                    ticketName: 'Ticket DEF',
-                    ticketCategory: 'VIP 2',
-                    ticketPrice: 1000000,
-                    totalTickets: 2,
-                    subtotal: 2000000
-                }
-            ],
-            totalPayment: 2200000,
-            totalTickets: 3,
-            paymentEvidence: 'https://via.placeholder.com/400x600/059669/ffffff?text=Payment+Evidence'
-        },
-        {
-            id: '2',
-            paymentId: '5245143413',
-            createdAt: '01 Januari 13:00',
-            bookedBy: 'Ryyan Ramadhan',
-            status: 'approved',
-            bookedAt: '01 Januari 2025',
-            paymentMethod: 'BCA VA',
-            tickets: [
-                {
-                    bookingId: '078340553',
-                    ticketName: 'Ticket GHI',
-                    ticketCategory: 'Regular',
-                    ticketPrice: 150000,
-                    totalTickets: 2,
-                    subtotal: 300000
-                }
-            ],
-            totalPayment: 300000,
-            totalTickets: 2
-        }
-    ];
+    const { getAdminTransactionReportById, adminUpdateTransactionReport } = useTickets();
 
     useEffect(() => {
         const fetchTransactionDetails = async () => {
-            if (!transactionId) {
-                setError('Transaction ID is required');
+            if (!id) {
+                setError('Group booking ID is required');
                 setLoading(false);
                 return;
             }
@@ -102,44 +53,58 @@ const TransactionDetail = () => {
                 setLoading(true);
                 setError(null);
 
-                // Simulate API call - replace with actual API call
-                setTimeout(() => {
-                    const foundTransaction = sampleTransactions.find(t => t.id === transactionId);
-                    if (foundTransaction) {
-                        setTransaction(foundTransaction);
-                    } else {
-                        setError('Transaction not found');
-                    }
-                    setLoading(false);
-                }, 1000);
+                const response = await getAdminTransactionReportById(parseInt(id));
+
+                if (response) {
+                    setTransaction(response[0]);
+                } else {
+                    setError('Transaction not found');
+                }
 
             } catch (error) {
                 console.error('Error fetching transaction details:', error);
                 setError('Failed to load transaction details. Please try again.');
+            } finally {
                 setLoading(false);
             }
         };
 
         fetchTransactionDetails();
-    }, [transactionId]);
+    }, [id]);
 
-    const handleStatusChange = (newStatus: 'approved' | 'rejected', reason?: string) => {
-        if (transaction) {
-            const updatedTransaction = {
-                ...transaction,
+    const handleStatusChange = async (newStatus: 'approved' | 'rejected', reason?: string) => {
+        if (!transaction) return;
+
+        try {
+            setUpdating(true);
+
+            // Call the API to update transaction status
+            await adminUpdateTransactionReport(
+                transaction.group_booking_id,
+                newStatus,
+                reason || ''
+            );
+
+            // Update local state
+            setTransaction(prev => prev ? {
+                ...prev,
                 status: newStatus,
-                rejectionReason: reason
-            };
-            setTransaction(updatedTransaction);
+                rejection_reason: reason || null
+            } : null);
 
-            // Here you would typically make an API call to update the transaction status
-            console.log('Updating transaction status:', { transactionId, newStatus, reason });
+            console.log('Transaction status updated successfully');
+
+        } catch (error) {
+            console.error('Error updating transaction status:', error);
+            setError('Failed to update transaction status. Please try again.');
+        } finally {
+            setUpdating(false);
         }
     };
 
-    const handleReject = () => {
+    const handleReject = async () => {
         if (transaction && rejectionReason.trim()) {
-            handleStatusChange('rejected', rejectionReason);
+            await handleStatusChange('rejected', rejectionReason);
             setShowRejectModal(false);
             setRejectionReason('');
         }
@@ -151,6 +116,16 @@ const TransactionDetail = () => {
             currency: 'IDR',
             minimumFractionDigits: 0
         }).format(amount);
+    };
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleString('id-ID', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     // Loading state
@@ -275,10 +250,10 @@ const TransactionDetail = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Payment ID
+                                    Group Booking ID
                                 </label>
                                 <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
-                                    {transaction.paymentId}
+                                    {transaction.group_booking_id}
                                 </div>
                             </div>
                             <div>
@@ -298,29 +273,21 @@ const TransactionDetail = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Created At
+                                    Booked At
                                 </label>
                                 <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
-                                    {transaction.createdAt}
+                                    {formatDate(transaction.booked_at)}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Booked by
+                                    Booked By
                                 </label>
                                 <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
-                                    {transaction.bookedBy}
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Booked at
-                                </label>
-                                <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
-                                    {transaction.bookedAt}
+                                    {transaction.booked_by}
                                 </div>
                             </div>
                             <div>
@@ -328,13 +295,13 @@ const TransactionDetail = () => {
                                     Payment Method
                                 </label>
                                 <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 border border-gray-200">
-                                    {transaction.paymentMethod}
+                                    {transaction.payment_method}
                                 </div>
                             </div>
                         </div>
 
                         {/* Payment Evidence Section */}
-                        {transaction.paymentEvidence && transaction.status === 'pending' && (
+                        {transaction.payment_evidence_path && (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-4">
                                     Payment Evidence
@@ -342,47 +309,55 @@ const TransactionDetail = () => {
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                     <div>
                                         <img
-                                            src={transaction.paymentEvidence}
+                                            src={transaction.payment_evidence_path}
                                             alt="Payment Evidence"
                                             className="w-full max-w-md rounded-lg border border-gray-200 shadow-sm"
+                                            onError={(e) => {
+                                                e.currentTarget.src = '/placeholder-image.png';
+                                                e.currentTarget.alt = 'Payment evidence not available';
+                                            }}
                                         />
                                     </div>
-                                    <div className="flex flex-col justify-center">
-                                        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                                            <h4 className="font-semibold text-gray-900 mb-4">Review Payment Evidence</h4>
-                                            <p className="text-gray-600 mb-6">
-                                                Please review the payment evidence submitted by the customer and decide whether to approve or reject this transaction.
-                                            </p>
-                                            <div className="flex gap-3">
-                                                <button
-                                                    onClick={() => handleStatusChange('approved')}
-                                                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                                                >
-                                                    <Check className="w-4 h-4" />
-                                                    Approve
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowRejectModal(true)}
-                                                    className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                    Reject
-                                                </button>
+                                    {transaction.status === 'pending' && (
+                                        <div className="flex flex-col justify-center">
+                                            <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                                <h4 className="font-semibold text-gray-900 mb-4">Review Payment Evidence</h4>
+                                                <p className="text-gray-600 mb-6">
+                                                    Please review the payment evidence submitted by the customer and decide whether to approve or reject this transaction.
+                                                </p>
+                                                <div className="flex gap-3">
+                                                    <button
+                                                        onClick={() => handleStatusChange('approved')}
+                                                        disabled={updating}
+                                                        className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors"
+                                                    >
+                                                        <Check className="w-4 h-4" />
+                                                        {updating ? 'Approving...' : 'Approve'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowRejectModal(true)}
+                                                        disabled={updating}
+                                                        className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                        Reject
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         )}
 
                         {/* Rejection Reason Display */}
-                        {transaction.status === 'rejected' && transaction.rejectionReason && (
+                        {transaction.status === 'rejected' && transaction.rejection_reason && (
                             <div>
                                 <label className="block text-sm font-medium text-red-700 mb-2">
                                     Rejection Reason
                                 </label>
                                 <div className="w-full px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-red-800">
-                                    {transaction.rejectionReason}
+                                    {transaction.rejection_reason}
                                 </div>
                             </div>
                         )}
@@ -405,13 +380,13 @@ const TransactionDetail = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white">
-                                        {transaction.tickets.map((ticket, index) => (
+                                        {transaction.ticket_details.map((ticket, index) => (
                                             <tr key={index} className={`border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
-                                                <td className="px-4 py-3 text-sm text-gray-900">{ticket.bookingId}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-900">{ticket.ticketName}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-900">{ticket.ticketCategory}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(ticket.ticketPrice)}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-900">{ticket.totalTickets}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900">{ticket.booking_id}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900">{ticket.ticket_name}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900">{ticket.category}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(ticket.price)}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900">{ticket.total_tickets}</td>
                                                 <td className="px-4 py-3 text-sm font-medium text-gray-900">{formatCurrency(ticket.subtotal)}</td>
                                             </tr>
                                         ))}
@@ -427,8 +402,8 @@ const TransactionDetail = () => {
                             </label>
                             <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                                 <div className="flex justify-between items-center text-lg font-semibold text-gray-900">
-                                    <span>Total Payment: {formatCurrency(transaction.totalPayment)}</span>
-                                    <span>Total Tickets: {transaction.totalTickets}</span>
+                                    <span>Total Payment: {formatCurrency(transaction.total_payment)}</span>
+                                    <span>Total Tickets: {transaction.total_tickets}</span>
                                 </div>
                             </div>
                         </div>
@@ -464,16 +439,17 @@ const TransactionDetail = () => {
                                     setShowRejectModal(false);
                                     setRejectionReason('');
                                 }}
-                                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                disabled={updating}
+                                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleReject}
-                                disabled={!rejectionReason.trim()}
+                                disabled={!rejectionReason.trim() || updating}
                                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition-colors"
                             >
-                                Reject Transaction
+                                {updating ? 'Rejecting...' : 'Reject Transaction'}
                             </button>
                         </div>
                     </div>

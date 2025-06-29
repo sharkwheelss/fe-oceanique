@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Eye, Loader2 } from 'lucide-react';
-import { toast } from 'react-toastify';
+import { useTickets } from '../../../../context/TicketContext';
 
 const TransactionList = () => {
     const navigate = useNavigate();
@@ -10,8 +10,7 @@ const TransactionList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // You can replace this with your actual API call
-    // const { getTransactions } = useTransactions(); // Replace with your actual context
+    const { getAdminTRansactionReport } = useTickets();
 
     useEffect(() => {
         const fetchTransactions = async () => {
@@ -19,67 +18,15 @@ const TransactionList = () => {
                 setLoading(true);
                 setError(null);
 
-                // Replace this with your actual API call
-                // const transactionsResponse = await getTransactions();
+                const response = await getAdminTRansactionReport();
+                console.log(response)
 
-                // Sample data - replace with actual API response
-                const sampleData = [
-                    {
-                        id: '1',
-                        paymentId: '5245143414',
-                        createdAt: '07 Mei 13:00',
-                        bookedBy: 'Ryyan Ramadhan',
-                        status: 'pending',
-                        bookedAt: '07 Mei 2025',
-                        paymentMethod: 'BCA VA',
-                        totalPayment: 2200000,
-                        totalTickets: 3
-                    },
-                    {
-                        id: '2',
-                        paymentId: '5245143413',
-                        createdAt: '01 Januari 13:00',
-                        bookedBy: 'Ryyan Ramadhan',
-                        status: 'approved',
-                        bookedAt: '01 Januari 2025',
-                        paymentMethod: 'BCA VA',
-                        totalPayment: 300000,
-                        totalTickets: 2
-                    },
-                    {
-                        id: '3',
-                        paymentId: '5245143412',
-                        createdAt: '02 Februari 09:00',
-                        bookedBy: 'Ryyan Ramadhan',
-                        status: 'approved',
-                        bookedAt: '02 Februari 2025',
-                        paymentMethod: 'BCA VA',
-                        totalPayment: 200000,
-                        totalTickets: 1
-                    },
-                    {
-                        id: '4',
-                        paymentId: '0123781741',
-                        createdAt: '01 Januari 13:30',
-                        bookedBy: 'Ryyan Ramadhan',
-                        status: 'rejected',
-                        bookedAt: '01 Januari 2024',
-                        paymentMethod: 'BCA VA',
-                        totalPayment: 100000,
-                        totalTickets: 1
-                    }
-                ];
-
-                setTransactions(sampleData);
-
-                // Uncomment when using real API
-                // if (transactionsResponse && transactionsResponse.data) {
-                //     setTransactions(transactionsResponse.data);
-                // } else if (Array.isArray(transactionsResponse)) {
-                //     setTransactions(transactionsResponse);
-                // } else {
-                //     setTransactions([]);
-                // }
+                if (response) {
+                    setTransactions(response);
+                } else {
+                    setTransactions([]);
+                    setError('No transaction data received');
+                }
             } catch (error) {
                 console.error('Error fetching transactions:', error);
                 setError('Failed to load transactions. Please try again.');
@@ -100,6 +47,17 @@ const TransactionList = () => {
         }).format(amount);
     };
 
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'pending':
@@ -114,8 +72,8 @@ const TransactionList = () => {
     };
 
     const filteredTransactions = transactions?.filter(transaction =>
-        transaction.paymentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.bookedBy?.toLowerCase().includes(searchTerm.toLowerCase())
+        transaction.group_booking_id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.booked_by?.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
     return (
@@ -160,10 +118,10 @@ const TransactionList = () => {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Payment ID
+                                            Group Booking ID
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Created At
+                                            Booked At
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Booked By
@@ -194,29 +152,29 @@ const TransactionList = () => {
                                         </tr>
                                     ) : (
                                         filteredTransactions.map((transaction) => (
-                                            <tr key={transaction.id} className="hover:bg-gray-50">
+                                            <tr key={transaction.group_booking_id} className="hover:bg-gray-50">
                                                 <td
                                                     className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer hover:text-teal-600"
                                                     onClick={() => {
-                                                        navigate(`/admin/tickets/transactions-report/${transaction.id}`);
+                                                        navigate(`/admin/tickets/transactions-report/${transaction.group_booking_id}`);
                                                     }}
                                                 >
-                                                    {transaction.paymentId}
+                                                    {transaction.group_booking_id}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {transaction.createdAt}
+                                                    {formatDate(transaction.booked_at)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {transaction.bookedBy}
+                                                    {transaction.booked_by}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {transaction.paymentMethod}
+                                                    {transaction.payment_method}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {formatCurrency(transaction.totalPayment)}
+                                                    {formatCurrency(transaction.total_payment)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {transaction.totalTickets}
+                                                    {transaction.total_tickets}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span
@@ -229,7 +187,7 @@ const TransactionList = () => {
                                                     <div className="flex space-x-2">
                                                         <button
                                                             onClick={() => {
-                                                                navigate(`/admin/tickets/transactions-report/${transaction.id}`);
+                                                                navigate(`/admin/tickets/transactions-report/${transaction.group_booking_id}`);
                                                             }}
                                                             className="text-teal-600 hover:text-teal-900 transition-colors"
                                                             title="View transaction details"
