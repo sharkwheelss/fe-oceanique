@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, Edit, Trash2, Plus, Loader2, X, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useTickets } from '../../../../context/TicketContext';
 
 // Types
@@ -9,6 +9,102 @@ interface TicketCategory {
     created_at: string;
     updated_at: string;
 }
+
+interface ConfirmationModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    title: string;
+    message: string;
+    type: 'delete' | 'success' | 'error';
+    isLoading?: boolean;
+    confirmText?: string;
+    cancelText?: string;
+}
+
+// Confirmation Modal Component
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    title,
+    message,
+    type,
+    isLoading = false,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel'
+}) => {
+    if (!isOpen) return null;
+
+    const getIcon = () => {
+        switch (type) {
+            case 'delete':
+                return <AlertTriangle className="w-6 h-6 text-red-600" />;
+            case 'success':
+                return <CheckCircle className="w-6 h-6 text-green-600" />;
+            case 'error':
+                return <AlertTriangle className="w-6 h-6 text-red-600" />;
+            default:
+                return <AlertTriangle className="w-6 h-6 text-gray-600" />;
+        }
+    };
+
+    const getButtonColor = () => {
+        switch (type) {
+            case 'delete':
+                return 'bg-red-600 hover:bg-red-700';
+            case 'success':
+                return 'bg-green-600 hover:bg-green-700';
+            default:
+                return 'bg-teal-600 hover:bg-teal-700';
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 backdrop-blur-xs bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                            {getIcon()}
+                            <h3 className="ml-3 text-lg font-semibold text-gray-900">{title}</h3>
+                        </div>
+                        {type === 'success' && (
+                            <button
+                                onClick={onClose}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        )}
+                    </div>
+
+                    <p className="text-gray-600 mb-6">{message}</p>
+
+                    <div className="flex justify-end space-x-3">
+                        {type !== 'success' && (
+                            <button
+                                onClick={onClose}
+                                disabled={isLoading}
+                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                                {cancelText}
+                            </button>
+                        )}
+                        <button
+                            onClick={type === 'success' ? onClose : onConfirm}
+                            disabled={isLoading}
+                            className={`px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center ${getButtonColor()}`}
+                        >
+                            {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            {type === 'success' ? 'OK' : confirmText}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // Header component matching events page style
 const Header: React.FC<{ title: string; showBack?: boolean; onBack?: () => void }> = ({
@@ -249,7 +345,7 @@ const ListTicketCategories: React.FC<{
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {filteredCategories.length === 0 ? (
                                         <tr>
-                                            <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                                            <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                                                 {loading ? 'Loading...' : 'No categories found'}
                                             </td>
                                         </tr>
@@ -306,6 +402,21 @@ const TicketCategoryManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    // Modal states
+    const [modal, setModal] = useState<{
+        isOpen: boolean;
+        type: 'delete' | 'success' | 'error';
+        title: string;
+        message: string;
+        onConfirm?: () => void;
+        categoryToDelete?: string;
+    }>({
+        isOpen: false,
+        type: 'success',
+        title: '',
+        message: ''
+    });
+
     const { getAdminTicketCategories,
         adminCreateNewTicketCategories,
         adminUpdateTicketCategories,
@@ -345,23 +456,46 @@ const TicketCategoryManagement: React.FC = () => {
         setSubmitError('');
     };
 
+    const closeModal = () => {
+        setModal({
+            isOpen: false,
+            type: 'success',
+            title: '',
+            message: ''
+        });
+    };
+
+    const showSuccessModal = (message: string) => {
+        setModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Success',
+            message
+        });
+    };
+
+    const showErrorModal = (message: string) => {
+        setModal({
+            isOpen: true,
+            type: 'error',
+            title: 'Error',
+            message
+        });
+    };
+
     const handleAddCategory = async (name: string) => {
         setIsSubmitting(true);
         setSubmitError('');
 
         try {
             const result = await adminCreateNewTicketCategories(name);
-            // console.log(result)
 
             if (result) {
                 // Refresh the categories list
                 await fetchCategories();
-
                 setCurrentView('list');
                 resetForm();
-
-                // Success notification (you can integrate with toast here)
-                console.log('✅ Category added successfully');
+                showSuccessModal('Category has been added successfully!');
             } else {
                 setSubmitError('Failed to add category');
             }
@@ -373,22 +507,19 @@ const TicketCategoryManagement: React.FC = () => {
         }
     };
 
-    const handleEditCategory = async (id: number, name: string) => {
+    const handleEditCategory = async (id: string, name: string) => {
         setIsSubmitting(true);
         setSubmitError('');
 
         try {
-            const result = await adminUpdateTicketCategories(id, name);
+            const result = await adminUpdateTicketCategories(parseInt(id), name);
 
             if (result) {
                 // Refresh the categories list
                 await fetchCategories();
-
                 setCurrentView('list');
                 resetForm();
-
-                // Success notification
-                console.log('✅ Category updated successfully');
+                showSuccessModal('Category has been updated successfully!');
             } else {
                 setSubmitError('Failed to update category');
             }
@@ -400,27 +531,39 @@ const TicketCategoryManagement: React.FC = () => {
         }
     };
 
-    const handleDeleteCategory = async (id: number) => {
-        const confirmed = window.confirm('🗑️ Are you sure you want to delete this category?\nThis action cannot be undone.');
-        if (!confirmed) return;
+    const confirmDeleteCategory = async () => {
+        if (!modal.categoryToDelete) return;
 
         try {
-            const result = await adminDeleteTicketCategories(id);
+            const result = await adminDeleteTicketCategories(parseInt(modal.categoryToDelete));
 
             if (result?.message?.toLowerCase().includes('success')) {
                 // Remove from local state
-                setCategories(prev => prev.filter(category => category.id !== id.toString()));
-
-                // Success notification
-                console.log('✅ Category deleted successfully');
+                setCategories(prev => prev.filter(category => category.id !== modal.categoryToDelete));
+                closeModal();
+                showSuccessModal('Category has been deleted successfully!');
             } else {
                 console.error('Delete failed:', result);
-                alert('❌ Failed to delete category. Please try again.');
+                closeModal();
+                showErrorModal('Failed to delete category. Please try again.');
             }
         } catch (error) {
             console.error('Delete error:', error);
-            alert('🚫 An error occurred while deleting the category.');
+            closeModal();
+            showErrorModal('An error occurred while deleting the category.');
         }
+    };
+
+    const handleDeleteCategory = (id: string) => {
+        const category = categories.find(cat => cat.id === id);
+        setModal({
+            isOpen: true,
+            type: 'delete',
+            title: 'Delete Category',
+            message: `Are you sure you want to delete "${category?.name}"? This action cannot be undone.`,
+            onConfirm: confirmDeleteCategory,
+            categoryToDelete: id
+        });
     };
 
     const handleEditClick = (category: TicketCategory) => {
@@ -434,43 +577,51 @@ const TicketCategoryManagement: React.FC = () => {
     };
 
     // Render based on current view
-    if (currentView === 'list') {
-        return (
-            <ListTicketCategories
-                categories={categories}
-                onAdd={() => setCurrentView('add')}
-                onEdit={handleEditClick}
-                onDelete={handleDeleteCategory}
-                loading={loading}
-                error={error}
-            />
-        );
-    }
+    return (
+        <>
+            {currentView === 'list' && (
+                <ListTicketCategories
+                    categories={categories}
+                    onAdd={() => setCurrentView('add')}
+                    onEdit={handleEditClick}
+                    onDelete={handleDeleteCategory}
+                    loading={loading}
+                    error={error}
+                />
+            )}
 
-    if (currentView === 'add') {
-        return (
-            <AddTicketCategory
-                onBack={handleBack}
-                onSave={handleAddCategory}
-                isSubmitting={isSubmitting}
-                submitError={submitError}
-            />
-        );
-    }
+            {currentView === 'add' && (
+                <AddTicketCategory
+                    onBack={handleBack}
+                    onSave={handleAddCategory}
+                    isSubmitting={isSubmitting}
+                    submitError={submitError}
+                />
+            )}
 
-    if (currentView === 'edit' && editingCategory) {
-        return (
-            <EditTicketCategory
-                category={editingCategory}
-                onBack={handleBack}
-                onSave={handleEditCategory}
-                isSubmitting={isSubmitting}
-                submitError={submitError}
-            />
-        );
-    }
+            {currentView === 'edit' && editingCategory && (
+                <EditTicketCategory
+                    category={editingCategory}
+                    onBack={handleBack}
+                    onSave={handleEditCategory}
+                    isSubmitting={isSubmitting}
+                    submitError={submitError}
+                />
+            )}
 
-    return null;
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={modal.isOpen}
+                onClose={closeModal}
+                onConfirm={modal.onConfirm || closeModal}
+                title={modal.title}
+                message={modal.message}
+                type={modal.type}
+                confirmText={modal.type === 'delete' ? 'Delete' : 'OK'}
+                cancelText="Cancel"
+            />
+        </>
+    );
 };
 
 export default TicketCategoryManagement;

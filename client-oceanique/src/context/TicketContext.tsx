@@ -10,6 +10,12 @@ interface TicketContextType {
     adminCreateNewTicketCategories: (name: string) => Promise<any>;
     adminUpdateTicketCategories: (id: number, name: string) => Promise<any>;
     adminDeleteTicketCategories: (id: number) => Promise<any>;
+
+    getAdminTicket: () => Promise<any>;
+    getAdminTicketById: (id: number) => Promise<any>;
+    adminCreateNewTicket: (name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => Promise<any>;
+    adminUpdateTicket: (id: number, name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => Promise<any>;
+    adminDeleteTicket: (id: number) => Promise<any>;
 }
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -84,6 +90,72 @@ export const TicketProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const getAdminTicket = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.ticket.getAdminTicket();
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch tickets');
+            console.error('Error fetching tickets:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const getAdminTicketById = async (id: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.ticket.getAdminTicketById(id);
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch tickets details');
+            console.error('Error fetching tickets details:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const adminCreateNewTicket = async (name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.ticket.adminCreateNewTicket(name, description, quota, price, date, private_code, events_id, tickets_categories_id);
+            return response;
+        } catch (err) {
+            setError('Failed to add ticket');
+            console.error('Error when add ticket:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const adminUpdateTicket = async (id: number, name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.ticket.adminUpdateTicket(id, name, description, quota, price, date, private_code, events_id, tickets_categories_id);
+            return response;
+        } catch (err) {
+            setError('Failed to edit ticket');
+            console.error('Error edit ticket:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const adminDeleteTicket = async (id: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.ticket.adminDeleteTicket(id);
+            return response;
+        } catch (err) {
+            setError('Failed to delete ticket category');
+            console.error('Error edit ticket category:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const value = {
         loading,
@@ -93,6 +165,12 @@ export const TicketProvider = ({ children }: { children: ReactNode }) => {
         adminCreateNewTicketCategories,
         adminUpdateTicketCategories,
         adminDeleteTicketCategories,
+
+        getAdminTicket,
+        getAdminTicketById,
+        adminCreateNewTicket,
+        adminUpdateTicket,
+        adminDeleteTicket,
     };
 
     return (

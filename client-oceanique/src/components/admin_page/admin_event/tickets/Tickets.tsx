@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useTickets } from '../../../../context/TicketContext';
 
 const TicketList = () => {
     const navigate = useNavigate();
@@ -10,42 +11,7 @@ const TicketList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Mock data for demonstration - replace with actual API calls
-    const mockTickets = [
-        {
-            id: '1',
-            name: 'Ticket one plus',
-            description: 'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-            parentEvent: 'Summer Party GSC 2',
-            category: 'VIP',
-            quota: 30,
-            price: 200000,
-            validDate: '2025-05-07',
-            status: 'active'
-        },
-        {
-            id: '2',
-            name: 'Ticket secondary',
-            description: 'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-            parentEvent: 'Summer Party GSC 1',
-            category: 'Exclusive',
-            quota: 0,
-            price: 1000000,
-            validDate: '2024-01-01',
-            status: 'sold_out'
-        },
-        {
-            id: '3',
-            name: 'Regular Access',
-            description: 'Standard access ticket for general admission to the event.',
-            parentEvent: 'Winter Festival',
-            category: 'Regular',
-            quota: 100,
-            price: 50000,
-            validDate: '2025-12-15',
-            status: 'active'
-        }
-    ];
+    const { getAdminTicket, adminDeleteTicket } = useTickets();
 
     useEffect(() => {
         const fetchTickets = async () => {
@@ -53,14 +19,9 @@ const TicketList = () => {
                 setLoading(true);
                 setError(null);
 
-                // Simulate API call - replace with actual API call
-                await new Promise(resolve => setTimeout(resolve, 500));
+                const ticketsResponse = await getAdminTicket();
+                setTickets(ticketsResponse.data || ticketsResponse);
 
-                // Replace this with actual API call
-                // const ticketsResponse = await getAdminTickets();
-                // setTickets(ticketsResponse.data || ticketsResponse);
-
-                setTickets(mockTickets);
             } catch (error) {
                 console.error('Error fetching tickets:', error);
                 setError('Failed to load tickets. Please try again.');
@@ -78,14 +39,12 @@ const TicketList = () => {
         if (!confirmed) return;
 
         try {
-            // Replace with actual API call
-            // const result = await adminDeleteTicket(ticketId);
+            const result = await adminDeleteTicket(ticketId);
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
-            toast.success('✅ Ticket deleted successfully');
+            if (result) {
+                setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
+                toast.success('✅ Ticket deleted successfully');
+            }
 
         } catch (error) {
             console.error('Delete error:', error);
@@ -115,12 +74,12 @@ const TicketList = () => {
         switch (status) {
             case 'active':
                 return 'bg-green-100 text-green-700';
-            case 'sold_out':
+            case 'sold out':
                 return 'bg-red-100 text-red-700';
-            case 'expired':
-                return 'bg-gray-100 text-gray-700';
-            case 'inactive':
-                return 'bg-yellow-100 text-yellow-700';
+            // case 'expired':
+            //     return 'bg-gray-100 text-gray-700';
+            // case 'inactive':
+            //     return 'bg-yellow-100 text-yellow-700';
             default:
                 return 'bg-slate-100 text-slate-600';
         }
@@ -132,10 +91,10 @@ const TicketList = () => {
                 return 'Active';
             case 'sold_out':
                 return 'Sold Out';
-            case 'expired':
-                return 'Expired';
-            case 'inactive':
-                return 'Inactive';
+            // case 'expired':
+            //     return 'Expired';
+            // case 'inactive':
+            //     return 'Inactive';
             default:
                 return status;
         }
@@ -237,27 +196,28 @@ const TicketList = () => {
                                                     {ticket.name}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {ticket.parentEvent}
+                                                    {ticket.event_name}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                                        {ticket.category}
+                                                        {ticket.category_name}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {formatDate(ticket.validDate)}
+                                                    {formatDate(ticket.date)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    <span className={`font-medium ${ticket.quota <= 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                                                        {ticket.quota}
+                                                    <span className={`font-medium ${(ticket.quota - ticket.sold) <= 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                                                        {ticket.quota - ticket.sold}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {formatPrice(ticket.price)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                                                        {getStatusText(ticket.status)}
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor((ticket.quota - ticket.sold) > 0 ? "active" : "sold out")}`}>
+                                                        {getStatusText((ticket.quota - ticket.sold) > 0 ? "active" : "sold out")}
+
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

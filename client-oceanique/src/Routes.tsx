@@ -177,12 +177,30 @@ export default function OceaniqueRoutes() {
                     </EventProvider>
                 } />
 
-                <Route path="/admin/tickets" element={<AdminTicket />} />
-                <Route path="/admin/tickets/:ticketId" element={<AdminTicketDetail />} />
-                <Route path="/admin/tickets/create" element={<AdminAddEditTicketDetail />} />
-                <Route path="/admin/tickets/:ticketId/edit" element={<AdminAddEditTicketDetail />} />
-
-
+                <Route path="/admin/tickets" element={
+                    <TicketProvider>
+                        <AdminTicket />
+                    </TicketProvider>
+                } />
+                <Route path="/admin/tickets/:ticketId" element={
+                    <TicketProvider>
+                        <AdminTicketDetail />
+                    </TicketProvider>
+                } />
+                <Route path="/admin/tickets/create" element={
+                    <EventProvider>
+                        <TicketProvider>
+                            <AdminAddEditTicketDetail />
+                        </TicketProvider>
+                    </EventProvider>
+                } />
+                <Route path="/admin/tickets/:ticketId/edit" element={
+                    <EventProvider>
+                        <TicketProvider>
+                            <AdminAddEditTicketDetail />
+                        </TicketProvider>
+                    </EventProvider>
+                } />
                 <Route path="/admin/tickets/category" element={
                     <TicketProvider>
                         <AdminTicketCategory />

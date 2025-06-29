@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Edit, MapPin, Tag, Users, DollarSign } from 'lucide-react';
+import { useTickets } from '../../../../context/TicketContext';
 
 // Types
 interface Ticket {
@@ -16,33 +17,6 @@ interface Ticket {
     status?: string;
 }
 
-// Mock data for demonstration
-const mockTickets: Ticket[] = [
-    {
-        id: '1',
-        name: 'Ticket one plus',
-        description: 'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-        parentEvent: 'Summer Party GSC 2',
-        category: 'VIP',
-        quota: 30,
-        price: 200000,
-        validDate: '2025-05-07',
-        sold: 15,
-        status: 'active'
-    },
-    {
-        id: '2',
-        name: 'Ticket secondary',
-        description: 'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.',
-        parentEvent: 'Summer Party GSC 1',
-        category: 'Exclusive',
-        quota: 50,
-        price: 1000000,
-        validDate: '2024-01-01',
-        sold: 45,
-        status: 'sold_out'
-    }
-];
 
 const TicketDetails = () => {
     const navigate = useNavigate();
@@ -52,6 +26,8 @@ const TicketDetails = () => {
     const [ticket, setTicket] = useState<Ticket | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const { getAdminTicketById } = useTickets();
 
     useEffect(() => {
         const fetchTicketDetails = async () => {
@@ -65,14 +41,10 @@ const TicketDetails = () => {
                 setLoading(true);
                 setError(null);
 
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                const result = await getAdminTicketById(Number(ticketId))
 
-                // Find ticket by ID (replace with actual API call)
-                const foundTicket = mockTickets.find(t => t.id === ticketId);
-
-                if (foundTicket) {
-                    setTicket(foundTicket);
+                if (result) {
+                    setTicket(result);
                 } else {
                     setError('Ticket not found');
                 }
@@ -269,7 +241,7 @@ const TicketDetails = () => {
                                 </label>
                                 <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 flex items-center">
                                     <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                                    {ticket.parentEvent || 'No parent event specified'}
+                                    {ticket.event_name || 'No parent event specified'}
                                 </div>
                             </div>
                         </div>
@@ -290,7 +262,7 @@ const TicketDetails = () => {
                                 </label>
                                 <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 flex items-center">
                                     <Tag className="w-4 h-4 mr-2 text-gray-500" />
-                                    {ticket.category || 'No category specified'}
+                                    {ticket.category_name || 'No category specified'}
                                 </div>
                             </div>
 
@@ -300,7 +272,7 @@ const TicketDetails = () => {
                                 </label>
                                 <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700 flex items-center">
                                     <Calendar className="w-4 h-4 mr-2 text-gray-500" />
-                                    {formatDate(ticket.validDate)}
+                                    {formatDate(ticket.date)}
                                 </div>
                             </div>
                         </div>

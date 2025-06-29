@@ -50,6 +50,12 @@ interface Api {
         adminCreateNewTicketCategories: (name: string) => Promise<any>;
         adminUpdateTicketCategories: (id: number, name: string) => Promise<any>;
         adminDeleteTicketCategories: (id: number) => Promise<any>;
+
+        getAdminTicket: () => Promise<any>;
+        getAdminTicketById: (id: number) => Promise<any>;
+        adminCreateNewTicket: (name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => Promise<any>;
+        adminUpdateTicket: (id: number, name: string, description: string, quota: number, price: number, date: string, private_code: string, events_id: number, tickets_categories_id: number) => Promise<any>;
+        adminDeleteTicket: (id: number) => Promise<any>;
     }
 }
 
