@@ -4,6 +4,7 @@ import Signup from './components/SignUp';
 import { RecommendationProvider } from './context/RecommendationContext';
 import { BeachProvider } from './context/BeachContext';
 import { EventProvider } from './context/EventContext';
+import { TicketProvider } from './context/TicketContext';
 import NotFound from './components/NotFound';
 import { Home, WhyOceaniqueSection } from './components/Home';
 import Profile from './components/Profile';
@@ -182,7 +183,12 @@ export default function OceaniqueRoutes() {
                 <Route path="/admin/tickets/:ticketId/edit" element={<AdminAddEditTicketDetail />} />
 
 
-                <Route path="/admin/tickets/category" element={<AdminTicketCategory />} />
+                <Route path="/admin/tickets/category" element={
+                    <TicketProvider>
+                        <AdminTicketCategory />
+                    </TicketProvider>
+                } />
+
                 <Route path="/admin/tickets/transactions-report" element={<AdminTransReport />} />
                 <Route path="/admin/tickets/transactions-report/:transactionId" element={<AdminTransDetails />} />
             </Route>

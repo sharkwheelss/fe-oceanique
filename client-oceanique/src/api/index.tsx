@@ -2,6 +2,7 @@ import { authApi } from './auth';
 import { recommendationApi } from './recommendation';
 import { beachApi } from './beach';
 import { eventApi } from './event';
+import { ticketApi } from './ticket';
 
 interface Api {
     auth: {
@@ -43,6 +44,13 @@ interface Api {
         adminUpdateEvent: (updateEvent: FormData, eventId: number) => Promise<any>;
         adminDeleteEvent: (eventId: number) => Promise<any>;
     };
+    ticket: {
+        getAdminTicketCategories: () => Promise<any>;
+        getAdminTicketCategoriesById: (id: number) => Promise<any>;
+        adminCreateNewTicketCategories: (name: string) => Promise<any>;
+        adminUpdateTicketCategories: (id: number, name: string) => Promise<any>;
+        adminDeleteTicketCategories: (id: number) => Promise<any>;
+    }
 }
 
 const api: Api = {
@@ -50,6 +58,7 @@ const api: Api = {
     recommendation: recommendationApi,
     beach: beachApi,
     event: eventApi,
+    ticket: ticketApi,
 }
 
 export default api

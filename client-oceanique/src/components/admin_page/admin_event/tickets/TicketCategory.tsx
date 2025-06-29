@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
+import { useTickets } from '../../../../context/TicketContext';
 
 // Types
 interface TicketCategory {
@@ -8,99 +9,6 @@ interface TicketCategory {
     created_at: string;
     updated_at: string;
 }
-
-// API Service (you can replace these with your actual API endpoints)
-const categoryAPI = {
-    // Fetch all categories
-    getCategories: async (): Promise<{ data: TicketCategory[] }> => {
-        try {
-            const response = await fetch('/api/admin/ticket-categories', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Adjust based on your auth
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch categories');
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching categories:', error);
-            throw error;
-        }
-    },
-
-    // Create new category
-    createCategory: async (name: string): Promise<{ message: string; data?: TicketCategory }> => {
-        try {
-            const response = await fetch('/api/admin/ticket-categories', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
-                body: JSON.stringify({ name }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to create category');
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Error creating category:', error);
-            throw error;
-        }
-    },
-
-    // Update category
-    updateCategory: async (id: string, name: string): Promise<{ message: string; data?: TicketCategory }> => {
-        try {
-            const response = await fetch(`/api/admin/ticket-categories/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
-                body: JSON.stringify({ name }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update category');
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Error updating category:', error);
-            throw error;
-        }
-    },
-
-    // Delete category
-    deleteCategory: async (id: string): Promise<{ message: string }> => {
-        try {
-            const response = await fetch(`/api/admin/ticket-categories/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete category');
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Error deleting category:', error);
-            throw error;
-        }
-    }
-};
 
 // Header component matching events page style
 const Header: React.FC<{ title: string; showBack?: boolean; onBack?: () => void }> = ({
@@ -398,32 +306,37 @@ const TicketCategoryManagement: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const { getAdminTicketCategories,
+        adminCreateNewTicketCategories,
+        adminUpdateTicketCategories,
+        adminDeleteTicketCategories } = useTickets();
+
+    const fetchCategories = async () => {
+        try {
+            setLoading(true);
+            setError('');
+            const response = await getAdminTicketCategories();
+            console.log('Categories response:', response);
+
+            // Handle response structure similar to your events page
+            if (response && response.data) {
+                setCategories(response.data);
+            } else if (Array.isArray(response)) {
+                setCategories(response);
+            } else {
+                setCategories([]);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            setError('Failed to load categories. Please try again.');
+            setCategories([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Fetch categories on component mount
     useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                setLoading(true);
-                setError('');
-                const response = await categoryAPI.getCategories();
-                console.log('Categories response:', response);
-
-                // Handle response structure similar to your events page
-                if (response && response.data) {
-                    setCategories(response.data);
-                } else if (Array.isArray(response)) {
-                    setCategories(response);
-                } else {
-                    setCategories([]);
-                }
-            } catch (error) {
-                console.error('Error fetching categories:', error);
-                setError('Failed to load categories. Please try again.');
-                setCategories([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchCategories();
     }, []);
 
@@ -437,14 +350,12 @@ const TicketCategoryManagement: React.FC = () => {
         setSubmitError('');
 
         try {
-            const result = await categoryAPI.createCategory(name);
+            const result = await adminCreateNewTicketCategories(name);
+            // console.log(result)
 
-            if (result?.message?.toLowerCase().includes('success') || result.data) {
+            if (result) {
                 // Refresh the categories list
-                const response = await categoryAPI.getCategories();
-                if (response && response.data) {
-                    setCategories(response.data);
-                }
+                await fetchCategories();
 
                 setCurrentView('list');
                 resetForm();
@@ -462,19 +373,16 @@ const TicketCategoryManagement: React.FC = () => {
         }
     };
 
-    const handleEditCategory = async (id: string, name: string) => {
+    const handleEditCategory = async (id: number, name: string) => {
         setIsSubmitting(true);
         setSubmitError('');
 
         try {
-            const result = await categoryAPI.updateCategory(id, name);
+            const result = await adminUpdateTicketCategories(id, name);
 
-            if (result?.message?.toLowerCase().includes('success') || result.data) {
+            if (result) {
                 // Refresh the categories list
-                const response = await categoryAPI.getCategories();
-                if (response && response.data) {
-                    setCategories(response.data);
-                }
+                await fetchCategories();
 
                 setCurrentView('list');
                 resetForm();
@@ -492,16 +400,16 @@ const TicketCategoryManagement: React.FC = () => {
         }
     };
 
-    const handleDeleteCategory = async (id: string) => {
+    const handleDeleteCategory = async (id: number) => {
         const confirmed = window.confirm('🗑️ Are you sure you want to delete this category?\nThis action cannot be undone.');
         if (!confirmed) return;
 
         try {
-            const result = await categoryAPI.deleteCategory(id);
+            const result = await adminDeleteTicketCategories(id);
 
             if (result?.message?.toLowerCase().includes('success')) {
                 // Remove from local state
-                setCategories(prev => prev.filter(category => category.id !== id));
+                setCategories(prev => prev.filter(category => category.id !== id.toString()));
 
                 // Success notification
                 console.log('✅ Category deleted successfully');
