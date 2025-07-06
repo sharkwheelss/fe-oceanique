@@ -209,7 +209,7 @@ const EventsPage = () => {
             case 'ended':
                 return 'Ended';
             case 'upcoming':
-                return 'Ongoing';
+                return 'Upcoming';
             default:
                 return 'Unknown';
         }

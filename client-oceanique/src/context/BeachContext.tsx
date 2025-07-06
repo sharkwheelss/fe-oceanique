@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import api from '../api';
+import { beachApi } from '../api/beach';
 
 interface BeachContextType {
     loading: boolean;
@@ -13,6 +14,8 @@ interface BeachContextType {
     getDetailsReview: (reviewId: string) => Promise<any>;
     addBeachReviews: (review: any) => Promise<any>;
     editDetailsReview: (review_id: string, review: any) => Promise<any>;
+    addWishlist: (beachId: string) => Promise<any>;
+    deleteWishlist: (beachId: string) => Promise<any>;
 }
 
 const BeachContext = createContext<BeachContextType | undefined>(undefined);
@@ -124,7 +127,33 @@ export const BeachProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setLoading(false);
         }
-    }
+    };
+    const addWishlist = async (beachId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.beach.addWishlist(beachId);
+            return response.data;
+        } catch (err) {
+            setError('Failed to add wishlist');
+            console.error('Error add wishlist:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const deleteWishlist = async (beachId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.beach.deleteWishlist(beachId);
+            return response;
+        } catch (err) {
+            setError('Failed to delete wishlist');
+            console.error('Error edit wishlist:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const value = {
         loading,
@@ -136,7 +165,9 @@ export const BeachProvider = ({ children }: { children: ReactNode }) => {
         getListOptions,
         getDetailsReview,
         addBeachReviews,
-        editDetailsReview
+        editDetailsReview,
+        addWishlist,
+        deleteWishlist
     };
 
     return (

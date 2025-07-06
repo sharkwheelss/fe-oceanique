@@ -33,6 +33,8 @@ interface Api {
         getDetailsReview: (reviewId: string) => Promise<any>;
         addBeachReviews: (review: FormData) => Promise<any>;
         editDetailsReview: (review_id: string, review: FormData) => Promise<any>;
+        addWishlist: (beachId: string) => Promise<any>;
+        deleteWishlist: (beachId: string) => Promise<any>;
     },
     event: {
         getAllEvents: () => Promise<any>;

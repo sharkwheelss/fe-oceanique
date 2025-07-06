@@ -104,13 +104,13 @@ export interface BeachReviewsResponse {
 
 // Main BeachDetailPage component
 export default function BeachDetailPage() {
-    // Get beach data from context - Added wishlist methods
+    // Get beach data from context - Updated to use correct API methods
     const {
         getBeachDetails,
         getBeachReviews,
-        addToWishlist,
-        removeFromWishlist,
-        checkWishlistStatus,
+        addWishlist,
+        deleteWishlist,
+        getWishlist,
         loading
     } = useBeaches();
     const { user } = useAuth();
@@ -122,6 +122,7 @@ export default function BeachDetailPage() {
     const [beachReviews, setBeachReviews] = useState<BeachReviewsResponse | null>(null);
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
+    const [wishlistStatusLoading, setWishlistStatusLoading] = useState(true);
 
     // Get beachId from URL params (you might need to adjust this based on your routing)
     const beachId = new URLSearchParams(window.location.search).get('id') ||
@@ -142,18 +143,33 @@ export default function BeachDetailPage() {
 
                 setBeachData(beach);
                 setBeachReviews(reviews);
-
-                // Check wishlist status after beach data is loaded
-                if (user?.id && beach?.id) {
-                    await checkWishlistStatusHandler(beach.id.toString());
-                }
             } catch (error) {
                 console.error('Error fetching beaches:', error);
             }
         };
 
         fetchBeachData();
-    }, [beachId, user?.id]);
+    }, [beachId]);
+
+    // Separate useEffect for wishlist status check
+    useEffect(() => {
+        const checkWishlistStatus = async () => {
+            if (!user?.id || !beachData?.id) {
+                setWishlistStatusLoading(false);
+                return;
+            }
+
+            try {
+                await checkWishlistStatusHandler(beachData.id.toString());
+            } catch (error) {
+                console.error('Error checking wishlist status:', error);
+            } finally {
+                setWishlistStatusLoading(false);
+            }
+        };
+
+        checkWishlistStatus();
+    }, [user?.id, beachData?.id]);
 
     console.log('beach data:', beachData?.id)
     console.log('review data:', beachReviews)
@@ -163,21 +179,30 @@ export default function BeachDetailPage() {
         if (!user?.id) return;
 
         try {
-            console.log('Check status: ', beachId);
-            // Assuming checkWishlistStatus returns boolean or an object indicating wishlist status
-            const status = await checkWishlistStatus(user.id, parseInt(beachId));
-            setIsWishlisted(!!status); // Convert to boolean
+            console.log('Check wishlist status for beach: ', beachId);
+
+            // Get all wishlisted beaches for the current user
+            const wishlistResponse = await getWishlist();
+
+            // Check if wishlistResponse has data property and is an array
+            const wishlistData = wishlistResponse || [];
+
+            // Check if current beach is in the wishlist
+            const isInWishlist = wishlistData.some((item: any) =>
+                item.beaches_id === parseInt(beachId)
+            );
+
+            setIsWishlisted(isInWishlist);
+            console.log('Beach is wishlisted:', isInWishlist);
+
         } catch (error) {
             console.error('Error checking wishlist status:', error);
+            // If there's an error (like user not authenticated), assume not wishlisted
+            setIsWishlisted(false);
         }
     };
 
     const toggleWishlist = async () => {
-        if (!user?.id || !beachData?.id) {
-            // Redirect to login if user is not authenticated
-            navigate('/login');
-            return;
-        }
 
         setWishlistLoading(true);
 
@@ -185,20 +210,42 @@ export default function BeachDetailPage() {
             console.log('Toggle wishlist clicked');
 
             if (isWishlisted) {
-                // Remove from wishlist
-                await removeFromWishlist(user.id, beachData.id);
+                // Remove from wishlist - using deleteWishlist with beachId as parameter
+                await deleteWishlist(beachId);
                 setIsWishlisted(false);
                 console.log('Removed from wishlist');
             } else {
-                // Add to wishlist
-                await addToWishlist(user.id, beachData.id);
+                // Add to wishlist - using addWishlist with beach data
+                await addWishlist(beachId);
                 setIsWishlisted(true);
                 console.log('Added to wishlist');
             }
+
+            // Optionally refresh wishlist status after successful operation
+            // await checkWishlistStatusHandler(beachData.id.toString());
+
         } catch (error) {
             console.error('Error toggling wishlist:', error);
-            // Optionally show error message to user
-            alert('Failed to update wishlist. Please try again.');
+
+            // Show user-friendly error message based on the error
+            let errorMessage = 'Failed to update wishlist. Please try again.';
+
+            if (error instanceof Error) {
+                // Handle specific error messages from the API
+                if (error.message.includes('409')) {
+                    errorMessage = 'Beach is already in your wishlist';
+                } else if (error.message.includes('404')) {
+                    errorMessage = 'Beach not found in your wishlist';
+                } else {
+                    errorMessage = error.message;
+                }
+            }
+
+            alert(errorMessage);
+
+            // Revert the wishlist state on error
+            // We don't need to revert here since we're updating state only on success
+
         } finally {
             setWishlistLoading(false);
         }
@@ -209,10 +256,12 @@ export default function BeachDetailPage() {
         setActiveTab(tab);
     };
 
-    if (loading || !beachData) {
+    if (loading || !beachData || wishlistStatusLoading) {
         return (
             <div className="max-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-xl">Loading details...</div>
+                <div className="text-xl">
+                    {loading || !beachData ? 'Loading details...' : 'Loading wishlist status...'}
+                </div>
             </div>
         );
     }
@@ -235,25 +284,30 @@ export default function BeachDetailPage() {
                         </div>
                     </div>
 
-                    {/* Wishlist button */}
+                    {/* Wishlist button - Updated styling to match your design */}
                     <button
                         onClick={toggleWishlist}
-                        disabled={wishlistLoading}
-                        className={`flex items-center px-6 py-3 rounded-full ${isWishlisted
-                                ? 'bg-red-500 hover:bg-red-600'
-                                : 'bg-teal-500 hover:bg-teal-600'
-                            } text-white font-medium transition-colors ${wishlistLoading ? 'opacity-50 cursor-not-allowed' : ''
+                        disabled={wishlistLoading || wishlistStatusLoading}
+                        className={`flex items-center px-6 py-3 rounded-full font-medium transition-all duration-200 ${isWishlisted
+                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                            : 'bg-teal-500 hover:bg-teal-600 text-white'
+                            } ${(wishlistLoading || wishlistStatusLoading)
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'hover:shadow-lg transform hover:scale-105'
                             }`}
                     >
                         <Heart
                             size={20}
-                            className={`mr-2 ${isWishlisted ? 'fill-current' : ''}`}
+                            className={`mr-2 transition-all duration-200 ${isWishlisted ? 'fill-current' : ''
+                                }`}
                         />
                         {wishlistLoading
                             ? 'Updating...'
-                            : isWishlisted
-                                ? 'Remove from wishlist'
-                                : 'Save to wishlist'
+                            : wishlistStatusLoading
+                                ? 'Loading...'
+                                : isWishlisted
+                                    ? 'Remove from wishlist'
+                                    : 'Save to wishlist'
                         }
                     </button>
                 </div>

@@ -74,4 +74,23 @@ export const beachApi = {
         });
         return response.json();
     },
+    addWishlist: async (beaches_id: string) => {
+        const response = await fetch(`${BASE_URL}/beaches/wishlist`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ beaches_id })
+        });
+        return response.json();
+    },
+    deleteWishlist: async (beachId: string) => {
+        const response = await fetch(`${BASE_URL}/beaches/wishlist/${beachId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
 }
