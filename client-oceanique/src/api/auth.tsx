@@ -39,4 +39,20 @@ export const authApi = {
             credentials: 'include',
         });
     },
+    viewProfile: async () => {
+        const response = await fetch(`${BASE_URL}/auth/profile`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        return response.json();
+    },
+    editProfile: async (dataProfile: FormData) => {
+        const response = await fetch(`${BASE_URL}/auth/profile/edit`, {
+            method: 'PUT',
+            credentials: 'include',
+            body: dataProfile
+        });
+        return response.json();
+    },
 };

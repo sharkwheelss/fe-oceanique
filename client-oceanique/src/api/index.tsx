@@ -12,6 +12,8 @@ interface Api {
         ) => Promise<any>;
         login: (credentials: { login: string; password: string }) => Promise<any>;
         logout: () => Promise<any>;
+        viewProfile: () => Promise<any>;
+        editProfile: (dataProfile: FormData) => Promise<any>;
     };
     recommendation: {
         getAllPersonalities: () => Promise<any>;

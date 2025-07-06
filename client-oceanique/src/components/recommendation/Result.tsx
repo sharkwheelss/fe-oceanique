@@ -92,7 +92,12 @@ export default function RecommendationResult() {
     const [destinations, setDestinations] = useState<BeachesView[]>([]);
     const [reviews, setReviews] = useState<Review[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingReviews, setIsLoadingReviews] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [originalApiData, setOriginalApiData] = useState<ApiBeachData[]>([]);
+
+    // Store reviews for each beach to avoid refetching
+    const [beachReviews, setBeachReviews] = useState<Map<number, Review[]>>(new Map());
 
     useEffect(() => {
         const loadRecommendationData = async () => {
@@ -104,11 +109,7 @@ export default function RecommendationResult() {
                 const stateData = location.state?.recommendationData;
                 const userOptions = location.state?.userOptions;
 
-                // console.log('stateData: ', stateData);
-                // console.log('userOptions: ', userOptions);
-
                 let recommendationData;
-                let reviewData;
 
                 if (stateData) {
                     // Use data from navigation state
@@ -122,14 +123,7 @@ export default function RecommendationResult() {
                     return;
                 }
 
-                // Fetch reviews for the first beach (or you can fetch for all beaches)
-                if (recommendationData?.data && recommendationData.data.length > 0) {
-                    const firstBeachId = recommendationData.data[0].beach_id;
-                    reviewData = await getBeachReviews(firstBeachId);
-                    console.log('Review data:', reviewData);
-                }
-
-                processRecommendationData(recommendationData, reviewData);
+                processRecommendationData(recommendationData);
             } catch (error) {
                 console.error('Error loading recommendation data:', error);
                 setError('Failed to load recommendations. Please try again.');
@@ -140,6 +134,49 @@ export default function RecommendationResult() {
 
         loadRecommendationData();
     }, [location.state, beachRecommendation]);
+
+    // Load reviews when destination changes
+    useEffect(() => {
+        const loadReviewsForCurrentDestination = async () => {
+            if (destinations.length === 0) return;
+
+            const currentDestination = destinations[currentDestinationIndex];
+            const currentBeachId = originalApiData[currentDestinationIndex]?.beach_id;
+
+            if (!currentBeachId) return;
+
+            // Check if we already have reviews for this beach
+            if (beachReviews.has(currentBeachId)) {
+                setReviews(beachReviews.get(currentBeachId) || []);
+                return;
+            }
+
+            try {
+                setIsLoadingReviews(true);
+                const reviewData = await getBeachReviews(currentBeachId);
+                console.log('Review data for beach', currentBeachId, ':', reviewData);
+
+                let currentReviews: Review[] = [];
+                if (Array.isArray(reviewData) && reviewData.length > 0 && Array.isArray(reviewData[0].reviews)) {
+                    currentReviews = reviewData[0].reviews;
+                }
+
+                // Store reviews in cache
+                setBeachReviews(prev => new Map(prev).set(currentBeachId, currentReviews));
+                setReviews(currentReviews);
+
+                // Update the current destination with amenities from reviews
+                updateDestinationWithReviewData(currentDestinationIndex, currentReviews);
+            } catch (error) {
+                console.error('Error loading reviews for beach', currentBeachId, ':', error);
+                setReviews([]);
+            } finally {
+                setIsLoadingReviews(false);
+            }
+        };
+
+        loadReviewsForCurrentDestination();
+    }, [currentDestinationIndex, destinations, originalApiData, getBeachReviews, beachReviews]);
 
     // Transform API beach data to component format
     const transformApiBeachToDestination = (apiBeach: ApiBeachData, reviewOptions: any[] = []): BeachesView => {
@@ -181,54 +218,79 @@ export default function RecommendationResult() {
         return Math.floor(Math.random() * 100) + 5;
     };
 
+    // Update destination with review data
+    const updateDestinationWithReviewData = (destIndex: number, reviewData: Review[]) => {
+        const allOptionVotes = reviewData.flatMap(review => review.option_votes || []);
+        const uniqueOptions = allOptionVotes.reduce((acc, option) => {
+            if (!acc.find(item => item.option_name === option.option_name)) {
+                acc.push({
+                    option_name: option.option_name,
+                    id: option.id
+                });
+            }
+            return acc;
+        }, [] as Array<{ option_name: string; id: number }>);
+
+        setDestinations(prev => {
+            const updated = [...prev];
+            if (updated[destIndex]) {
+                updated[destIndex] = {
+                    ...updated[destIndex],
+                    amenities: uniqueOptions
+                };
+            }
+            return updated;
+        });
+    };
 
     // Process the API response data
-    const processRecommendationData = (data: any, reviewData: any) => {
+    const processRecommendationData = (data: any) => {
         console.log('Processing API data:', data);
-        console.log('Processing review data:', reviewData[0]?.reviews);
 
         try {
             let processedDestinations: BeachesView[] = [];
-            let allReviews: Review[] = [];
-
-            // Extract reviews if available
-            if (Array.isArray(reviewData) && reviewData.length > 0 && Array.isArray(reviewData[0].reviews)) {
-                allReviews = reviewData[0].reviews;
-                setReviews(allReviews);
-            }
-
-            // Get all option votes from reviews for amenities
-            const allOptionVotes = allReviews.flatMap(review => review.option_votes || []);
+            let apiBeaches: ApiBeachData[] = [];
 
             // Handle different possible response structures
             if (data.data && Array.isArray(data.data)) {
                 // API returns { data: [...] }
+                apiBeaches = data.data;
                 processedDestinations = data.data.map((beach: ApiBeachData) =>
-                    transformApiBeachToDestination(beach, allOptionVotes)
+                    transformApiBeachToDestination(beach, [])
                 );
             } else if (Array.isArray(data)) {
                 // API returns array directly
+                apiBeaches = data;
                 processedDestinations = data.map((beach: ApiBeachData) =>
-                    transformApiBeachToDestination(beach, allOptionVotes)
+                    transformApiBeachToDestination(beach, [])
                 );
             } else if (data.destinations && Array.isArray(data.destinations)) {
                 // Legacy format support
                 processedDestinations = data.destinations;
+                apiBeaches = data.destinations;
             } else if (data.results && Array.isArray(data.results)) {
                 // Another possible format
+                apiBeaches = data.results;
                 processedDestinations = data.results.map((beach: ApiBeachData) =>
-                    transformApiBeachToDestination(beach, allOptionVotes)
+                    transformApiBeachToDestination(beach, [])
                 );
             } else {
                 console.warn('Unexpected API response format:', data);
                 processedDestinations = [];
+                apiBeaches = [];
             }
 
             // Sort by match percentage (highest first)
-            processedDestinations = processedDestinations.sort((a, b) => b.matchPercentage - a.matchPercentage);
+            const sortedIndices = processedDestinations
+                .map((_, index) => index)
+                .sort((a, b) => processedDestinations[b].matchPercentage - processedDestinations[a].matchPercentage);
+
+            processedDestinations = sortedIndices.map(index => processedDestinations[index]);
+            apiBeaches = sortedIndices.map(index => apiBeaches[index]);
 
             console.log('Processed destinations:', processedDestinations);
             setDestinations(processedDestinations);
+            setOriginalApiData(apiBeaches);
 
         } catch (error) {
             console.error('Error processing recommendation data:', error);
@@ -250,8 +312,6 @@ export default function RecommendationResult() {
             experienced: review.experience > 0
         };
     };
-
-
 
     // Function to handle navigation between destinations
     const handleNavigation = (direction: 'next' | 'prev') => {
@@ -474,15 +534,22 @@ export default function RecommendationResult() {
             </div>
 
             {/* Reviews Section */}
-            {reviews.length > 0 && (
-                <div className="border-t pt-4">
-                    <div className="flex items-center px-4 pb-2 border-b">
-                        <h3 className="font-bold text-lg">Reviews</h3>
-                        <div className="ml-2 h-1 w-16 bg-teal-500 rounded"></div>
-                    </div>
+            <div className="border-t pt-4">
+                <div className="flex items-center px-4 pb-2 border-b">
+                    <h3 className="font-bold text-lg">Reviews</h3>
+                    <div className="ml-2 h-1 w-16 bg-teal-500 rounded"></div>
+                    {isLoadingReviews && (
+                        <div className="ml-4 w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                    )}
+                </div>
 
-                    {/* Review Cards */}
-                    {reviews.map(review => {
+                {/* Review Cards */}
+                {isLoadingReviews ? (
+                    <div className="p-4 text-center">
+                        <p className="text-gray-600">Loading reviews...</p>
+                    </div>
+                ) : reviews.length > 0 ? (
+                    reviews.map(review => {
                         // Transform API review to component format if needed
                         const displayReview = review.review_id ? transformApiReviewToComponent(review) : review;
 
@@ -519,7 +586,7 @@ export default function RecommendationResult() {
                                             <span className="text-sm">{displayReview.rating} / 5</span>
                                         </div>
                                         <p className="text-xs text-gray-500">(Posted at {displayReview.date})</p>
-                                        
+
                                     </div>
                                 </div>
 
@@ -558,9 +625,13 @@ export default function RecommendationResult() {
                                 )}
                             </div>
                         );
-                    })}
-                </div>
-            )}
+                    })
+                ) : (
+                    <div className="p-4 text-center">
+                        <p className="text-gray-600">No reviews available for this beach.</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

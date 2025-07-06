@@ -79,7 +79,9 @@ export default function OceaniqueRoutes() {
                 } />
                 <Route path="/recommendation-result" element={
                     <RecommendationProvider>
-                        <Result />
+                        <BeachProvider>
+                            <Result />
+                        </BeachProvider>
                     </RecommendationProvider>
                 } />
 
@@ -137,23 +139,7 @@ export default function OceaniqueRoutes() {
                 <Route path="/admin" element={<AdminDashboard />} />
             </Route>
 
-            {/* Admin CMS routes - Only for CMS admins */}
-            {/* <Route element={<AdminProtectedRoute adminType="cms" />}>
-                <Route path="/admin/cms" element={<AdminCMSDashboard />} />
-                <Route path="/admin/cms/users" element={<AdminUsers />} />
-                <Route path="/admin/cms/beaches" element={
-                    <BeachProvider>
-                        <AdminBeaches />
-                    </BeachProvider>
-                } />
-                <Route path="/admin/cms/reviews" element={
-                    <BeachProvider>
-                        <AdminReviews />
-                    </BeachProvider>
-                } />
-            </Route> */}
-
-            {/* Admin Event routes - Only for Event admins */}
+            {/* Admin Event routes - Only for CMS Event admins */}
             <Route element={<AdminProtectedRoute adminType="event" />}>
                 <Route path="/admin/events" element={
                     <EventProvider>

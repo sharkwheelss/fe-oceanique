@@ -33,6 +33,8 @@ interface AuthContextType {
     ) => Promise<{ success: boolean; message?: string; user?: User; token?: string }>;
     completeLogin: (user: User, token: string) => void;
     logout: () => void;
+    viewProfile: () => Promise<any>;
+    editProfile: (dataProfile: FormData) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,6 +46,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [user, setUser] = useState<User | null>(null);
 
     // Helper functions to determine user roles based on user_types_id
@@ -157,6 +160,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
             localStorage.removeItem('token');
         }
     };
+    const viewProfile = async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            const response = await api.auth.viewProfile();
+            return response.data;
+        } catch (err) {
+            setError('Failed to fetch profile');
+            console.error('Error fetching profile:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    const editProfile = async (dataProfile: FormData) => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            const response = await api.auth.editProfile(dataProfile);
+            return response;
+        } catch (err) {
+            setError('Failed to edit profile');
+            console.error('Error edit profile:', err);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <AuthContext.Provider value={{
@@ -171,7 +201,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             signup,
             login,
             completeLogin,
-            logout
+            logout,
+            viewProfile,
+            editProfile
         }}>
             {children}
         </AuthContext.Provider>

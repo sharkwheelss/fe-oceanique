@@ -257,12 +257,14 @@ function Questions() {
 
                             return (
                                 <div key={option.id} className="flex flex-col items-center flex-shrink-0">
-                                    <div className="bg-white rounded-3xl shadow-md overflow-hidden mb-4 w-48">
-                                        {/* Placeholder for illustration - you can replace with actual images */}
-                                        <div className="w-full h-64 bg-gradient-to-br from-teal-100 to-blue-100 flex items-center justify-center">
-                                            <img src="https://picsum.photos/200/300" alt="" />
-                                        </div>
+                                    <div className="bg-white rounded-3xl shadow-md overflow-hidden mb-4 w-48 h-64">
+                                        <img
+                                            src={option.img}
+                                            alt=""
+                                            className="w-full h-full object-cover rounded-3xl"
+                                        />
                                     </div>
+
                                     <div className="text-center text-xl font-medium mb-2">
                                         {option.option_text}
                                     </div>
