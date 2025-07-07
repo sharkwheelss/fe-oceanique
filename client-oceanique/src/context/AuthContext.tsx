@@ -9,6 +9,7 @@ interface User {
     user_types_id: number;
     user_personality_id?: number | null;
     avatar?: string;
+    img?: string;
 }
 
 interface AuthContextType {
@@ -165,6 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setIsLoading(true);
             setError(null);
             const response = await api.auth.viewProfile();
+            setUser(response.data)
             return response.data;
         } catch (err) {
             setError('Failed to fetch profile');

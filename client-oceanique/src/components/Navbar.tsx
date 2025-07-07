@@ -15,7 +15,7 @@ const navItems = [
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, user, logout, isAdminCMS, isAdminEvent, isCust } = useAuth();
+  const { isAuthenticated, user, logout, isCust } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -35,6 +35,7 @@ const Navbar: React.FC = () => {
     navigate(path);
     setShowMobileMenu(false);
   };
+  // console.log(user)
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
@@ -79,7 +80,7 @@ const Navbar: React.FC = () => {
                   className="flex items-center space-x-2"
                 >
                   <img
-                    src={user?.imgProfile}
+                    src={user?.img}
                     alt="Profile"
                     className="w-8 h-8 rounded-full"
                   />

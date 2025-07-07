@@ -105,16 +105,17 @@
 
                 if (response.ok) {
                     const data = await response.json();
+                    console.log(data)
                     const processedWeather = processWeatherData(data);
                     setWeatherData(processedWeather);
                 } else {
                     // Fallback to mock data if API fails
-                    setWeatherData(getMockWeatherData());
+                    // setWeatherData(getMockWeatherData());
                 }
             } catch (error) {
                 console.error('Weather API error:', error);
                 // Use mock data as fallback
-                setWeatherData(getMockWeatherData());
+                // setWeatherData(getMockWeatherData());
             } finally {
                 setLoading(false);
             }

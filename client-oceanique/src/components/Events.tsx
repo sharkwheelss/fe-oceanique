@@ -236,7 +236,7 @@ const EventsPage = () => {
     }
 
     return (
-        <div className="max-h-screen bg-gray-50">
+        <div className="max-h-screen">
             {/* Search and Filters */}
             <div className="container sticky top-[72px] z-40 bg-white mx-auto px-4 py-6">
                 <div className="flex flex-wrap justify-center gap-4">
@@ -294,7 +294,7 @@ const EventsPage = () => {
                         <p className="text-gray-500 text-lg">No events found matching your criteria.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {filteredEvents.map((event) => (
                             <div key={event.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
                                 onClick={() => { navigate(`/event-detail/${event.id}`); }}>
