@@ -166,7 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setIsLoading(true);
             setError(null);
             const response = await api.auth.viewProfile();
-            setUser(response.data)
+            // setUser(response.data)
             return response.data;
         } catch (err) {
             setError('Failed to fetch profile');

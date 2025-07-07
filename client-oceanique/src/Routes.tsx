@@ -47,8 +47,11 @@ export default function OceaniqueRoutes() {
             <Route path="/" element={<Navigate to="/home" />} />
             <Route path="/home" element={
                 <div>
-                    <Home />
-                    <WhyOceaniqueSection />
+                    <EventProvider>
+                        <BeachProvider>
+                            <Home />
+                        </BeachProvider>
+                    </EventProvider>
                 </div>
             } />
             <Route path="/signin" element={<Signin />} />

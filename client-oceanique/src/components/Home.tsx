@@ -1,8 +1,30 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import WishlistEventsSection from './HomeEvents';
+import { useBeaches } from '../context/BeachContext';
 
 const Home = () => {
     const navigate = useNavigate();
+    const [wishlistBeachIds, setWishlistBeachIds] = useState<number[]>([]);
+    const { getWishlist } = useBeaches();
+
+    // Example: Fetch user's wishlist beach IDs
+    // Replace this with your actual wishlist fetching logic
+    useEffect(() => {
+        const fetchWishlistBeaches = async () => {
+            try {
+                const wishlistData = await getWishlist();
+                setWishlistBeachIds(wishlistData.map(item => item.beaches_id));
+            } catch (error) {
+                console.error('Error fetching wishlist:', error);
+            }
+        };
+
+        fetchWishlistBeaches();
+    }, []);
+
+    console.log(wishlistBeachIds)
+
     return (
         <>
             <section className="container mx-auto px-4 py-16 flex flex-col md:flex-row items-center">
@@ -53,11 +75,18 @@ const Home = () => {
                     {/* Try Now Button */}
                 </div>
             </section>
+
             <button className="w-full py-4 bg-teal-500 text-white rounded-full hover:bg-teal-600 transition-colors flex items-center justify-center font-medium text-sm md:text-base lg:text-lg"
                 onClick={() => navigate(`/personality`)} >
                 <span className="mr-2">Try now</span>
                 <img src="/home-trynow.png" alt="trynow" className='h-6 w-6 ml-1' />
-            </button >
+            </button>
+
+            {/* Why Oceanique Section */}
+            <WhyOceaniqueSection />
+
+            {/* Wishlist Events Section */}
+            <WishlistEventsSection wishlistBeachIds={wishlistBeachIds} />
         </>
     );
 }
