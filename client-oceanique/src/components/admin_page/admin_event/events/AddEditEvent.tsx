@@ -3,12 +3,16 @@ import { ArrowLeft, Upload, X, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEvents } from '../../../../context/EventContext';
 import { useBeaches } from '../../../../context/BeachContext';
+import DialogMessage from '../../../../components/helper/DialogMessage';
+import { useDialog } from '../../../../components/helper/useDialog';
 
 const EventForm = () => {
     const { eventId } = useParams();
     const { getAdminEventDetails, adminCreateNewEvent, adminUpdateEvent } = useEvents();
     const { getAllBeaches } = useBeaches();
     const navigate = useNavigate();
+
+    const [dialogState, { showSuccess, showError, closeDialog }] = useDialog();
 
     // Determine mode based on whether eventId exists in URL
     const mode = eventId ? 'edit' : 'add';
@@ -105,9 +109,16 @@ const EventForm = () => {
             [name]: value
         }));
 
-        // Clear error when user starts typing
+        // Clear specific validation errors when relevant fields change
         if (submitError) {
-            setSubmitError('');
+            // Clear error if user is fixing date/time validation issues
+            if (['start_date', 'start_time', 'end_date', 'end_time'].includes(name)) {
+                setSubmitError('');
+            }
+            // Clear error if user is filling required fields
+            else if (submitError.includes('required fields') && value.trim() !== '') {
+                setSubmitError('');
+            }
         }
     };
 
@@ -131,37 +142,13 @@ const EventForm = () => {
         setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
-    const validateForm = () => {
-        const required = ['name', 'description', 'start_date', 'start_time', 'end_date', 'end_time', 'beach_id'];
-        const missing = required.filter(field => !eventData[field]);
-
-        if (missing.length > 0) {
-            setSubmitError(`Please fill in all required fields: ${missing.join(', ')}`);
-            return false;
-        }
-
-        // Validate date logic
-        const startDateTime = new Date(`${eventData.start_date}T${eventData.start_time}`);
-        const endDateTime = new Date(`${eventData.end_date}T${eventData.end_time}`);
-
-        if (endDateTime <= startDateTime) {
-            setSubmitError('End date and time must be after start date and time');
-            return false;
-        }
-
-        return true;
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateForm()) {
-            return;
-        }
-
         try {
-            setIsSubmitting(true);
             setSubmitError('');
+            setIsSubmitting(true);
 
             // Create FormData for file upload
             const formData = new FormData();
@@ -194,13 +181,28 @@ const EventForm = () => {
             }
 
             if (result?.success) {
-                navigate('/admin/events');
+                showSuccess(
+                    `${isEdit ? "Edit Event" : "Add Event"} Successful`,
+                    `Successfully ${isEdit ? "Edit Event" : "Add Event"}`,
+                    {
+                        onConfirm: () => {
+                            closeDialog();
+                            navigate('/admin/events');
+                        }
+                    }
+                )
             } else {
-                setSubmitError(result?.message || 'Failed to save event.');
+                showError(
+                    `${isEdit ? "Edit Event" : "Add Event"} Failed`,
+                    result.message,
+                    {
+                        showCancel: false,
+                        onConfirm: () => closeDialog()
+                    }
+                )
             }
         } catch (error) {
             console.error('Error saving event:', error);
-            setSubmitError(error.message);
         } finally {
             setIsSubmitting(false);
         }
@@ -335,12 +337,21 @@ const EventForm = () => {
         <div className="flex-1 bg-gray-50">
             <Header title={isEdit ? "Edit Event" : "Add Event"} showBack={true} />
             <div className="p-8">
+                <DialogMessage
+                    type={dialogState.type}
+                    title={dialogState.title}
+                    message={dialogState.message}
+                    isOpen={dialogState.isOpen}
+                    onClose={closeDialog}
+                    redirectPath={dialogState.redirectPath}
+                    onConfirm={dialogState.onConfirm}
+                    confirmText={dialogState.confirmText}
+                    cancelText={dialogState.cancelText}
+                    showCancel={dialogState.showCancel}
+                    autoClose={dialogState.autoClose}
+                    autoCloseDelay={dialogState.autoCloseDelay}
+                />
                 <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-8">
-                    {submitError && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-red-600">{submitError}</p>
-                        </div>
-                    )}
 
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

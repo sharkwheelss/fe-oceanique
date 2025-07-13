@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import DialogMessage from '../components/helper/DialogMessage';
+import { useDialog } from '../components/helper/useDialog';
 
 const navItems = [
   { label: 'Home', path: '/home' },
@@ -17,25 +19,33 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const { isAuthenticated, user, logout, isCust } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  const [dialogState, { showWarning, closeDialog }] = useDialog();
 
   const handleLogout = () => {
     setShowDropdown(false);
-    setShowLogoutConfirm(true);
-  };
 
-  const confirmLogout = () => {
-    logout();
-    setShowLogoutConfirm(false);
-    navigate('/signin');
+    showWarning(
+      'Log Out',
+      'Are you sure want to logout?',
+      {
+        showCancel: true,
+        confirmText: 'Logout',
+        onConfirm: () => {
+          logout();
+          navigate('/signin');
+          closeDialog();
+        }
+      }
+    )
   };
 
   const handleMobileNavClick = (path: string) => {
     navigate(path);
     setShowMobileMenu(false);
   };
-  // console.log(user)
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
@@ -247,52 +257,20 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Logout Confirmation Modal */}
-      {
-        showLogoutConfirm && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
-            <div
-              className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-popup"
-              style={{
-                animation: 'popup 0.3s cubic-bezier(0.22, 1, 0.36, 1)'
-              }}
-            >
-              <h3 className="text-2xl font-bold mb-4 text-gray-800">Confirm Logout</h3>
-              <p className="mb-6 text-gray-700">Are you sure you want to logout?</p>
-              <div className="flex justify-center gap-4">
-                <button
-                  onClick={confirmLogout}
-                  className="px-6 py-2 text-white rounded transition-colors bg-teal-500 hover:bg-teal-600"
-                >
-                  Yes, Logout
-                </button>
-                <button
-                  onClick={() => setShowLogoutConfirm(false)}
-                  className="px-6 py-2 text-gray-700 rounded transition-colors bg-gray-200 hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-            <style>
-              {`
-            @keyframes popup {
-              0% {
-                opacity: 0;
-                transform: scale(0.8);
-              }
-              100% {
-                opacity: 1;
-                transform: scale(1);
-              }
-            }
-            .animate-popup {
-              animation: popup 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-            }
-          `}
-            </style>
-          </div>
-        )
-      }
+      <DialogMessage
+        type={dialogState.type}
+        title={dialogState.title}
+        message={dialogState.message}
+        isOpen={dialogState.isOpen}
+        onClose={closeDialog}
+        redirectPath={dialogState.redirectPath}
+        onConfirm={dialogState.onConfirm}
+        confirmText={dialogState.confirmText}
+        cancelText={dialogState.cancelText}
+        showCancel={dialogState.showCancel}
+        autoClose={dialogState.autoClose}
+        autoCloseDelay={dialogState.autoCloseDelay}
+      />
     </header >
   );
 };

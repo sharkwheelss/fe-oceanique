@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useTickets } from '../../../../context/TicketContext';
 import { useEvents } from '../../../../context/EventContext';
+import DialogMessage from '../../../../components/helper/DialogMessage';
+import { useDialog } from '../../../../components/helper/useDialog';
 
 const TicketForm = () => {
     const { ticketId } = useParams();
@@ -10,6 +12,9 @@ const TicketForm = () => {
     const isEdit = mode === 'edit';
     const { getAdminTicketById, adminCreateNewTicket, adminUpdateTicket, getAdminTicketCategories } = useTickets();
     const { getAllEvents } = useEvents();
+    const navigate = useNavigate();
+
+    const [dialogState, { showSuccess, showError, closeDialog }] = useDialog();
 
     const [ticketData, setTicketData] = useState({
         name: '',
@@ -26,8 +31,6 @@ const TicketForm = () => {
     const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitError, setSubmitError] = useState('');
-    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -103,7 +106,17 @@ const TicketForm = () => {
 
             } catch (error) {
                 console.error('Error fetching ticket details:', error);
-                setSubmitError('Failed to load ticket details');
+                showError(
+                    "Load Ticket Failed",
+                    "Failed to load ticket details. Please try again.",
+                    {
+                        showCancel: false,
+                        onConfirm: () => {
+                            closeDialog();
+                            navigate('/admin/tickets');
+                        }
+                    }
+                );
             } finally {
                 setIsLoading(false);
             }
@@ -134,10 +147,6 @@ const TicketForm = () => {
             ...prev,
             [name]: finalValue
         }));
-
-        if (submitError) {
-            setSubmitError('');
-        }
     };
 
     const validateForm = () => {
@@ -153,17 +162,38 @@ const TicketForm = () => {
                     default: return field;
                 }
             });
-            setSubmitError(`Please fill in all required fields: ${fieldNames.join(', ')}`);
+            showError(
+                "Validation Error",
+                `Please fill in all required fields: ${fieldNames.join(', ')}`,
+                {
+                    showCancel: false,
+                    onConfirm: () => closeDialog()
+                }
+            );
             return false;
         }
 
         if (ticketData.quota < 0) {
-            setSubmitError('Quota cannot be negative');
+            showError(
+                "Validation Error",
+                "Quota cannot be negative",
+                {
+                    showCancel: false,
+                    onConfirm: () => closeDialog()
+                }
+            );
             return false;
         }
 
         if (ticketData.price < 0) {
-            setSubmitError('Price cannot be negative');
+            showError(
+                "Validation Error",
+                "Price cannot be negative",
+                {
+                    showCancel: false,
+                    onConfirm: () => closeDialog()
+                }
+            );
             return false;
         }
 
@@ -179,7 +209,6 @@ const TicketForm = () => {
 
         try {
             setIsSubmitting(true);
-            setSubmitError('');
 
             const apiParams = [
                 ticketData.name,
@@ -204,15 +233,37 @@ const TicketForm = () => {
             console.log('API Result:', result);
 
             // Check if the operation was successful
-            // Adjust this condition based on your API response structure
             if (result && (result.success !== false)) {
-                navigate('/admin/tickets');
+                showSuccess(
+                    `${isEdit ? "Edit Ticket" : "Add Ticket"} Successful`,
+                    `Successfully ${isEdit ? "updated" : "created"} ticket`,
+                    {
+                        onConfirm: () => {
+                            closeDialog();
+                            navigate('/admin/tickets');
+                        }
+                    }
+                );
             } else {
-                setSubmitError(result?.message || 'Failed to save ticket.');
+                showError(
+                    `${isEdit ? "Edit Ticket" : "Add Ticket"} Failed`,
+                    result?.message || 'Failed to save ticket. Please try again.',
+                    {
+                        showCancel: false,
+                        onConfirm: () => closeDialog()
+                    }
+                );
             }
         } catch (error) {
             console.error('Error saving ticket:', error);
-            setSubmitError(error.message || 'An error occurred while saving');
+            showError(
+                `${isEdit ? "Edit Ticket" : "Add Ticket"} Failed`,
+                error.message || 'An error occurred while saving the ticket',
+                {
+                    showCancel: false,
+                    onConfirm: () => closeDialog()
+                }
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -251,13 +302,21 @@ const TicketForm = () => {
         <div className="flex-1 bg-gray-50">
             <Header title={isEdit ? "Edit Ticket" : "Add Ticket"} showBack={true} />
             <div className="p-8">
+                <DialogMessage
+                    type={dialogState.type}
+                    title={dialogState.title}
+                    message={dialogState.message}
+                    isOpen={dialogState.isOpen}
+                    onClose={closeDialog}
+                    redirectPath={dialogState.redirectPath}
+                    onConfirm={dialogState.onConfirm}
+                    confirmText={dialogState.confirmText}
+                    cancelText={dialogState.cancelText}
+                    showCancel={dialogState.showCancel}
+                    autoClose={dialogState.autoClose}
+                    autoCloseDelay={dialogState.autoCloseDelay}
+                />
                 <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-8">
-                    {submitError && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-red-600">{submitError}</p>
-                        </div>
-                    )}
-
                     <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -391,6 +450,13 @@ const TicketForm = () => {
                         </div>
 
                         <div className="flex justify-end space-x-4">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/admin/tickets')}
+                                className="px-8 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
                             <button
                                 type="submit"
                                 disabled={isSubmitting}

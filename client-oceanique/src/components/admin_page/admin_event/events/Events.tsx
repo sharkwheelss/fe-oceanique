@@ -2,66 +2,103 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { useEvents } from '../../../../context/EventContext';
-import { toast } from 'react-toastify';
+import DialogMessage from '../../../../components/helper/DialogMessage';
+import { useDialog } from '../../../../components/helper/useDialog';
 
 const EventList = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
     const { getAdminEvents, adminDeleteEvent } = useEvents();
+    const [dialogState, { showSuccess, showError, showWarning, closeDialog }] = useDialog();
+
+    // Extract fetchEvents function so it can be reused
+    const fetchEvents = async () => {
+        try {
+            setLoading(true);
+            const eventsResponse = await getAdminEvents();
+            console.log(eventsResponse);
+
+            // Assuming the response structure - adjust based on your actual API response
+            if (eventsResponse && eventsResponse.data) {
+                setEvents(eventsResponse.data);
+            } else if (Array.isArray(eventsResponse)) {
+                setEvents(eventsResponse);
+            } else {
+                setEvents([]);
+            }
+        } catch (error) {
+            console.error('Error fetching events:', error);
+            setEvents([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchEvents = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const eventsResponse = await getAdminEvents();
-                console.log(eventsResponse);
-
-                // Assuming the response structure - adjust based on your actual API response
-                if (eventsResponse && eventsResponse.data) {
-                    setEvents(eventsResponse.data);
-                } else if (Array.isArray(eventsResponse)) {
-                    setEvents(eventsResponse);
-                } else {
-                    setEvents([]);
-                }
-            } catch (error) {
-                console.error('Error fetching events:', error);
-                setError('Failed to load events. Please try again.');
-                setEvents([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchEvents();
     }, []);
 
+    const handleDelete = async (eventId: any, eventName: any) => {
+        // First show confirmation dialog
+        showWarning(
+            'Delete Event',
+            `Are you sure you want to delete "${eventName}"? This action cannot be undone.`,
+            {
+                showCancel: true,
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                onConfirm: async () => {
+                    // Close the warning dialog first
+                    closeDialog();
 
-    const handleDelete = async (eventId) => {
-        const confirmed = window.confirm('🗑️ Are you sure you want to delete this event?\nThis action cannot be undone.');
-        if (!confirmed) return;
+                    try {
+                        // Perform the delete operation
+                        const result = await adminDeleteEvent(eventId);
 
-        try {
-            const result = await adminDeleteEvent(eventId);
-
-            if (result?.message?.toLowerCase().includes('success')) {
-                setEvents(prev => prev.filter(event => event.id !== eventId));
-
-                // Modern success notification
-                toast.success('✅ Event deleted successfully');
-            } else {
-                console.error('Delete failed:', result);
-                toast.error('❌ Failed to delete event. Please try again.');
+                        // Check if the deletion was successful
+                        if (result.success) {
+                            showSuccess(
+                                'Delete Event Successful',
+                                result.message || `"${eventName}" has been deleted successfully.`,
+                                {
+                                    showCancel: false,
+                                    onConfirm: async () => {
+                                        closeDialog();
+                                        // Reload the events data after successful deletion
+                                        await fetchEvents();
+                                    }
+                                }
+                            );
+                        } else {
+                            showError(
+                                'Delete Event Failed',
+                                result.message,
+                                {
+                                    showCancel: false,
+                                    onConfirm: () => {
+                                        closeDialog();
+                                    }
+                                }
+                            );
+                        }
+                    } catch (error) {
+                        showError(
+                            'Delete Event Failed',
+                            'An unexpected error occurred while deleting the event.',
+                            {
+                                showCancel: false,
+                                onConfirm: () => {
+                                    closeDialog();
+                                }
+                            }
+                        );
+                    }
+                }
             }
-        } catch (error) {
-            console.error('Delete error:', error);
-            toast.error('🚫 An error occurred while deleting the event.');
-        }
+        );
     };
 
     const formatDate = (dateString) => {
@@ -77,26 +114,28 @@ const EventList = () => {
         }).replace(' pukul', ', ');
     };
 
-    const formatTime = (timeString) => {
-        if (!timeString) return '';
-        // If timeString is already in HH:MM format, return as is
-        if (typeof timeString === 'string' && timeString.includes(':')) {
-            return timeString;
-        }
-        // If it's a full datetime string, extract time
-        const date = new Date(timeString);
-        return date.toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
     const filteredEvents = events?.filter(event =>
         event.name?.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
     return (
         <div className="flex-1 bg-gray-50">
+            {/* Reusable Dialog Component */}
+            <DialogMessage
+                type={dialogState.type}
+                title={dialogState.title}
+                message={dialogState.message}
+                isOpen={dialogState.isOpen}
+                onClose={closeDialog}
+                redirectPath={dialogState.redirectPath}
+                onConfirm={dialogState.onConfirm}
+                confirmText={dialogState.confirmText}
+                cancelText={dialogState.cancelText}
+                showCancel={dialogState.showCancel}
+                autoClose={dialogState.autoClose}
+                autoCloseDelay={dialogState.autoCloseDelay}
+            />
+
             <div className="bg-white border-b border-gray-200 px-8 py-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold text-gray-800">Event List</h1>
@@ -104,11 +143,6 @@ const EventList = () => {
             </div>
 
             <div className="p-8">
-                {error && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-600">Error: {error}</p>
-                    </div>
-                )}
 
                 <div className="bg-white rounded-lg shadow-sm">
                     <div className="p-6 border-b border-gray-200">
@@ -224,32 +258,20 @@ const EventList = () => {
                                                     <div className="flex space-x-2">
                                                         <button
                                                             onClick={() => {
-                                                                if (event.status !== 'ended') {
-                                                                    navigate(`/admin/events/${event.id}/edit`);
-                                                                }
+                                                                navigate(`/admin/events/${event.id}/edit`);
                                                             }}
-                                                            className={`transition-colors ${event.status === 'ended'
-                                                                ? 'text-gray-400 cursor-not-allowed'
-                                                                : 'text-teal-600 hover:text-teal-900'
-                                                                }`}
-                                                            title={event.status === 'ended' ? 'Editing is disabled for ended events' : 'Edit event'}
-                                                            disabled={event.status === 'ended'}
+                                                            className={`transition-colors text-teal-600 hover:text-teal-900 cursor-pointer`}
                                                         >
                                                             <Edit className="w-4 h-4" />
                                                         </button>
 
                                                         <button
                                                             onClick={() => {
+                                                                handleDelete(event.id, event.name);
                                                                 if (event.status === 'ended') {
-                                                                    handleDelete(event.id);
                                                                 }
                                                             }}
-                                                            className={`transition-colors ${event.status === 'ended'
-                                                                ? 'text-red-600 hover:text-red-900 cursor-pointer'
-                                                                : 'text-gray-400 cursor-not-allowed'
-                                                                }`}
-                                                            title={event.status === 'ended' ? 'Delete event' : 'You can only delete ended events'}
-                                                            disabled={event.status !== 'ended'}
+                                                            className={`transition-colors text-red-600 hover:text-red-900 cursor-pointer`}
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>

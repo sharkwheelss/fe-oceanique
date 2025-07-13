@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
-import { toast } from 'react-toastify';
 import { useTickets } from '../../../../context/TicketContext';
+import DialogMessage from '../../../../components/helper/DialogMessage';
+import { useDialog } from '../../../../components/helper/useDialog';
 
 const TicketList = () => {
     const navigate = useNavigate();
@@ -12,50 +13,94 @@ const TicketList = () => {
     const [error, setError] = useState(null);
 
     const { getAdminTicket, adminDeleteTicket } = useTickets();
+    const [dialogState, { showSuccess, showError, showWarning, closeDialog }] = useDialog();
 
-    useEffect(() => {
-        const fetchTickets = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-
-                const ticketsResponse = await getAdminTicket();
-
-                if (ticketsResponse.message && !ticketsResponse.data) {
-                    setError(ticketsResponse.message);
-                    setTickets([]);
-                } else {
-                    setTickets(ticketsResponse.data || []);
-                }
-
-            } catch (error) {
-                console.error('Error fetching tickets:', error);
-                setError('Failed to fetch tickets');
-                setTickets([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchTickets();
-    }, []);
-
-    const handleDelete = async (ticketId) => {
-        const confirmed = window.confirm('🗑️ Are you sure you want to delete this ticket?\nThis action cannot be undone.');
-        if (!confirmed) return;
-
+    // Extract fetchTickets function so it can be reused
+    const fetchTickets = async () => {
         try {
-            const result = await adminDeleteTicket(ticketId);
+            setLoading(true);
+            setError(null);
 
-            if (result) {
-                setTickets(prev => prev.filter(ticket => ticket.id !== ticketId));
-                toast.success('✅ Ticket deleted successfully');
+            const ticketsResponse = await getAdminTicket();
+
+            if (ticketsResponse.message && !ticketsResponse.data) {
+                setError(ticketsResponse.message);
+                setTickets([]);
+            } else {
+                setTickets(ticketsResponse.data || []);
             }
 
         } catch (error) {
-            console.error('Delete error:', error);
-            toast.error('🚫 An error occurred while deleting the ticket.');
+            console.error('Error fetching tickets:', error);
+            setError('Failed to fetch tickets');
+            setTickets([]);
+        } finally {
+            setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        fetchTickets();
+    }, []);
+
+    const handleDelete = async (ticketId, ticketName) => {
+        // First show confirmation dialog
+        showWarning(
+            'Delete Ticket',
+            `Are you sure you want to delete "${ticketName}"? This action cannot be undone.`,
+            {
+                showCancel: true,
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                onConfirm: async () => {
+                    // Close the warning dialog first
+                    closeDialog();
+
+                    try {
+                        // Perform the delete operation
+                        const result = await adminDeleteTicket(ticketId);
+
+                        // Check if the deletion was successful
+                        if (result.success) {
+                            showSuccess(
+                                'Delete Ticket Successful',
+                                `"${ticketName}" has been deleted successfully.`,
+                                {
+                                    showCancel: false,
+                                    onConfirm: async () => {
+                                        closeDialog();
+                                        await fetchTickets();
+                                    }
+                                }
+                            );
+                        } else {
+                            showError(
+                                'Delete Ticket Failed',
+                                result.message,
+                                {
+                                    showCancel: false,
+                                    onConfirm: () => {
+                                        closeDialog();
+                                    }
+                                }
+                            );
+                        }
+                    } catch (error) {
+                        console.error('Delete error:', error);
+                        showError(
+                            'Delete Ticket Failed',
+                            'An unexpected error occurred while deleting the ticket.',
+                            {
+                                showCancel: false,
+                                onConfirm: () => {
+                                    closeDialog();
+                                }
+                            }
+                        );
+                    }
+                }
+            }
+        );
     };
 
     const formatPrice = (price) => {
@@ -82,10 +127,6 @@ const TicketList = () => {
                 return 'bg-green-100 text-green-700';
             case 'sold out':
                 return 'bg-red-100 text-red-700';
-            // case 'expired':
-            //     return 'bg-gray-100 text-gray-700';
-            // case 'inactive':
-            //     return 'bg-yellow-100 text-yellow-700';
             default:
                 return 'bg-slate-100 text-slate-600';
         }
@@ -97,10 +138,6 @@ const TicketList = () => {
                 return 'Active';
             case 'sold_out':
                 return 'Sold Out';
-            // case 'expired':
-            //     return 'Expired';
-            // case 'inactive':
-            //     return 'Inactive';
             default:
                 return status;
         }
@@ -112,6 +149,22 @@ const TicketList = () => {
 
     return (
         <div className="flex-1 bg-gray-50">
+            {/* Reusable Dialog Component */}
+            <DialogMessage
+                type={dialogState.type}
+                title={dialogState.title}
+                message={dialogState.message}
+                isOpen={dialogState.isOpen}
+                onClose={closeDialog}
+                redirectPath={dialogState.redirectPath}
+                onConfirm={dialogState.onConfirm}
+                confirmText={dialogState.confirmText}
+                cancelText={dialogState.cancelText}
+                showCancel={dialogState.showCancel}
+                autoClose={dialogState.autoClose}
+                autoCloseDelay={dialogState.autoCloseDelay}
+            />
+
             <div className="bg-white border-b border-gray-200 px-8 py-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold text-gray-800">Ticket List</h1>
@@ -223,7 +276,6 @@ const TicketList = () => {
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor((ticket.quota - ticket.sold) > 0 ? "active" : "sold out")}`}>
                                                         {getStatusText((ticket.quota - ticket.sold) > 0 ? "active" : "sold out")}
-
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -236,7 +288,7 @@ const TicketList = () => {
                                                             <Edit className="w-4 h-4" />
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDelete(ticket.id)}
+                                                            onClick={() => handleDelete(ticket.id, ticket.name)}
                                                             className="text-red-600 hover:text-red-900 transition-colors"
                                                             title="Delete ticket"
                                                         >

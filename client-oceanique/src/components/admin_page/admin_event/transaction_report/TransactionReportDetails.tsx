@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, X, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useTickets } from '../../../../context/TicketContext';
+import DialogMessage from '../../../../components/helper/DialogMessage';
+import { useDialog } from '../../../../components/helper/useDialog';
 
 // Define the transaction interface based on API response
 interface TicketDetail {
@@ -35,11 +37,11 @@ const TransactionDetail = () => {
     const [transaction, setTransaction] = useState<Transaction | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
     const [updating, setUpdating] = useState(false);
 
     const { getAdminTransactionReportById, adminUpdateTransactionReport } = useTickets();
+    const [dialogState, { showSuccess, showError, showWarning, closeDialog }] = useDialog();
 
     useEffect(() => {
         const fetchTransactionDetails = async () => {
@@ -92,22 +94,81 @@ const TransactionDetail = () => {
                 rejection_reason: reason || null
             } : null);
 
-            console.log('Transaction status updated successfully');
+            // Show success dialog
+            const statusText = newStatus === 'approved' ? 'approved' : 'rejected';
+            showSuccess(
+                `Transaction ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}`,
+                `Transaction has been ${statusText} successfully.`,
+                {
+                    showCancel: false,
+                    onConfirm: () => {
+                        closeDialog();
+                    }
+                }
+            );
 
         } catch (error) {
             console.error('Error updating transaction status:', error);
-            setError('Failed to update transaction status. Please try again.');
+            showError(
+                'Update Failed',
+                'Failed to update transaction status. Please try again.',
+                {
+                    showCancel: false,
+                    onConfirm: () => {
+                        closeDialog();
+                    }
+                }
+            );
         } finally {
             setUpdating(false);
         }
     };
 
-    const handleReject = async () => {
-        if (transaction && rejectionReason.trim()) {
-            await handleStatusChange('rejected', rejectionReason);
-            setShowRejectModal(false);
-            setRejectionReason('');
+    const handleApprove = () => {
+        showWarning(
+            'Approve Transaction',
+            'Are you sure you want to approve this transaction? This action cannot be undone.',
+            {
+                showCancel: true,
+                confirmText: 'Approve',
+                cancelText: 'Cancel',
+                onConfirm: async () => {
+                    closeDialog();
+                    await handleStatusChange('approved');
+                }
+            }
+        );
+    };
+
+    const handleRejectConfirm = () => {
+        if (!rejectionReason.trim()) {
+            showError(
+                'Rejection Reason Required',
+                'Please provide a reason for rejecting this transaction.',
+                {
+                    showCancel: false,
+                    onConfirm: () => {
+                        closeDialog();
+                    }
+                }
+            );
+            return;
         }
+
+        showWarning(
+            'Reject Transaction',
+            `Are you sure you want to reject this transaction with the reason: "${rejectionReason}"? This action cannot be undone.`,
+            {
+                showCancel: true,
+                confirmText: 'Reject',
+                cancelText: 'Cancel',
+                onConfirm: async () => {
+                    closeDialog();
+                    await handleStatusChange('rejected', rejectionReason);
+                    setRejectionReason('');
+                }
+            }
+        );
     };
 
     const formatCurrency = (amount: number) => {
@@ -229,6 +290,22 @@ const TransactionDetail = () => {
     // Main component render
     return (
         <div className="flex-1 bg-gray-50">
+            {/* Reusable Dialog Component */}
+            <DialogMessage
+                type={dialogState.type}
+                title={dialogState.title}
+                message={dialogState.message}
+                isOpen={dialogState.isOpen}
+                onClose={closeDialog}
+                redirectPath={dialogState.redirectPath}
+                onConfirm={dialogState.onConfirm}
+                confirmText={dialogState.confirmText}
+                cancelText={dialogState.cancelText}
+                showCancel={dialogState.showCancel}
+                autoClose={dialogState.autoClose}
+                autoCloseDelay={dialogState.autoCloseDelay}
+            />
+
             <div className="bg-white border-b border-gray-200 px-8 py-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -325,9 +402,21 @@ const TransactionDetail = () => {
                                                 <p className="text-gray-600 mb-6">
                                                     Please review the payment evidence submitted by the customer and decide whether to approve or reject this transaction.
                                                 </p>
+                                                <div className="mb-4">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Rejection Reason (if rejecting)
+                                                    </label>
+                                                    <textarea
+                                                        value={rejectionReason}
+                                                        onChange={(e) => setRejectionReason(e.target.value)}
+                                                        placeholder="Enter the reason for rejection..."
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                                                        rows={3}
+                                                    />
+                                                </div>
                                                 <div className="flex gap-3">
                                                     <button
-                                                        onClick={() => handleStatusChange('approved')}
+                                                        onClick={handleApprove}
                                                         disabled={updating}
                                                         className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors"
                                                     >
@@ -335,7 +424,7 @@ const TransactionDetail = () => {
                                                         {updating ? 'Approving...' : 'Approve'}
                                                     </button>
                                                     <button
-                                                        onClick={() => setShowRejectModal(true)}
+                                                        onClick={handleRejectConfirm}
                                                         disabled={updating}
                                                         className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors"
                                                     >
@@ -410,51 +499,6 @@ const TransactionDetail = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Rejection Modal */}
-            {showRejectModal && (
-                <div className="fixed inset-0 backdrop-blur-xs bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 border border-gray-300">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Transaction</h3>
-                        <p className="text-gray-600 mb-4">
-                            Please provide a reason for rejecting this transaction. This will help the customer understand why their payment was not accepted.
-                        </p>
-                        <div className="mb-4">
-                            <label htmlFor="rejectionReason" className="block text-sm font-medium text-gray-700 mb-2">
-                                Rejection Reason *
-                            </label>
-                            <textarea
-                                id="rejectionReason"
-                                value={rejectionReason}
-                                onChange={(e) => setRejectionReason(e.target.value)}
-                                placeholder="Enter the reason for rejection..."
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
-                                rows={4}
-                                required
-                            />
-                        </div>
-                        <div className="flex gap-3 justify-end">
-                            <button
-                                onClick={() => {
-                                    setShowRejectModal(false);
-                                    setRejectionReason('');
-                                }}
-                                disabled={updating}
-                                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleReject}
-                                disabled={!rejectionReason.trim() || updating}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition-colors"
-                            >
-                                {updating ? 'Rejecting...' : 'Reject Transaction'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
