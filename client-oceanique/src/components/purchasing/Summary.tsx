@@ -101,7 +101,7 @@ function SummaryPage({ responseData, getTicketById, formatCurrency }) {
     };
 
     // Calculate total
-    const totalAmount = responseData?.bookingResult?.reduce((total, booking) => total + booking.total_payment, 0) || 0;
+    const totalAmount = responseData?.bookingResult?.reduce((total, booking) => booking.total_payment, 0) || 0;
 
     // Check if responseData exists and has bookings
     if (!responseData?.bookingResult || responseData.bookingResult.length === 0) {
@@ -209,7 +209,7 @@ function SummaryPage({ responseData, getTicketById, formatCurrency }) {
                                             {booking.total_tickets} ticket(s)
                                         </p>
                                         <p className="text-lg font-semibold text-gray-800 mt-1">
-                                            {formatCurrency ? formatCurrency(booking.total_payment) : `Rp ${booking.total_payment.toLocaleString()}`}
+                                            {formatCurrency ? formatCurrency(booking.subtotal) : `Rp ${booking.subtotal.toLocaleString()}`}
                                         </p>
                                         <p className="text-sm mt-3 text-gray-600">
                                             Payment Method: {booking.payment_method}

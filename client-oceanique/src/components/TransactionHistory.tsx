@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, ChevronDown } from 'lucide-react';
+import { Clock, ChevronDown, AlertCircle } from 'lucide-react';
 import { useEvents } from '../context/EventContext';
 
 // QR Code Generator Component
@@ -80,6 +80,10 @@ const TransactionHistoryPage = () => {
         total_payment: number;
         users_id: number;
         tickets_id: number;
+        rejection_reason?: string;
+        ticket_name?: string;
+        event_description?: string;
+        description?: string;
     }
 
     interface ApiResponse {
@@ -100,6 +104,8 @@ const TransactionHistoryPage = () => {
         cancelDate?: string;
         successDate?: string;
         apiId: number;
+        description?: string;
+        rejectionReason?: string;
     }
 
     interface Transaction {
@@ -111,8 +117,9 @@ const TransactionHistoryPage = () => {
         timeRemaining?: string;
         booked_at: string;
         updated_at: string;
+        description?: string;
+        rejectionReason?: string;
     }
-
 
     // Transform API data to component format
     const transformApiData = (apiData: ApiTransaction[]): Transaction[] => {
@@ -132,9 +139,9 @@ const TransactionHistoryPage = () => {
 
             // Create tickets from grouped transactions
             const tickets: Ticket[] = groupTransactions.map((transaction, index) => ({
-                name: `Event Ticket ${transaction.tickets_id}`,
+                name: transaction.ticket_name,
                 ticketId: transaction.id.toString(),
-                type: transaction.tickets_id === 2 ? 'Standard' : 'VIP',
+                type: transaction.ticket_category_name,
                 date: new Date(transaction.booked_at).toLocaleDateString('en-US', {
                     day: '2-digit',
                     month: 'long',
@@ -144,6 +151,14 @@ const TransactionHistoryPage = () => {
                 price: transaction.total_payment,
                 status: transaction.status,
                 paymentMethod: transaction.payment_method,
+                booked_date: transaction.status === 'pending' ?
+                    new Date(transaction.updated_at).toLocaleString('en-US', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : undefined,
                 cancelDate: transaction.status === 'rejected' ?
                     new Date(transaction.updated_at).toLocaleString('en-US', {
                         day: '2-digit',
@@ -160,11 +175,14 @@ const TransactionHistoryPage = () => {
                         hour: '2-digit',
                         minute: '2-digit'
                     }) : undefined,
-                apiId: transaction.id
+                apiId: transaction.id,
+                description: transaction.description,
+                rejectionReason: transaction.rejection_reason,
+                subtotal: transaction.subtotal
             }));
 
             // Calculate total price
-            const totalPrice = groupTransactions.reduce((sum, t) => sum + t.total_payment, 0);
+            const totalPrice = groupTransactions.reduce((sum, t) => sum + t.subtotal, 0);
 
             return {
                 id: groupId,
@@ -174,7 +192,8 @@ const TransactionHistoryPage = () => {
                 status: firstTransaction.status,
                 timeRemaining: firstTransaction.status === 'pending' ? '59.00' : undefined,
                 booked_at: firstTransaction.booked_at,
-                updated_at: firstTransaction.updated_at
+                updated_at: firstTransaction.updated_at,
+                rejectionReason: firstTransaction.rejection_reason
             };
         });
     };
@@ -268,6 +287,29 @@ const TransactionHistoryPage = () => {
     };
 
     /**
+     * Render rejection reason section
+     * @param {string} rejectionReason - Rejection reason text
+     * @returns {JSX.Element} Rejection reason component
+     */
+    const renderRejectionReason = (rejectionReason: string): JSX.Element => {
+        return (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                <div className="flex items-start">
+                    <AlertCircle className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                        <h4 className="text-sm font-medium text-red-800 mb-1">
+                            Rejection Reason
+                        </h4>
+                        <p className="text-sm text-red-700">
+                            {rejectionReason}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    /**
      * Render a ticket card
      * @param {Object} ticket - Ticket information
      * @param {string} transactionId - Parent transaction ID
@@ -320,12 +362,13 @@ const TransactionHistoryPage = () => {
 
                         {/* Ticket description */}
                         <p className="text-gray-600 mt-2 text-sm">
-                            Lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem
-                            ipsum has been the industry's standard dummy text ever since the 1500s, when an
-                            unknown printer took a galley of type and scrambled it to make a type specimen
-                            book. It has survived not only five centuries, but also the leap into electronic
-                            typesetting, remaining essentially unchanged.
+                            {ticket.description}
                         </p>
+
+                        {/* Rejection reason section - only show for rejected tickets */}
+                        {ticket.status === 'rejected' && ticket.rejectionReason && (
+                            renderRejectionReason(ticket.rejectionReason)
+                        )}
 
                         {/* Bottom info */}
                         <div className="flex justify-between mt-4">
@@ -344,11 +387,14 @@ const TransactionHistoryPage = () => {
                             {/* Payment info */}
                             <div className="text-right text-sm text-gray-600">
                                 <div>Payment Method: {ticket.paymentMethod}</div>
+                                {ticket.status === 'pending' && (
+                                    <div>Booked at {ticket.booked_date}</div>
+                                )}
                                 {ticket.status === 'rejected' && ticket.cancelDate && (
-                                    <div>Cancelled at {ticket.cancelDate}</div>
+                                    <div>Rejected at {ticket.cancelDate}</div>
                                 )}
                                 {ticket.status === 'approved' && ticket.successDate && (
-                                    <div>Success at {ticket.successDate}</div>
+                                    <div>Approved at {ticket.successDate}</div>
                                 )}
                             </div>
                         </div>
@@ -356,6 +402,12 @@ const TransactionHistoryPage = () => {
                         {/* ID */}
                         <div className="mt-2 text-sm text-gray-500">
                             IDTRX-{ticket.ticketId}
+                        </div>
+
+                        <div className="text-right">
+                            <div className="text-teal-500 text-sm font-semibold">
+                                Total: Rp{formatPrice(ticket.subtotal)}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -379,6 +431,23 @@ const TransactionHistoryPage = () => {
                 {showCountdown && (
                     <div className="px-6 py-4">
                         <h2 className="text-xl font-semibold">Your Ticket(s)</h2>
+                    </div>
+                )}
+
+                {/* Transaction-level rejection reason (if all tickets in group are rejected) */}
+                {transaction.status === 'rejected' && transaction.rejectionReason && (
+                    <div className="px-6 py-4 bg-red-50 border-b border-red-200">
+                        <div className="flex items-start">
+                            <AlertCircle className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <h3 className="text-sm font-medium text-red-800 mb-1">
+                                    Transaction Rejected
+                                </h3>
+                                <p className="text-sm text-red-700">
+                                    {transaction.rejectionReason}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 )}
 
