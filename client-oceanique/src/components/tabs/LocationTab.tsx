@@ -225,35 +225,6 @@
                         </div>
 
                         <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Nearby Places */}
-                            <div>
-                                <h3 className="text-lg font-semibold mb-2">What's around</h3>
-                                <p className="text-xs text-gray-500 mb-4">(powered by OpenStreetMap)</p>
-
-                                {nearbyPlaces.length > 0 ? (
-                                    nearbyPlaces.map((place, index) => (
-                                        <div key={index} className="flex items-center justify-between mb-3 p-2 rounded hover:bg-gray-50">
-                                            <div className="flex items-center">
-                                                <div className="w-6 h-6 bg-red-100 flex items-center justify-center mr-3 rounded">
-                                                    <span className="text-sm">{place.type}</span>
-                                                </div>
-                                                <span className="text-sm font-medium">{place.name}</span>
-                                            </div>
-                                            <span className="text-gray-600 text-sm">{place.distance}</span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    [...Array(4)].map((_, index) => (
-                                        <div key={index} className="flex items-center justify-between mb-3 p-2">
-                                            <div className="flex items-center">
-                                                <div className="w-6 h-6 bg-gray-200 animate-pulse mr-3 rounded"></div>
-                                                <div className="w-20 h-4 bg-gray-200 animate-pulse rounded"></div>
-                                            </div>
-                                            <div className="w-12 h-4 bg-gray-200 animate-pulse rounded"></div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
 
                             {/* Weather Forecast */}
                             <div>

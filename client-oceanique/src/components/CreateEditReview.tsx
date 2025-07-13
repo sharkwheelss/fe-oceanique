@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { ChevronLeft, Check, X } from 'lucide-react';
 import { useBeaches } from '../context/BeachContext';
+import DialogMessage from '../components/helper/DialogMessage';
+import { useDialog } from '../components/helper/useDialog';
 
 interface CreateEditReviewProps {
-    reviewId?: string; // Changed from existingReview object to reviewId string
+    reviewId?: string;
     isLoading?: boolean;
 }
 
@@ -27,12 +29,6 @@ interface Category {
     options: Option[];
 }
 
-interface PopupState {
-    show: boolean;
-    type: 'success' | 'error';
-    message: string;
-}
-
 interface ReviewDetails {
     id: number;
     rating: number;
@@ -53,7 +49,6 @@ export default function CreateEditReview({
     const { beachId, reviewId } = useParams();
     const isEditMode = !!reviewId;
 
-    console.log(reviewId)
     // State for form data
     const [formData, setFormData] = useState<ReviewFormData>({
         rating: 5,
@@ -81,16 +76,12 @@ export default function CreateEditReview({
     // State for submission
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // State for popup
-    const [popup, setPopup] = useState<PopupState>({
-        show: false,
-        type: 'success',
-        message: ''
-    });
+    // Use the reusable dialog hook
+    const [dialogState, { showSuccess, showError, closeDialog, showWarning }] = useDialog();
 
     const { getListOptions, addBeachReviews, getDetailsReview, editDetailsReview } = useBeaches();
 
-    // Category names mapping (you can adjust these based on your preference_categories)
+    // Category names mapping
     const categoryNames: { [key: number]: string } = {
         1: 'Accessibility',
         2: 'Activity',
@@ -124,30 +115,29 @@ export default function CreateEditReview({
                         rating: response.rating,
                         comment: response.user_review,
                         optionVotes: optionVotesArray,
-                        photos: [] // Keep this empty for new photos only
+                        photos: []
                     });
 
                     // Handle existing photos separately
                     if (response.path) {
                         const photoUrls = response.path.split(',').filter(url => url.trim());
                         setExistingPhotos(photoUrls);
-                        setPhotoPreviews(photoUrls); // Show existing photos in preview
+                        setPhotoPreviews(photoUrls);
                     }
                 }
             } catch (error) {
                 console.error('Error fetching review details:', error);
-                setPopup({
-                    show: true,
-                    type: 'error',
-                    message: 'Failed to load review details. Please try again.'
-                });
+                showError(
+                    'Error Loading Review',
+                    'Failed to load review details. Please try again.'
+                );
             } finally {
                 setReviewLoading(false);
             }
         };
 
         fetchReviewDetails();
-    }, [reviewId, isEditMode]);
+    }, [reviewId, isEditMode, showError]);
 
     // Fetch options from API on component mount
     useEffect(() => {
@@ -178,18 +168,17 @@ export default function CreateEditReview({
                 }
             } catch (error) {
                 console.error('Error fetching options:', error);
-                setPopup({
-                    show: true,
-                    type: 'error',
-                    message: 'Failed to load beach options. Please refresh the page.'
-                });
+                showError(
+                    'Error Loading Options',
+                    'Failed to load beach options. Please refresh the page.'
+                );
             } finally {
                 setOptionsLoading(false);
             }
         };
 
         fetchOptions();
-    }, []);
+    }, [showError]);
 
     // Get option name by ID
     const getOptionName = (optionId: number): string => {
@@ -201,15 +190,10 @@ export default function CreateEditReview({
     };
 
     /**
-     * Close popup and handle navigation if success
+     * Handle navigation back
      */
-    const closePopup = (): void => {
-        setPopup({ show: false, type: 'success', message: '' });
-
-        // If it was a success popup, navigate back to review page
-        if (popup.type === 'success') {
-            window.history.back();
-        }
+    const handleBack = () => {
+        window.history.back();
     };
 
     /**
@@ -252,11 +236,10 @@ export default function CreateEditReview({
 
         // Limit to 5 photos total (existing + new)
         if (totalPhotos > 5) {
-            setPopup({
-                show: true,
-                type: 'error',
-                message: 'Maximum 5 photos allowed'
-            });
+            showError(
+                'Photo Limit Exceeded',
+                'Maximum 5 photos allowed'
+            );
             return;
         }
 
@@ -275,104 +258,159 @@ export default function CreateEditReview({
     };
 
     /**
-     * Remove a photo
+     * Remove a photo with confirmation
      */
     const removePhoto = (index: number): void => {
         const isExistingPhoto = index < existingPhotos.length;
+        const photoType = isExistingPhoto ? 'existing' : 'new';
 
-        if (isExistingPhoto) {
-            // Remove from existing photos
-            const updatedExistingPhotos = existingPhotos.filter((_, i) => i !== index);
-            setExistingPhotos(updatedExistingPhotos);
-        } else {
-            // Remove from new photos
-            const newPhotoIndex = index - existingPhotos.length;
-            const updatedNewPhotos = newPhotos.filter((_, i) => i !== newPhotoIndex);
-            setNewPhotos(updatedNewPhotos);
+        showWarning(
+            'Remove Photo',
+            `Are you sure you want to remove this ${photoType} photo?`,
+            {
+                showCancel: true,
+                confirmText: 'Remove',
+                onConfirm: () => {
+                    if (isExistingPhoto) {
+                        // Remove from existing photos
+                        const updatedExistingPhotos = existingPhotos.filter((_, i) => i !== index);
+                        setExistingPhotos(updatedExistingPhotos);
+                    } else {
+                        // Remove from new photos
+                        const newPhotoIndex = index - existingPhotos.length;
+                        const updatedNewPhotos = newPhotos.filter((_, i) => i !== newPhotoIndex);
+                        setNewPhotos(updatedNewPhotos);
 
-            // Update formData
-            setFormData({
-                ...formData,
-                photos: updatedNewPhotos
-            });
+                        // Update formData
+                        setFormData({
+                            ...formData,
+                            photos: updatedNewPhotos
+                        });
 
-            // Revoke URL for new photo
-            if (photoPreviews[index].startsWith('blob:')) {
-                URL.revokeObjectURL(photoPreviews[index]);
+                        // Revoke URL for new photo
+                        if (photoPreviews[index].startsWith('blob:')) {
+                            URL.revokeObjectURL(photoPreviews[index]);
+                        }
+                    }
+
+                    // Update previews
+                    const updatedPreviews = photoPreviews.filter((_, i) => i !== index);
+                    setPhotoPreviews(updatedPreviews);
+                    closeDialog();
+                },
             }
+        );
+    };
+
+    /**
+     * Validate form data
+     */
+    const validateForm = (): boolean => {
+        if (!formData.rating || formData.rating < 1 || formData.rating > 5) {
+            showError('Validation Error', 'Please select a valid rating between 1 and 5.');
+            return false;
         }
 
-        // Update previews
-        const updatedPreviews = photoPreviews.filter((_, i) => i !== index);
-        setPhotoPreviews(updatedPreviews);
+        if (!formData.comment.trim()) {
+            showError('Validation Error', 'Please write a review comment.');
+            return false;
+        }
+
+        if (formData.optionVotes.length === 0) {
+            showError('Validation Error', 'Please select at least one beach feature.');
+            return false;
+        }
+
+        return true;
     };
 
     /**
      * Handle form submission
      */
     const handleSubmit = async (): Promise<void> => {
-        // Validate required fields
-        if (!formData.rating || !formData.comment.trim() || formData.optionVotes.length === 0) {
-            setPopup({
-                show: true,
-                type: 'error',
-                message: 'Please fill in all required fields'
-            });
-            return;
-        }
+        if (!validateForm()) return;
 
         setIsSubmitting(true);
 
-        // Create FormData for multipart/form-data submission
-        const submitData = new FormData();
-
-        // Add text fields
-        const currentBeachId = isEditMode && reviewDetails ? reviewDetails.beaches_id.toString() : (beachId ?? "");
-        submitData.append('beachId', currentBeachId);
-        submitData.append('rating', formData.rating.toString());
-        submitData.append('comment', formData.comment);
-
-        // Add option votes as individual form fields
-        formData.optionVotes.forEach((optionId) => {
-            submitData.append('optionVotes', optionId.toString());
-        });
-
-        // Add new photos only
-        formData.photos.forEach((photo) => {
-            submitData.append('files', photo);
-        });
-
-        // IMPORTANT: Tell backend whether to keep existing files
-        if (isEditMode) {
-            // Keep existing files if user hasn't removed any existing photos
-            const keepExisting = existingPhotos.length > 0;
-            submitData.append('keepExistingFiles', keepExisting.toString());
-            submitData.append('reviewId', reviewId);
-        }
-
         try {
+            // Create FormData for multipart/form-data submission
+            const submitData = new FormData();
+
+            // Add text fields
+            const currentBeachId = isEditMode && reviewDetails ? reviewDetails.beaches_id.toString() : (beachId ?? "");
+            submitData.append('beachId', currentBeachId);
+            submitData.append('rating', formData.rating.toString());
+            submitData.append('comment', formData.comment);
+
+            // Add option votes as individual form fields
+            formData.optionVotes.forEach((optionId) => {
+                submitData.append('optionVotes', optionId.toString());
+            });
+
+            // Add new photos only
+            formData.photos.forEach((photo) => {
+                submitData.append('files', photo);
+            });
+
+            // IMPORTANT: Tell backend whether to keep existing files
+            if (isEditMode) {
+                // Keep existing files if user hasn't removed any existing photos
+                const keepExisting = existingPhotos.length > 0;
+                submitData.append('keepExistingFiles', keepExisting.toString());
+                submitData.append('reviewId', reviewId);
+            }
+
             if (isEditMode) {
                 await editDetailsReview(reviewId, submitData);
             } else {
                 await addBeachReviews(submitData);
             }
 
-            setPopup({
-                show: true,
-                type: 'success',
-                message: isEditMode
-                    ? 'Review updated successfully!'
-                    : 'Review submitted successfully!'
-            });
+            showSuccess(
+                'Success!',
+                isEditMode ? 'Review updated successfully!' : 'Review submitted successfully!',
+                { onConfirm: handleBack }
+            );
+
         } catch (error) {
             console.error('Error submitting review:', error);
-            setPopup({
-                show: true,
-                type: 'error',
-                message: 'Failed to save review. Please try again.'
-            });
+            showError(
+                'Submission Failed',
+                'Failed to save review. Please try again.'
+            );
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    /**
+     * Handle cancel with confirmation if form has been modified
+     */
+    const handleCancel = (): void => {
+        const hasChanges = formData.comment.trim() !== '' ||
+            formData.optionVotes.length > 0 ||
+            formData.photos.length > 0 ||
+            (isEditMode && reviewDetails && (
+                formData.rating !== reviewDetails.rating ||
+                formData.comment !== reviewDetails.user_review
+            ));
+
+        if (hasChanges) {
+            showWarning(
+                'Discard Changes',
+                'Are you sure you want to discard your changes?',
+                {
+                    showCancel: true,
+                    cancelText: 'Keep Editing',
+                    confirmText: 'Discard',
+                    onConfirm: () => {
+                        closeDialog();
+                        handleBack();
+                    },
+                }
+            );
+        } else {
+            handleBack();
         }
     };
 
@@ -385,7 +423,7 @@ export default function CreateEditReview({
                 }
             });
         };
-    }, []);
+    }, [photoPreviews]);
 
     // Show loading state
     if (optionsLoading || (isEditMode && reviewLoading)) {
@@ -405,46 +443,27 @@ export default function CreateEditReview({
 
     return (
         <div className="max-w-4xl mx-auto p-4 bg-white">
-            {/* Popup Modal */}
-            {popup.show && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-lg">
-                        <div className="text-center">
-                            {popup.type === 'success' ? (
-                                <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                                    <Check size={32} className="text-green-500" />
-                                </div>
-                            ) : (
-                                <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                                    <X size={32} className="text-red-500" />
-                                </div>
-                            )}
-                            <h3 className={`text-lg font-semibold mb-2 ${popup.type === 'success' ? 'text-green-700' : 'text-red-700'
-                                }`}>
-                                {popup.type === 'success' ? 'Success!' : 'Error'}
-                            </h3>
-                            <p className="text-gray-600 mb-6">
-                                {popup.message}
-                            </p>
-                            <button
-                                onClick={closePopup}
-                                className={`px-6 py-2 rounded-full text-white font-medium ${popup.type === 'success'
-                                    ? 'bg-green-500 hover:bg-green-600'
-                                    : 'bg-red-500 hover:bg-red-600'
-                                    } transition-colors`}
-                            >
-                                {popup.type === 'success' ? 'Continue' : 'Try Again'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Reusable Dialog Message */}
+            <DialogMessage
+                type={dialogState.type}
+                title={dialogState.title}
+                message={dialogState.message}
+                isOpen={dialogState.isOpen}
+                onClose={closeDialog}
+                redirectPath={dialogState.redirectPath}
+                onConfirm={dialogState.onConfirm}
+                confirmText={dialogState.confirmText}
+                cancelText={dialogState.cancelText}
+                showCancel={dialogState.showCancel}
+                autoClose={dialogState.autoClose}
+                autoCloseDelay={dialogState.autoCloseDelay}
+            />
 
             {/* Header with back button */}
             <div className="flex items-center mb-6">
                 <button
                     className="rounded-full bg-teal-500 p-2 mr-3"
-                    onClick={() => window.history.back()}
+                    onClick={handleCancel}
                     disabled={isLoading || isSubmitting}
                 >
                     <ChevronLeft size={24} className="text-white" />
@@ -475,7 +494,7 @@ export default function CreateEditReview({
                                 <button
                                     type="button"
                                     onClick={() => removePhoto(index)}
-                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
                                     disabled={isLoading || isSubmitting}
                                 >
                                     <X size={12} />
@@ -541,7 +560,7 @@ export default function CreateEditReview({
                         value={formData.comment}
                         onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                         placeholder="Share your experience at this beach..."
-                        className="w-full border rounded p-3 h-32 resize-none"
+                        className="w-full border rounded p-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
                         disabled={isLoading || isSubmitting}
                     />
                 </div>
@@ -619,7 +638,7 @@ export default function CreateEditReview({
                 <div className="flex justify-between">
                     <button
                         type="button"
-                        onClick={() => window.history.back()}
+                        onClick={handleCancel}
                         className="px-8 py-3 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors"
                         disabled={isLoading || isSubmitting}
                     >

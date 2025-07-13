@@ -20,11 +20,17 @@ const TicketList = () => {
                 setError(null);
 
                 const ticketsResponse = await getAdminTicket();
-                setTickets(ticketsResponse.data || ticketsResponse);
+
+                if (ticketsResponse.message && !ticketsResponse.data) {
+                    setError(ticketsResponse.message);
+                    setTickets([]);
+                } else {
+                    setTickets(ticketsResponse.data || []);
+                }
 
             } catch (error) {
                 console.error('Error fetching tickets:', error);
-                setError('Failed to load tickets. Please try again.');
+                setError('Failed to fetch tickets');
                 setTickets([]);
             } finally {
                 setLoading(false);

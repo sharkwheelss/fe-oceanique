@@ -99,7 +99,7 @@ export const TicketProvider = ({ children }: { children: ReactNode }) => {
             setLoading(true);
             setError(null);
             const response = await api.ticket.getAdminTicket();
-            return response.data;
+            return response;
         } catch (err) {
             setError('Failed to fetch tickets');
             console.error('Error fetching tickets:', err);

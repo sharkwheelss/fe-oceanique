@@ -2,6 +2,8 @@ import { useState } from 'react';
 import PassInput from './PassInput';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import DialogMessage from '../components/helper/DialogMessage';
+import { useDialog } from '../components/helper/useDialog';
 
 const Signup = () => {
     // Form state
@@ -10,8 +12,8 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+
+    const [dialogState, { showSuccess, showError, closeDialog }] = useDialog();
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -46,11 +48,15 @@ const Signup = () => {
     const handleSubmit = async () => {
         const result = await signup(username, email, password, confirmPassword, userTypeId);
         if (result.success) {
-            setShowSuccess(true);
-            setErrorMessage('');
+            showSuccess(
+                'Sign Up Successful!',
+                'Welcome to Oceanique! Please Sign In to Continue.',
+            )
         } else {
-            setShowSuccess(false);
-            setErrorMessage(result.message || 'Sign up failed');
+            showError(
+                'Sign Up Failed',
+                result.message || 'Sign Up Failed'
+            )
         }
     };
 
@@ -162,93 +168,23 @@ const Signup = () => {
             </div>
 
             {/* Pop-up Messages */}
-            {showSuccess && (
-                <DialogMessage
-                    type="success"
-                    title="Sign Up Successful!"
-                    message={`Welcome to Oceanique!`}
-                    navigate={signinLink}
-                    handleResponse={() => setShowSuccess(false)}
-                />
-            )}
-            {errorMessage && (
-                <DialogMessage
-                    type="error"
-                    title="Sign Up Failed!"
-                    message={errorMessage}
-                    navigate={location.pathname}
-                    handleResponse={() => setErrorMessage('')}
-                />
-            )}
+            <DialogMessage
+                type={dialogState.type}
+                title={dialogState.title}
+                message={dialogState.message}
+                isOpen={dialogState.isOpen}
+                onClose={closeDialog}
+                redirectPath={dialogState.redirectPath}
+                onConfirm={dialogState.onConfirm}
+                confirmText={dialogState.confirmText}
+                cancelText={dialogState.cancelText}
+                showCancel={dialogState.showCancel}
+                autoClose={dialogState.autoClose}
+                autoCloseDelay={dialogState.autoCloseDelay}
+            />
         </div>
     );
 }
 
-interface DialogMessageProps {
-    type: 'success' | 'error';
-    title: string;
-    message: string;
-    handleResponse: () => void;
-    navigate: string;
-}
-
-const DialogMessage: React.FC<DialogMessageProps> = ({ type, title, message, navigate, handleResponse }) => {
-    const styles = {
-        success: {
-            background: 'bg-white',
-            title: 'text-teal-600',
-            button: 'bg-teal-500 hover:bg-teal-600',
-            navigate: navigate
-        },
-        error: {
-            background: 'bg-white',
-            title: 'text-red-600',
-            button: 'bg-red-500 hover:bg-red-600',
-            navigate: navigate
-        }
-    }
-
-    return (
-        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
-            <div
-                className={`${styles[type].background} rounded-lg shadow-lg p-8 max-w-sm w-full text-center animate-popup`}
-                style={{
-                    animation: 'popup 0.3s cubic-bezier(0.22, 1, 0.36, 1)'
-                }}
-            >
-                <h3 className={`text-2xl font-bold mb-4 ${styles[type].title}`}>{title}</h3>
-                <p className="mb-6 text-gray-700">{message}</p>
-                <button
-                    onClick={() => {
-                        handleResponse();
-                        if (type === 'success') {
-                            window.location.href = navigate;
-                        }
-                    }}
-                    className={`px-6 py-2 text-white rounded transition-colors ${styles[type].button}`}
-                >
-                    {type === 'success' ? 'Continue' : 'Close'}
-                </button>
-            </div>
-            <style>
-                {`
-                @keyframes popup {
-                    0% {
-                    opacity: 0;
-                    transform: scale(0.8);
-                    }
-                    100% {
-                    opacity: 1;
-                    transform: scale(1);
-                    }
-                }
-                .animate-popup {
-                    animation: popup 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-                }
-                `}
-            </style>
-        </div>
-    )
-}
 
 export default Signup;

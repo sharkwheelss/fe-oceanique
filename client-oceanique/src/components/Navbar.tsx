@@ -80,7 +80,7 @@ const Navbar: React.FC = () => {
                   className="flex items-center space-x-2"
                 >
                   <img
-                    src={user?.img}
+                    src={user?.imgProfile}
                     alt="Profile"
                     className="w-8 h-8 rounded-full"
                   />

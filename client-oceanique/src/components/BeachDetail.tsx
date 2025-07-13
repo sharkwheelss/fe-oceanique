@@ -360,14 +360,6 @@ export default function BeachDetailPage() {
                 </div>
             </div>
 
-            {/* Event Availability */}
-            <div className="container mx-auto px-4 mb-6">
-                <div className="border border-gray-200 rounded-lg p-6 text-center text-gray-600">
-                    {/* Event availability logic can be added here based on your data structure */}
-                    No event available
-                </div>
-            </div>
-
             {/* Tabs Navigation */}
             <div className="container mx-auto px-4">
                 <div className="flex border-b border-gray-200 sticky top-[72px] z-40 bg-white">

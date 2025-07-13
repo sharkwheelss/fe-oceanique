@@ -21,7 +21,7 @@ const EventForm = () => {
         start_time: '',
         end_date: '',
         end_time: '',
-        jenis: '',
+        jenis: 'public',
         beach_id: '',
         beach_name: ''
     });
