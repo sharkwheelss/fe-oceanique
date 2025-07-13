@@ -1,21 +1,20 @@
-    import React, { useState, useEffect, useRef } from 'react';
+    import { useState, useEffect, useRef } from 'react';
     import { MapPin, Sun, CloudRain, Cloud, CloudSnow, Zap } from 'lucide-react';
 
-    const LocationContent = () => {
+    const LocationContent = (beachData: any) => {
         const mapRef = useRef(null);
         const [weatherData, setWeatherData] = useState(null);
-        const [nearbyPlaces, setNearbyPlaces] = useState([]);
         const [loading, setLoading] = useState(true);
         const [mapLoaded, setMapLoaded] = useState(false);
 
         const WEATHER_API_KEY = '89874db7e434075c5a64fe1cc32842dc';
 
-        // Location coordinates for Cungkil, Surabaya
         const location = {
-            lat: -7.3115,
-            lng: 112.7721,
-            name: 'Cungkil, Surabaya, Jawa Timur'
+            lat: beachData.beachData.latitude,
+            lng: beachData.beachData.longitude,
+            name: `${beachData.beachData.kecamatan}, ${beachData.beachData.kota}, ${beachData.beachData.province}`
         };
+        console.log(beachData.beachData)
 
         // Initialize OpenStreetMap with Leaflet
         useEffect(() => {
@@ -75,21 +74,8 @@
                     .bindPopup(location.name);
 
                 setMapLoaded(true);
-
-                // Load mock nearby places (since we don't have Google Places API)
-                setTimeout(() => {
-                    setNearbyPlaces(getMockNearbyPlaces());
-                }, 1000);
             }
         };
-
-        // Mock nearby places for Indonesia context
-        const getMockNearbyPlaces = () => [
-            { name: 'Toko Sari Roti', type: '🏪', distance: '0.2 km' },
-            { name: 'Warung Pecel Lele', type: '🍽️', distance: '0.3 km' },
-            { name: 'Apotek K24', type: '💊', distance: '0.5 km' },
-            { name: 'Indomaret', type: '🛍️', distance: '0.4 km' }
-        ];
 
         // Fetch weather data
         useEffect(() => {
@@ -98,24 +84,19 @@
 
         const fetchWeatherData = async () => {
             try {
-                // Using OpenWeatherMap as Weather.io alternative (more accessible)
                 const response = await fetch(
                     `https://api.openweathermap.org/data/2.5/forecast?lat=${location.lat}&lon=${location.lng}&appid=${WEATHER_API_KEY}&units=metric`
                 );
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log(data)
+                    // console.log(data)
                     const processedWeather = processWeatherData(data);
+                    console.log(processedWeather)
                     setWeatherData(processedWeather);
-                } else {
-                    // Fallback to mock data if API fails
-                    // setWeatherData(getMockWeatherData());
                 }
             } catch (error) {
                 console.error('Weather API error:', error);
-                // Use mock data as fallback
-                // setWeatherData(getMockWeatherData());
             } finally {
                 setLoading(false);
             }
@@ -146,13 +127,6 @@
             });
         };
 
-        const getMockWeatherData = () => [
-            { time: '00:00 - 06:00', condition: 'Clear', description: 'Sunny', temp: 28, icon: Sun },
-            { time: '06:00 - 12:00', condition: 'Rain', description: 'Light rain', temp: 26, icon: CloudRain },
-            { time: '12:00 - 18:00', condition: 'Clouds', description: 'Cloudy', temp: 30, icon: Cloud },
-            { time: '18:00 - 00:00', condition: 'Clouds', description: 'Partly cloudy', temp: 27, icon: Cloud }
-        ];
-
         const getWeatherIcon = (condition) => {
             const iconMap = {
                 'Clear': Sun,
@@ -163,36 +137,6 @@
                 'Thunderstorm': Zap
             };
             return iconMap[condition] || Cloud;
-        };
-
-        const getPlaceIcon = (type) => {
-            const iconMap = {
-                'shopping_mall': '🛍️',
-                'store': '🏪',
-                'restaurant': '🍽️',
-                'hospital': '🏥',
-                'school': '🏫',
-                'gas_station': '⛽',
-                'bank': '🏦'
-            };
-            return iconMap[type] || '📍';
-        };
-
-        const calculateDistance = (pos1, pos2) => {
-            const lat1 = typeof pos1.lat === 'function' ? pos1.lat() : pos1.lat;
-            const lng1 = typeof pos1.lng === 'function' ? pos1.lng() : pos1.lng;
-            const lat2 = typeof pos2.lat === 'function' ? pos2.lat() : pos2.lat;
-            const lng2 = typeof pos2.lng === 'function' ? pos2.lng() : pos2.lng;
-
-            const R = 6371; // Earth's radius in km
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLng = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const distance = R * c;
-            return distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`;
         };
 
         return (
@@ -268,27 +212,6 @@
                         </div>
                     </div>
                 </div>
-
-                {/* API Key Notice */}
-                {WEATHER_API_KEY === 'YOUR_OPENWEATHER_API_KEY' && (
-                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h4 className="font-semibold text-blue-800 mb-2">Setup Instructions</h4>
-                        <div className="text-sm text-blue-700 space-y-2">
-                            <div>
-                                <p className="font-medium">✅ Map: Ready to use (OpenStreetMap - Free)</p>
-                                <p className="text-xs text-blue-600">No API key needed for the map</p>
-                            </div>
-                            <div>
-                                <p className="font-medium">🌤️ Weather: Setup needed</p>
-                                <p className="text-xs text-blue-600">
-                                    1. Sign up at <a href="https://openweathermap.org/api" className="underline" target="_blank" rel="noopener noreferrer">OpenWeatherMap</a> (FREE - 1,000 calls/day)<br />
-                                    2. Get your API key<br />
-                                    3. Replace <code className="bg-blue-100 px-1 rounded">YOUR_OPENWEATHER_API_KEY</code>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         );
     };

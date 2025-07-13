@@ -171,8 +171,8 @@ export default function BeachDetailPage() {
         checkWishlistStatus();
     }, [user?.id, beachData?.id]);
 
-    console.log('beach data:', beachData?.id)
-    console.log('review data:', beachReviews)
+    // console.log('beach data:', beachData)
+    // console.log('review data:', beachReviews)
 
     // Wishlist management functions
     const checkWishlistStatusHandler = async (beachId: string) => {
