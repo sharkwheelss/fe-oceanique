@@ -24,7 +24,17 @@ const TicketList = () => {
             const ticketsResponse = await getAdminTicket();
 
             if (ticketsResponse.message && !ticketsResponse.data) {
-                setError(ticketsResponse.message);
+                showError(
+                    'No Bank Account Found',
+                    ticketsResponse.message,
+                    {
+                        showCancel: false,
+                        onConfirm: () => {
+                            closeDialog();
+                            navigate('/profile')
+                        }
+                    }
+                );
                 setTickets([]);
             } else {
                 setTickets(ticketsResponse.data || []);
@@ -32,7 +42,6 @@ const TicketList = () => {
 
         } catch (error) {
             console.error('Error fetching tickets:', error);
-            setError('Failed to fetch tickets');
             setTickets([]);
         } finally {
             setLoading(false);
@@ -172,11 +181,6 @@ const TicketList = () => {
             </div>
 
             <div className="p-8">
-                {error && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-600">Error: {error}</p>
-                    </div>
-                )}
 
                 <div className="bg-white rounded-lg shadow-sm">
                     <div className="p-6 border-b border-gray-200">
