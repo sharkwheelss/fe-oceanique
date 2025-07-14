@@ -262,6 +262,10 @@ function Questions() {
                                             src={option.img}
                                             alt=""
                                             className="w-full h-full object-cover rounded-3xl"
+                                            onError={(e) => {
+                                                e.currentTarget.src = '/option-placeholder.jpg';
+                                            }
+                                            }
                                         />
                                     </div>
 

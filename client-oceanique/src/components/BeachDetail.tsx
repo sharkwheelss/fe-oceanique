@@ -320,11 +320,7 @@ export default function BeachDetailPage() {
                         {/* Beach name and weather */}
                         <div className="flex items-center mb-2">
                             <h1 className="text-3xl font-bold mr-4">{beachData.beach_name}</h1>
-                            {/* Weather is not in the Beach interface, but keeping it for potential future use */}
-                            <div className="bg-gray-100 text-gray-800 rounded-full px-4 py-1 flex items-center">
-                                <Sun size={16} className="text-yellow-500 mr-2" />
-                                <span className="text-sm">Sunny</span>
-                            </div>
+
                         </div>
 
                         {/* Rating */}
@@ -353,9 +349,12 @@ export default function BeachDetailPage() {
             <div className="container mx-auto px-4 mb-4">
                 <div className="rounded-lg overflow-hidden">
                     <img
-                        src={beachData.img_path}
+                        src={beachData.img_path || 'https://picsum.photos/id/16/2500/1667'}
                         alt={beachData.beach_name}
                         className="w-full h-96 object-cover"
+                        onError={(e) => {
+                            e.currentTarget.src = 'https://picsum.photos/id/16/2500/1667';
+                        }}
                     />
                 </div>
             </div>

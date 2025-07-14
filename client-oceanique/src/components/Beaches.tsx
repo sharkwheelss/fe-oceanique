@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { ChevronLeft, ChevronRight, Search, MapPin, Star, Calendar, XCircle } from 'lucide-react';
+import { Search, MapPin, Star, Calendar, XCircle, ArrowUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBeaches } from '../context/BeachContext'
 
@@ -31,6 +31,8 @@ type Filters = {
     priceRange: string;
 };
 
+
+
 interface Coordinates {
     lat: number;
     lng: number;
@@ -41,6 +43,7 @@ const Beaches = () => {
     const [beaches, setBeaches] = useState<Beach[]>([]);
     const [filteredBeaches, setFilteredBeaches] = useState<Beach[]>([]);
     const [loading, setLoading] = useState(true);
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const navigate = useNavigate();
     const [filters, setFilters] = useState<Filters>({
         province: '',
@@ -50,10 +53,6 @@ const Beaches = () => {
     });
 
     const { getAllBeaches } = useBeaches();
-
-    // Separate slider states for each section
-    const [nearYouIndex, setNearYouIndex] = useState(0);
-    const [sabangMeraukeIndex, setSabangMeraukeIndex] = useState(0);
 
     const calculateDistance = (beach: Beach, userLocation: Coordinates | null): number => {
         if (!userLocation) return -1; // Return -1 if location isn't available yet
@@ -109,6 +108,7 @@ const Beaches = () => {
     };
 
     const { location } = useCurrentLocation();
+
     // Fetch beaches data
     useEffect(() => {
         if (!location) return; // Prevent fetch from running when location is null
@@ -138,7 +138,17 @@ const Beaches = () => {
         fetchBeaches();
     }, [location]); // Runs only when location updates
 
-    // Filter beaches based on search and filters
+    // Sort beaches by distance
+    const sortBeachesByDistance = (beaches: Beach[], order: 'asc' | 'desc'): Beach[] => {
+        return [...beaches].sort((a, b) => {
+            const aDistance = a.distance || 999999; // Put beaches without distance at the end
+            const bDistance = b.distance || 999999;
+
+            return order === 'asc' ? aDistance - bDistance : bDistance - aDistance;
+        });
+    };
+
+    // Filter and sort beaches
     useEffect(() => {
         let filtered = beaches;
 
@@ -171,8 +181,10 @@ const Beaches = () => {
             filtered = filtered.filter(beach => beach.estimate_price.includes(filters.priceRange));
         }
 
-        setFilteredBeaches(filtered);
-    }, [searchQuery, filters, beaches]);
+        // Sort the filtered results by distance
+        const sorted = sortBeachesByDistance(filtered, sortOrder);
+        setFilteredBeaches(sorted);
+    }, [searchQuery, filters, beaches, sortOrder]);
 
     // Get unique values for filter dropdowns
     const getUniqueProvinces = () => [...new Set(beaches.map(beach => beach.province))];
@@ -193,6 +205,11 @@ const Beaches = () => {
         }));
     };
 
+    // Handler for sort order toggle
+    const toggleSortOrder = (): void => {
+        setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    };
+
     // Clear all filters
     const clearFilters = () => {
         setFilters({
@@ -202,15 +219,16 @@ const Beaches = () => {
             priceRange: ''
         });
         setSearchQuery('');
+        setSortOrder('asc');
     };
 
-    // Get beaches for "Near You" section (sorted by distance)
-    const nearYouBeaches = filteredBeaches
-        .filter(beach => beach.distance && beach.distance <= 10)
-        .sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    // Get beaches for "Near You" section (sorted by distance, within 50km)
+    const nearYouBeaches = filteredBeaches.filter(beach =>
+        beach.distance !== undefined && beach.distance !== -1 && beach.distance <= 50
+    );
 
-    // Get beaches for "Sabang to Merauke" section (all beaches)
-    const sabangMeraukeBeaches = filteredBeaches;
+    // Get beaches for "All Beaches" section
+    const allBeaches = filteredBeaches;
 
     const FilterDropdown: React.FC<{
         label: string;
@@ -260,21 +278,19 @@ const Beaches = () => {
         );
     };
 
-    // Slider navigation handlers
-    const handleNearYouPrev = () => {
-        setNearYouIndex(prev => Math.max(prev - 1, 0));
-    };
-
-    const handleNearYouNext = () => {
-        setNearYouIndex(prev => Math.min(prev + 1, Math.max(0, nearYouBeaches.length - 3)));
-    };
-
-    const handleSabangMeraukePrev = () => {
-        setSabangMeraukeIndex(prev => Math.max(prev - 1, 0));
-    };
-
-    const handleSabangMeraukeNext = () => {
-        setSabangMeraukeIndex(prev => Math.min(prev + 1, Math.max(0, sabangMeraukeBeaches.length - 3)));
+    const SortButton: React.FC = () => {
+        return (
+            <button
+                onClick={toggleSortOrder}
+                className="flex items-center gap-2 px-4 py-2 rounded-md transition-colors bg-teal-500 text-white hover:bg-teal-600"
+            >
+                <span>Sort by Distance</span>
+                <ArrowUpDown size={16} />
+                <span className="text-xs">
+                    {sortOrder === 'asc' ? '↑' : '↓'}
+                </span>
+            </button>
+        );
     };
 
     if (loading) {
@@ -289,7 +305,7 @@ const Beaches = () => {
         <div className="max-h-screen">
             {/* Search and Filters */}
             <div className="container sticky top-[72px] z-40 bg-white mx-auto px-4 py-6">
-                <div className="flex flex-wrap justify-center gap-4">
+                <div className="flex flex-wrap justify-center gap-4 mb-4">
                     <div className="relative flex-grow max-w-lg">
                         <Search className="absolute left-3 top-3 text-gray-400" size={20} />
                         <input
@@ -333,105 +349,64 @@ const Beaches = () => {
                         Reset
                     </button>
                 </div>
+
+                {/* Sort by Distance */}
+                <div className="flex justify-center">
+                    <SortButton />
+                </div>
             </div>
 
             {/* Near You Section */}
             <section className="container mx-auto px-4 py-4">
-                <h2 className="text-2xl font-bold mb-4 text-center">Near You</h2>
+                <h2 className="text-2xl font-bold mb-4 text-center">Near You (Within 50km)</h2>
                 <div className="border-t border-gray-200 pt-4">
-                    <div className="relative flex items-center justify-center">
-                        <button
-                            onClick={handleNearYouPrev}
-                            className="z-10 absolute left-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={nearYouIndex === 0}
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
-                        <div className="w-full px-12 overflow-hidden">
-                            <div
-                                className="flex gap-6 transition-transform duration-500 ease-in-out"
-                                style={{
-                                    transform: `translateX(-${nearYouIndex * (320 + 24)}px)`,
-                                }}
-                            >
-                                {nearYouBeaches.length > 0 ? (
-                                    nearYouBeaches.map((beach) => (
-                                        <div
-                                            key={beach.id}
-                                            className="w-80 flex-shrink-0 cursor-pointer"
-                                            onClick={() => {
-                                                console.log(`Navigate to beach detail: ${beach.id}`);
-                                                navigate(`/beach-detail/${beach.id}`);
-                                            }}
-                                        >
-                                            <BeachCard beach={beach} />
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="w-full text-center py-8">
-                                        <p className="text-gray-500">No beaches found near you</p>
-                                    </div>
-                                )}
-                            </div>
+                    {nearYouBeaches.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {nearYouBeaches.map((beach) => (
+                                <div
+                                    key={beach.id}
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                        console.log(`Navigate to beach detail: ${beach.id}`);
+                                        navigate(`/beach-detail/${beach.id}`);
+                                    }}
+                                >
+                                    <BeachCard beach={beach} />
+                                </div>
+                            ))}
                         </div>
-                        <button
-                            onClick={handleNearYouNext}
-                            className="z-10 absolute right-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={nearYouIndex >= Math.max(0, nearYouBeaches.length - 3)}
-                        >
-                            <ChevronRight size={24} />
-                        </button>
-                    </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500">No beaches found near you within 50km</p>
+                        </div>
+                    )}
                 </div>
             </section>
 
-            {/* Sabang to Merauke Section */}
+            {/* All Beaches Section */}
             <section className="container mx-auto px-4 py-4">
-                <h2 className="text-2xl font-bold mb-4 text-center">Sabang to Merauke</h2>
+                <h2 className="text-2xl font-bold mb-4 text-center">All Beaches</h2>
                 <div className="border-t border-gray-200 pt-4">
-                    <div className="relative flex items-center justify-center">
-                        <button
-                            onClick={handleSabangMeraukePrev}
-                            className="z-10 absolute left-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={sabangMeraukeIndex === 0}
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
-                        <div className="w-full px-12 overflow-hidden">
-                            <div
-                                className="flex gap-6 transition-transform duration-500 ease-in-out"
-                                style={{
-                                    transform: `translateX(-${sabangMeraukeIndex * (320 + 24)}px)`,
-                                }}
-                            >
-                                {sabangMeraukeBeaches.length > 0 ? (
-                                    sabangMeraukeBeaches.map((beach) => (
-                                        <div
-                                            key={beach.id}
-                                            className="w-80 flex-shrink-0 cursor-pointer"
-                                            onClick={() => {
-                                                console.log(`Navigate to beach detail: ${beach.id}`);
-                                                navigate(`/beach-detail/${beach.id}`);
-                                            }}
-                                        >
-                                            <BeachCard beach={beach} />
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="w-full text-center py-8">
-                                        <p className="text-gray-500">No beaches found</p>
-                                    </div>
-                                )}
-                            </div>
+                    {allBeaches.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {allBeaches.map((beach) => (
+                                <div
+                                    key={beach.id}
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                        console.log(`Navigate to beach detail: ${beach.id}`);
+                                        navigate(`/beach-detail/${beach.id}`);
+                                    }}
+                                >
+                                    <BeachCard beach={beach} />
+                                </div>
+                            ))}
                         </div>
-                        <button
-                            onClick={handleSabangMeraukeNext}
-                            className="z-10 absolute right-0 top-1/2 -translate-y-1/2 bg-teal-500 text-white rounded-md p-2 hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            disabled={sabangMeraukeIndex >= Math.max(0, sabangMeraukeBeaches.length - 3)}
-                        >
-                            <ChevronRight size={24} />
-                        </button>
-                    </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500">No beaches found</p>
+                        </div>
+                    )}
                 </div>
             </section>
         </div>
@@ -460,7 +435,7 @@ const ChevronDown = () => {
 // Beach card component
 const BeachCard: React.FC<{ beach: Beach }> = ({ beach }) => {
     return (
-        <div className="bg-white rounded-xl shadow-md overflow-hidden w-80 flex flex-col">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden w-full flex flex-col">
             <div className="relative h-48">
                 <img
                     src={beach.img_path || 'https://picsum.photos/id/16/2500/1667'}
@@ -471,7 +446,12 @@ const BeachCard: React.FC<{ beach: Beach }> = ({ beach }) => {
                     }}
                 />
                 <div className="absolute top-3 left-3 bg-white bg-opacity-80 rounded-full px-3 py-1 flex items-center">
-                    <span className="text-sm">{beach.distance} km</span>
+                    <span className="text-sm">
+                        {beach.distance !== undefined && beach.distance !== -1
+                            ? `${beach.distance} km`
+                            : 'Distance N/A'
+                        }
+                    </span>
                 </div>
             </div>
 
