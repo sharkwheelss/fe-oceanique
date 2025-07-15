@@ -248,8 +248,7 @@ function ReviewCard({ review, isCurrentUser, onEdit }: {
         setIsLiked(prev => !prev);
     };
 
-    // Check if user is experienced (experience === 0 means experienced)
-    const isExperiencedUser = review.experience === 0;
+    const isExperiencedUser = review.experience > 0;
 
     // Get media content (images and videos)
     const mediaContent = review.contents || [];
@@ -293,12 +292,17 @@ function ReviewCard({ review, isCurrentUser, onEdit }: {
                         </div>
                         <p className="text-sm text-gray-500">Since {review.join_date}</p>
 
-                        {!isExperiencedUser && (
+                        <div className="mt-2 bg-blue-100 text-green-700 text-xs py-1 px-2 rounded-full inline-flex items-center">
+                            <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                            <span>{review?.personality || 'Unknown'}</span>
+                        </div>
+                        {isExperiencedUser && (
                             <div className="mt-2 bg-blue-100 text-blue-700 text-xs py-1 px-2 rounded-full inline-flex items-center">
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
                                 <span>from experienced user</span>
                             </div>
                         )}
+
                     </div>
                 </div>
 

@@ -19,8 +19,8 @@ type Beach = {
     province: string;
     path: string;
     img_path: string;
-    distance?: number; // This would be calculated based on user location
-    hasEvent?: boolean; // This would come from events API
+    distance?: number;
+    event_count?: number;
 };
 
 // Define the Filters type
@@ -74,12 +74,6 @@ const Beaches = () => {
         return Math.round(earthRadiusKm * c); // Distance in km
     };
 
-    // Mock function to check if beach has events (replace with actual events API call)
-    const checkHasEvent = (beachId: number): boolean => {
-        // Mock event checking - replace with actual events API
-        return Math.random() > 0.5;
-    };
-
     const useCurrentLocation = () => {
         const [location, setLocation] = useState<Coordinates | null>(null);
         const [error, setError] = useState<string | null>(null);
@@ -121,7 +115,6 @@ const Beaches = () => {
                 const beachesWithExtras = response.map((beach: Beach) => ({
                     ...beach,
                     distance: calculateDistance(beach, location),
-                    hasEvent: checkHasEvent(beach.id)
                 }));
 
                 console.log('Retrieve info location: ', location);
@@ -478,7 +471,7 @@ const BeachCard: React.FC<{ beach: Beach }> = ({ beach }) => {
             </div>
 
             <div className="p-4 border-t border-gray-100">
-                {beach.hasEvent ? (
+                {beach.event_count > 0 ? (
                     <div className="flex items-center justify-center text-green-600">
                         <Calendar size={16} className="mr-1" />
                         <span className="text-sm">Event Available</span>

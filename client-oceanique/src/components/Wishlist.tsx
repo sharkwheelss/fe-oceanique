@@ -31,31 +31,6 @@ const WishlistBeachPage = () => {
         fetchWishlistData();
     }, []);
 
-    /**
-     * Parse price string to get min and max values
-     */
-    const parsePrice = (priceString) => {
-        if (!priceString) return { min: 0, max: 0 };
-
-        const matches = priceString.match(/(\d+)k?\s*-\s*(\d+)k?/);
-        if (matches) {
-            return {
-                min: parseInt(matches[1]),
-                max: parseInt(matches[2])
-            };
-        }
-        return { min: 0, max: 0 };
-    };
-
-    /**
-     * Generate placeholder image based on beach id
-     */
-    const getBeachImage = (beachId) => {
-        const imageIds = [15, 147, 162, 158, 164, 167, 168];
-        const imageId = imageIds[beachId % imageIds.length];
-        return `https://picsum.photos/id/${imageId}/400/300`;
-    };
-
     return (
         <div className="bg-white min-h-screen">
             {/* Main content */}
@@ -107,8 +82,6 @@ const WishlistBeachPage = () => {
                                 <WishlistBeachCard
                                     key={beach.id}
                                     beach={beach}
-                                    getBeachImage={getBeachImage}
-                                    parsePrice={parsePrice}
                                 />
                             ))}
                         </div>
@@ -122,8 +95,7 @@ const WishlistBeachPage = () => {
 /**
  * WishlistBeachCard - Component for individual wishlist beach card
  */
-const WishlistBeachCard = ({ beach, getBeachImage, parsePrice }) => {
-    const price = parsePrice(beach.estimate_price);
+const WishlistBeachCard = ({ beach }) => {
     const navigate = useNavigate();
 
     return (
@@ -140,7 +112,7 @@ const WishlistBeachCard = ({ beach, getBeachImage, parsePrice }) => {
             {/* Beach image */}
             <div className="relative h-48 overflow-hidden">
                 <img
-                    src={getBeachImage(beach.beaches_id)}
+                    src={beach.img_path}
                     alt={beach.beach_name}
                     className="w-full h-full object-cover"
                 />
@@ -152,11 +124,7 @@ const WishlistBeachCard = ({ beach, getBeachImage, parsePrice }) => {
                 <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-semibold pr-2">{beach.beach_name}</h3>
                     <div className="text-gray-700 text-sm whitespace-nowrap">
-                        {beach.estimate_price ? (
-                            `Rp${price.min}k - ${price.max}k`
-                        ) : (
-                            'Price varies'
-                        )}
+                        {beach.estimate_price}
                     </div>
                 </div>
 
