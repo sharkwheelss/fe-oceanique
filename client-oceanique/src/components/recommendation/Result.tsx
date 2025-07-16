@@ -18,8 +18,8 @@ interface BeachesView {
     reviews: number;
     priceRange: string;
     matchPercentage: number;
-    distance: number;
-    eventAvailable: boolean;
+    // distance: number;
+    // eventAvailable: boolean;
     image: string;
     description?: string;
     amenities: Array<{
@@ -44,6 +44,7 @@ interface ApiBeachData {
     official_website: string;
     province: string;
     rating_average: number;
+    reviewCount: number;
 }
 
 interface Review {
@@ -124,6 +125,7 @@ export default function RecommendationResult() {
                 }
 
                 processRecommendationData(recommendationData);
+                console.log('Recommendation data loaded:', recommendationData);
             } catch (error) {
                 console.error('Error loading recommendation data:', error);
                 setError('Failed to load recommendations. Please try again.');
@@ -196,27 +198,18 @@ export default function RecommendationResult() {
             name: apiBeach.beach_name,
             location: `${apiBeach.kecamatan}, ${apiBeach.kota}, ${apiBeach.province}`,
             rating: apiBeach.rating_average,
-            reviews: Math.floor(Math.random() * 100) + 50,
+            reviews: apiBeach.reviewCount,
             priceRange: apiBeach.estimate_price,
             matchPercentage: apiBeach.match_percentage,
-            distance: calculateDistance(parseFloat(apiBeach.latitude), parseFloat(apiBeach.longitude)),
+            // distance: calculateDistance(parseFloat(apiBeach.latitude), parseFloat(apiBeach.longitude)),
             amenities: uniqueOptions,
-            eventAvailable: Math.random() > 0.5,
             image: 'https://picsum.photos/id/13/2500/1667',
             description: apiBeach.descriptions
         };
     };
 
-    // Helper function to calculate distance (placeholder implementation)
-    const calculateDistance = (lat: number, lng: number): number => {
-        // If coordinates are 0, return a random distance between 10-50km
-        if (lat === 0 && lng === 0) {
-            return Math.floor(Math.random() * 40) + 10;
-        }
-        // Here you would implement actual distance calculation
-        // For now, return a placeholder
-        return Math.floor(Math.random() * 100) + 5;
-    };
+    // console.log(destinations)
+
 
     // Update destination with review data
     const updateDestinationWithReviewData = (destIndex: number, reviewData: Review[]) => {
@@ -393,6 +386,8 @@ export default function RecommendationResult() {
 
     const currentDestination = destinations[currentDestinationIndex];
 
+    console.log(currentDestination.reviews)
+
     // Group amenities into rows of 4
     const amenityRows = chunkAmenities(currentDestination.amenities || [], 4);
 
@@ -469,11 +464,11 @@ export default function RecommendationResult() {
                         }}
                     />
 
-                    {/* Distance badge */}
+                    {/* Distance badge
                     <div className="absolute bottom-4 left-4 bg-white rounded-full px-3 py-1 flex items-center gap-1 text-sm shadow-sm">
                         <MapPin size={14} className="text-red-500" />
                         <span>{currentDestination.distance} km</span>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Destination Info */}
@@ -483,7 +478,7 @@ export default function RecommendationResult() {
                         <div className="flex items-center gap-2 mt-1">
                             {renderStarRating(currentDestination.rating)}
                             <span className="text-sm text-gray-600">
-                                {currentDestination.rating} ({currentDestination.reviews} reviews)
+                                {currentDestination.rating} ({currentDestination.reviews || 0} reviews)
                             </span>
                         </div>
                         <div className="flex items-center gap-1 mt-1 text-sm text-gray-600">
@@ -494,12 +489,12 @@ export default function RecommendationResult() {
 
                     <div className="text-right">
                         <p className="font-bold">{currentDestination.priceRange}</p>
-                        {currentDestination.eventAvailable && (
+                        {/* {currentDestination.eventAvailable && (
                             <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs px-2 py-1 rounded border border-green-200 mt-1">
                                 <span className="w-3 h-3 bg-green-500 rounded-sm"></span>
                                 Event Available
                             </span>
-                        )}
+                        )} */}
                     </div>
                 </div>
 
