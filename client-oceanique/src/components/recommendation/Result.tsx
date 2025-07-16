@@ -430,29 +430,6 @@ export default function RecommendationResult() {
                     <span className="text-green-500 text-xs">Match</span>
                 </div>
 
-                {/* Navigation buttons */}
-                <button
-                    onClick={() => handleNavigation('prev')}
-                    disabled={currentDestinationIndex === 0}
-                    className={`absolute top-1/2 left-2 -translate-y-1/2 p-2 rounded-full z-10 ${currentDestinationIndex === 0
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-teal-500 text-white hover:bg-teal-600'
-                        }`}
-                >
-                    <ChevronLeft size={24} />
-                </button>
-
-                <button
-                    onClick={() => handleNavigation('next')}
-                    disabled={currentDestinationIndex === destinations.length - 1}
-                    className={`absolute top-1/2 right-2 -translate-y-1/2 p-2 rounded-full z-10 ${currentDestinationIndex === destinations.length - 1
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-teal-500 text-white hover:bg-teal-600'
-                        }`}
-                >
-                    <ChevronRight size={24} />
-                </button>
-
                 {/* Destination Image */}
                 <div className="rounded-lg overflow-hidden mb-4 relative">
                     <img
@@ -463,6 +440,28 @@ export default function RecommendationResult() {
                             (e.target as HTMLImageElement).src = "/api/placeholder/800/300";
                         }}
                     />
+                    {/* Navigation buttons */}
+                    <button
+                        onClick={() => handleNavigation('prev')}
+                        disabled={currentDestinationIndex === 0}
+                        className={`absolute top-1/2 left-2 -translate-y-1/2 p-2 rounded-full z-10 ${currentDestinationIndex === 0
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-teal-500 text-white hover:bg-teal-600'
+                            }`}
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+
+                    <button
+                        onClick={() => handleNavigation('next')}
+                        disabled={currentDestinationIndex === destinations.length - 1}
+                        className={`absolute top-1/2 right-2 -translate-y-1/2 p-2 rounded-full z-10 ${currentDestinationIndex === destinations.length - 1
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-teal-500 text-white hover:bg-teal-600'
+                            }`}
+                    >
+                        <ChevronRight size={24} />
+                    </button>
 
                     {/* Distance badge
                     <div className="absolute bottom-4 left-4 bg-white rounded-full px-3 py-1 flex items-center gap-1 text-sm shadow-sm">
@@ -508,6 +507,10 @@ export default function RecommendationResult() {
                 {/* Amenities/Options */}
                 {amenityRows.length > 0 && (
                     <div className="mb-6">
+                        <div className="mb-2">
+                            <span className="font-semibold text-gray-700 text-base">What People Said</span>
+                            <div className="h-1 w-24 bg-teal-500 rounded mt-1"></div>
+                        </div>
                         {amenityRows.map((row, rowIndex) => (
                             <div key={`row-${rowIndex}`} className="flex gap-2 mb-2">
                                 {row.map((amenity, index) => (
