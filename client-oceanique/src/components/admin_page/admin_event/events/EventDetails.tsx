@@ -314,47 +314,14 @@ const EventDetails = () => {
                                 {event?.beach_name || 'No location specified'}
                             </div>
                         </div>
-
-                        {/* Additional event information if available */}
-                        {(event?.capacity || event?.registeredCount || event?.status) && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {event?.capacity && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Capacity
-                                        </label>
-                                        <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700">
-                                            {event.capacity}
-                                        </div>
-                                    </div>
-                                )}
-                                {event?.registeredCount !== undefined && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Registered
-                                        </label>
-                                        <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700">
-                                            {event.registeredCount}
-                                        </div>
-                                    </div>
-                                )}
-                                {event?.status && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Status
-                                        </label>
-                                        <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                event.status === 'inactive' ? 'bg-red-100 text-red-800' :
-                                                    'bg-gray-100 text-gray-800'
-                                                }`}>
-                                                {event.status}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Social Media
+                            </label>
+                            <div className="w-full px-3 py-2 bg-gray-100 rounded-lg text-gray-700">
+                                {event?.social_media || '-'}
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>

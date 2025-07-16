@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
-import { ArrowLeft, MapPin, Calendar, Minus, Plus, ArrowRight, X, User } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Minus, Plus, ArrowRight, X, User, BadgeInfo } from 'lucide-react';
 
 // Interface for ticket category
 export interface TicketCategory {
@@ -33,6 +33,7 @@ export interface EventData {
     id: number;
     name: string;
     description: string;
+    social_media: string;
     is_active: number; // 0 or 1 (boolean as number)
     start_date: string; // ISO date string
     end_date: string; // ISO date string
@@ -190,6 +191,7 @@ export default function EventTicketPage() {
     const [error, setError] = useState(null);
     const [privateCodeLoading, setPrivateCodeLoading] = useState(false);
     const [privateCodeError, setPrivateCodeError] = useState<string | null>(null);
+    const [isZoomed, setIsZoomed] = useState(false);
 
     const navigate = useNavigate();
     const { getEventDetails, verifyPrivateCode } = useEvents();
@@ -402,17 +404,37 @@ export default function EventTicketPage() {
                     </div>
 
                     <div className="flex flex-col md:flex-row">
+                        {/* Thumbnail image */}
                         <div className="md:w-1/3">
                             <img
                                 src={eventData.img_path}
                                 alt={eventData.name}
-                                className="rounded-lg w-full md:w-auto object-cover"
+                                className="rounded-lg w-full md:w-auto object-cover cursor-zoom-in"
+                                onClick={() => setIsZoomed(true)}
                                 onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                                     const target = e.target as HTMLImageElement;
                                     target.src = '/api/placeholder/400/300';
                                 }}
                             />
                         </div>
+
+                        {/* Zoomed modal */}
+                        {isZoomed && (
+                            <div
+                                className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+                                onClick={() => setIsZoomed(false)}
+                            >
+                                <img
+                                    src={eventData.img_path}
+                                    alt={eventData.name}
+                                    className="max-w-full max-h-full rounded-lg cursor-zoom-out"
+                                    onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = '/api/placeholder/800/600';
+                                    }}
+                                />
+                            </div>
+                        )}
 
                         <div className="md:w-2/3 md:pl-6 mt-4 md:mt-0">
                             <div className="flex items-center space-x-2">
@@ -426,30 +448,50 @@ export default function EventTicketPage() {
 
                             <h1 className="text-2xl font-semibold mt-2">{eventData.name}</h1>
 
-                            <p className="text-gray-600 mt-2 text-sm">
+                            <p className="text-gray-600 mt-2 text-sm text-justify">
                                 {eventData.description}
                             </p>
 
                             <div className="mt-4 flex items-center text-gray-600">
-                                <MapPin className="h-5 w-5 text-pink-500" />
+                                <MapPin className="h-5 w-5 text-blue-500" />
                                 <span className="ml-2 text-sm">
                                     {eventData.beach_name}, {eventData.city}, {eventData.province}
                                 </span>
                             </div>
 
                             <div className="mt-2 flex items-center text-gray-600">
-                                <Calendar className="h-5 w-5 text-pink-500" />
+                                <Calendar className="h-5 w-5 text-blue-500" />
                                 <span className="ml-2 text-sm">
                                     {formatDate(eventData.start_date)} {formatTime(eventData.start_time)} - {formatDate(eventData.end_date)} {formatTime(eventData.end_time)}
                                 </span>
                             </div>
 
                             <div className="mt-4 flex items-center text-gray-600">
-                                <User className="h-5 w-5 text-pink-500" />
+                                <User className="h-5 w-5 text-blue-500" />
                                 <span className="ml-2 text-sm">
                                     Held by: {eventData.held_by}
                                 </span>
                             </div>
+
+                            <div className="mt-4 flex items-center text-gray-600">
+                                <BadgeInfo className="h-5 w-5 text-blue-500" />
+                                <span className="ml-2 text-sm">
+                                    Visit our social media:&nbsp;
+                                    {eventData.social_media ? (
+                                        <a
+                                            href={eventData.social_media.startsWith('http') ? eventData.social_media : `https://${eventData.social_media}`}
+                                            className="text-blue-500 hover:underline"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            {eventData.social_media}
+                                        </a>
+                                    ) : (
+                                        <span className="text-gray-400">-</span>
+                                    )}
+                                </span>
+                            </div>
+
                         </div>
                     </div>
                 </div>

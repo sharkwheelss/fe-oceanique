@@ -27,7 +27,8 @@ const EventForm = () => {
         end_time: '',
         jenis: 'public',
         beach_id: '',
-        beach_name: ''
+        beach_name: '',
+        social_media: '',
     });
     const [beaches, setBeaches] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]);
@@ -74,7 +75,8 @@ const EventForm = () => {
                         end_time: event.end_time,
                         jenis: event.jenis,
                         beach_id: event.beach_id,
-                        beach_name: event.beach_name
+                        beach_name: event.beach_name,
+                        social_media: event.social_media || '',
                     });
 
                     // Handle existing images
@@ -162,6 +164,7 @@ const EventForm = () => {
             formData.append('end_time', eventData.end_time);
             formData.append('jenis', eventData.jenis);
             formData.append('beaches_id', eventData.beach_id);
+            formData.append('social_media', eventData.social_media);
 
             // Append files
             selectedFiles.forEach((file) => {
@@ -304,7 +307,7 @@ const EventForm = () => {
                     </h4>
                     <div className="space-y-2">
                         {selectedFiles.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                            <div key={index} className="flex items-center justify-between bg-green-200 p-2 rounded">
                                 <span className="text-sm text-gray-600">{file.name}</span>
                                 <button
                                     type="button"
@@ -483,6 +486,19 @@ const EventForm = () => {
                                 ))}
                             </select>
                         </div>
+                        <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Social Media (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    name="social_media"
+                                    value={eventData.social_media || ''}
+                                    onChange={handleInputChange}
+                                    placeholder="Type here..."
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                                />
+                            </div>
 
                         <div className="flex justify-end space-x-4">
                             <button

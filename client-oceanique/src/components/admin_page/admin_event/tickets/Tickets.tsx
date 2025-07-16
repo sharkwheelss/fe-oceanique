@@ -13,7 +13,7 @@ const TicketList = () => {
     const [error, setError] = useState(null);
 
     const { getAdminTicket, adminDeleteTicket } = useTickets();
-    const [dialogState, { showSuccess, showError, showWarning, closeDialog }] = useDialog();
+    const [dialogState, { showSuccess, showError, showWarning, closeDialog, showInfo }] = useDialog();
 
     // Extract fetchTickets function so it can be reused
     const fetchTickets = async () => {
@@ -24,7 +24,7 @@ const TicketList = () => {
             const ticketsResponse = await getAdminTicket();
 
             if (ticketsResponse.message && !ticketsResponse.data) {
-                showError(
+                showInfo(
                     'No Bank Account Found',
                     ticketsResponse.message,
                     {

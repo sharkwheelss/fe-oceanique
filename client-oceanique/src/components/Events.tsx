@@ -29,7 +29,7 @@ interface Event {
 interface Filters {
     province: string;
     city: string;
-    subdistrict: string;
+    beach_name: string;
     status: string;
 }
 
@@ -41,7 +41,7 @@ const EventsPage = () => {
     const [filters, setFilters] = useState<Filters>({
         province: '',
         city: '',
-        subdistrict: '',
+        beach_name: '',
         status: ''
     });
 
@@ -95,8 +95,8 @@ const EventsPage = () => {
         }
 
         // Subdistrict filter
-        if (filters.subdistrict) {
-            filtered = filtered.filter(event => event.subdistrict === filters.subdistrict);
+        if (filters.beach_name) {
+            filtered = filtered.filter(event => event.beach_name === filters.beach_name);
         }
 
         // Status filter
@@ -110,7 +110,7 @@ const EventsPage = () => {
     // Get unique values for filter dropdowns
     const getUniqueProvinces = () => [...new Set(events.map(event => event.province))];
     const getUniqueCities = () => [...new Set(events.map(event => event.city))];
-    const getUniqueSubdistricts = () => [...new Set(events.map(event => event.subdistrict))];
+    const getUniqueBeach = () => [...new Set(events.map(event => event.beach_name))];
     const getUniqueStatuses = () => [...new Set(events.map(event => event.status))];
 
     // Handler for search input changes
@@ -131,7 +131,7 @@ const EventsPage = () => {
         setFilters({
             province: '',
             city: '',
-            subdistrict: '',
+            beach_name: '',
             status: ''
         });
         setSearchQuery('');
@@ -264,10 +264,10 @@ const EventsPage = () => {
                         options={getUniqueCities()}
                     />
                     <FilterDropdown
-                        label="Subdistrict"
-                        value={filters.subdistrict}
-                        onChange={(val: string) => handleFilterChange('subdistrict', val)}
-                        options={getUniqueSubdistricts()}
+                        label="Beach"
+                        value={filters.beach_name}
+                        onChange={(val: string) => handleFilterChange('beach_name', val)}
+                        options={getUniqueBeach()}
                     />
                     <FilterDropdown
                         label="Status"
@@ -327,7 +327,7 @@ const EventsPage = () => {
                                     {/* Location */}
                                     <div className="flex items-center text-sm text-gray-600 mb-3">
                                         <MapPin className="w-4 h-4 mr-2" />
-                                        <span>{event.beach_name}</span>
+                                        <span>{event.beach_name}, {event.city}, {event.province}</span>
                                     </div>
 
                                     {/* Description */}
