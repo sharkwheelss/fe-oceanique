@@ -6,14 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import DialogMessage from '../components/helper/DialogMessage';
 import { useDialog } from '../components/helper/useDialog';
 import LanguageSwitcher from './helper/LanguageSwitcher';
-
-const navItems = [
-  { label: 'Home', path: '/home' },
-  { label: 'Beaches', path: '/beaches' },
-  { label: 'Events', path: '/events' },
-  { label: 'Wishlist', path: '/wishlist' },
-  { label: 'Transaction History', path: '/transaction-history' },
-];
+import { useI18n } from '../context/I18nContext';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -25,12 +18,22 @@ const Navbar: React.FC = () => {
 
   const [dialogState, { showWarning, closeDialog }] = useDialog();
 
+  const { t } = useI18n();
+
+  const navItems = [
+    { label: t('navbar.home'), path: '/home' },
+    { label: t('navbar.beaches'), path: '/beaches' },
+    { label: t('navbar.events'), path: '/events' },
+    { label: t('navbar.wishlist'), path: '/wishlist' },
+    { label: t('navbar.transactionHistory'), path: '/transaction-history' },
+  ];
+
   const handleLogout = () => {
     setShowDropdown(false);
 
     showWarning(
-      'Log Out',
-      'Are you sure want to logout?',
+      t('logout.title'),
+      t('logout.message'),
       {
         showCancel: true,
         confirmText: 'Logout',
@@ -52,8 +55,8 @@ const Navbar: React.FC = () => {
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="absolute top-4 left-4 z-99999999">
-                <LanguageSwitcher />
-            </div>
+          <LanguageSwitcher />
+        </div>
         {/* Logo */}
         {isCust && (
           <div className="flex items-center" onClick={() => navigate('/home')}>

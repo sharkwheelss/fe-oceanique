@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { Search, MapPin, Star, Calendar, XCircle, ArrowUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBeaches } from '../context/BeachContext'
+import { useI18n } from '../context/I18nContext';
 
 // Beach type based on API response
 type Beach = {
@@ -53,6 +54,7 @@ const Beaches = () => {
     });
 
     const { getAllBeaches } = useBeaches();
+    const { t } = useI18n();
 
     const calculateDistance = (beach: Beach, userLocation: Coordinates | null): number => {
         if (!userLocation) return -1; // Return -1 if location isn't available yet
@@ -277,7 +279,7 @@ const Beaches = () => {
                 onClick={toggleSortOrder}
                 className="flex items-center gap-2 px-4 py-2 rounded-md transition-colors bg-teal-500 text-white hover:bg-teal-600"
             >
-                <span>Sort by Distance</span>
+                <span>{t('beaches.sortBy')}</span>
                 <ArrowUpDown size={16} />
                 <span className="text-xs">
                     {sortOrder === 'asc' ? '↑' : '↓'}
@@ -303,7 +305,7 @@ const Beaches = () => {
                         <Search className="absolute left-3 top-3 text-gray-400" size={20} />
                         <input
                             type="text"
-                            placeholder="Search beaches..."
+                            placeholder={t('beaches.search')}
                             className="pl-10 pr-4 py-3 bg-gray-200 rounded-md w-full outline-none"
                             value={searchQuery}
                             onChange={handleSearchChange}
@@ -311,25 +313,25 @@ const Beaches = () => {
                     </div>
 
                     <FilterDropdown
-                        label="Province"
+                        label={t('beaches.province')}
                         value={filters.province}
                         onChange={(val: string) => handleFilterChange('province', val)}
                         options={getUniqueProvinces()}
                     />
                     <FilterDropdown
-                        label="City"
+                        label={t('beaches.city')}
                         value={filters.city}
                         onChange={(val: string) => handleFilterChange('city', val)}
                         options={getUniqueCities()}
                     />
                     <FilterDropdown
-                        label="Subdistrict"
+                        label={t('beaches.subdistrict')}
                         value={filters.subdistrict}
                         onChange={(val: string) => handleFilterChange('subdistrict', val)}
                         options={getUniqueSubdistricts()}
                     />
                     <FilterDropdown
-                        label="Price Range"
+                        label={t('beaches.priceRange')}
                         value={filters.priceRange}
                         onChange={(val: string) => handleFilterChange('priceRange', val)}
                         options={getUniquePriceRanges()}
@@ -351,7 +353,7 @@ const Beaches = () => {
 
             {/* Near You Section */}
             <section className="container mx-auto px-4 py-4">
-                <h2 className="text-2xl font-bold mb-4 text-center">Near You (Within 50km)</h2>
+                <h2 className="text-2xl font-bold mb-4 text-center">{t('beaches.near')}</h2>
                 <div className="border-t border-gray-200 pt-4">
                     {nearYouBeaches.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -378,7 +380,7 @@ const Beaches = () => {
 
             {/* All Beaches Section */}
             <section className="container mx-auto px-4 py-4">
-                <h2 className="text-2xl font-bold mb-4 text-center">All Beaches</h2>
+                <h2 className="text-2xl font-bold mb-4 text-center">{t('beaches.all')}</h2>
                 <div className="border-t border-gray-200 pt-4">
                     {allBeaches.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

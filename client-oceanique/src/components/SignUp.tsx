@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import DialogMessage from '../components/helper/DialogMessage';
 import { useDialog } from '../components/helper/useDialog';
+import { useI18n } from '../context/I18nContext';
 
 const Signup = () => {
     // Form state
@@ -12,6 +13,7 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const { t } = useI18n();
 
     const [dialogState, { showSuccess, showError, closeDialog }] = useDialog();
 
@@ -23,21 +25,21 @@ const Signup = () => {
         switch (location.pathname) {
             case '/signup':
                 return {
-                    title: 'Your Indonesian Beach Escape Starts Here',
-                    subtitle: '– Join Oceanique Now!',
+                    title: t('signup.title'),
+                    subtitle: t('signup.subtitle'),
                     img: '/cust-signup.png',
                     userTypeId: 1,
                     signinLink: '/signin',
-                    signinText: 'Sign in here'
+                    signinText: t('signup.signinHere')
                 };
             case '/adminevent-signup':
                 return {
-                    title: 'Join as Event Organizer',
-                    subtitle: '– Share your events with the world!',
+                    title: t('signup.adminTitle'),
+                    subtitle: t('signup.adminSubtitle'),
                     img: '/adminevent-signin.png',
                     userTypeId: 3,
                     signinLink: '/adminevent-signin',
-                    signinText: 'Sign in as event organizer'
+                    signinText: t('signup.signinHere')
                 };
         }
     };
@@ -49,12 +51,12 @@ const Signup = () => {
         const result = await signup(username, email, password, confirmPassword, userTypeId);
         if (result.success) {
             showSuccess(
-                'Sign Up Successful!',
-                'Welcome to Oceanique! Please Sign In to Continue.',
+                t('signup.successTitle'),
+                t('signup.successMessage'),
             )
         } else {
             showError(
-                'Sign Up Failed',
+                t('signup.failedTitle'),
                 result.message || 'Sign Up Failed'
             )
         }
@@ -71,7 +73,7 @@ const Signup = () => {
                     <div className="mb-4">
                         <input
                             type="text"
-                            placeholder="Enter username"
+                            placeholder={t('signup.usernamePlaceholder')}
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             className="w-full px-4 py-3 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -82,7 +84,7 @@ const Signup = () => {
                     <div className="mb-4">
                         <input
                             type="email"
-                            placeholder="Enter your email"
+                            placeholder={t('signup.emailPlaceholder')}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="w-full px-4 py-3 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -94,7 +96,7 @@ const Signup = () => {
                         <PassInput
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Password"
+                            placeholder={t('signup.passwordPlaceholder')}
                         />
                     </div>
 
@@ -103,7 +105,7 @@ const Signup = () => {
                         <PassInput
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Confirm Password"
+                            placeholder={t('signup.confirmPasswordPlaceholder')}
                         />
                     </div>
 
@@ -112,13 +114,13 @@ const Signup = () => {
                         onClick={handleSubmit}
                         className="w-full py-3 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors"
                     >
-                        Sign up
+                        {t('signup.signupButton')}
                     </button>
 
                     {/* Sign In Link */}
                     <div className="text-center mt-6">
                         <p>
-                            Already have an account?
+                            {t('signup.haveAcc')}
                             <Link to={signinLink} className="text-teal-500 ml-1 hover:underline">
                                 {signinText}
                             </Link>
@@ -128,12 +130,12 @@ const Signup = () => {
                     {/* Additional navigation for customer signup */}
                     {location.pathname === '/signup' && (
                         <div className="mt-6 text-center">
-                            <p className="text-gray-500 mb-6">Are you organizing events?</p>
+                            <p className="text-gray-500 mb-6">{t('signup.organizingEvent')}</p>
                             <button
                                 onClick={() => navigate('/adminevent-signup')}
                                 className="w-full py-3 bg-gray-300 text-gray-700 rounded hover:bg-gray-500 hover:text-white transition-colors"
                             >
-                                Sign up as event organizer!
+                                {t('signup.eventAdminSignup')}
                             </button>
                         </div>
                     )}

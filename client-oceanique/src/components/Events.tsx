@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Calendar, Users } from 'lucide-react';
 import { useEvents } from '../context/EventContext';
 import { useNavigate } from 'react-router-dom';
+import { useI18n } from '../context/I18nContext';
 
 // Event type based on API response
 interface Event {
@@ -47,6 +48,7 @@ const EventsPage = () => {
 
     const navigate = useNavigate();
     const { getAllEvents } = useEvents();
+    const { t } = useI18n();
 
     // Fetch events on component mount
     useEffect(() => {
@@ -244,7 +246,7 @@ const EventsPage = () => {
                         <Search className="absolute left-3 top-3 text-gray-400" size={20} />
                         <input
                             type="text"
-                            placeholder="Search events..."
+                            placeholder={t('events.search')}
                             className="pl-10 pr-4 py-3 bg-gray-200 rounded-md w-full outline-none"
                             value={searchQuery}
                             onChange={handleSearchChange}
@@ -252,25 +254,25 @@ const EventsPage = () => {
                     </div>
 
                     <FilterDropdown
-                        label="Province"
+                        label={t('events.province')}
                         value={filters.province}
                         onChange={(val: string) => handleFilterChange('province', val)}
                         options={getUniqueProvinces()}
                     />
                     <FilterDropdown
-                        label="City"
+                        label={t('events.city')}
                         value={filters.city}
                         onChange={(val: string) => handleFilterChange('city', val)}
                         options={getUniqueCities()}
                     />
                     <FilterDropdown
-                        label="Beach"
+                        label={t('events.beach')}
                         value={filters.beach_name}
                         onChange={(val: string) => handleFilterChange('beach_name', val)}
                         options={getUniqueBeach()}
                     />
                     <FilterDropdown
-                        label="Status"
+                        label={t('events.status')}
                         value={filters.status}
                         onChange={(val: string) => handleFilterChange('status', val)}
                         options={getUniqueStatuses()}
@@ -287,7 +289,7 @@ const EventsPage = () => {
 
             {/* Events Grid */}
             <div className="container mx-auto px-4 py-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">All Available Events</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('events.all')}</h2>
 
                 {filteredEvents.length === 0 ? (
                     <div className="text-center py-12">

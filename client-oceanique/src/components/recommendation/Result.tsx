@@ -9,6 +9,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useRecommendation } from '../../context/RecommendationContext';
 import { useBeaches } from '../../context/BeachContext';
+import { useI18n } from '../../context/I18nContext';
 
 interface BeachesView {
     id: number;
@@ -87,6 +88,7 @@ export default function RecommendationResult() {
     const location = useLocation();
     const { beachRecommendation } = useRecommendation();
     const { getBeachReviews } = useBeaches();
+    const { t } = useI18n();
 
     // State for current active destination (for pagination)
     const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
@@ -401,19 +403,19 @@ export default function RecommendationResult() {
                         onClick={() => navigate('/questions')}
                     >
                         <ChevronLeft size={16} />
-                        <span>Start Over</span>
+                        <span>{t('result.startOver')}</span>
                     </button>
-                    <h1 className="text-2xl font-bold text-center">Our top picks for you!</h1>
+                    <h1 className="text-2xl font-bold text-center">{t('result.title')}</h1>
                     <button
                         className="text-teal-600"
                         onClick={() => navigate('/')}
                     >
-                        Finish
+                        {t('result.finish')}
                     </button>
                 </div>
 
                 <div className="flex justify-between items-center">
-                    <p className="text-gray-500 text-sm">Scroll to see the reviews</p>
+                    <p className="text-gray-500 text-sm">{t('result.scroll')}</p>
                     <div className="flex items-center gap-2">
                         <span className="text-gray-500 text-sm">
                             {currentDestinationIndex + 1} of {destinations.length} recommendations
@@ -427,7 +429,7 @@ export default function RecommendationResult() {
                 {/* Match percentage badge */}
                 <div className="absolute top-8 left-8 z-10 bg-white rounded-full p-2 flex flex-col items-center justify-center w-16 h-16 shadow-md">
                     <span className="text-green-500 font-bold">{currentDestination.matchPercentage}%</span>
-                    <span className="text-green-500 text-xs">Match</span>
+                    <span className="text-green-500 text-xs">{t('result.match')}</span>
                 </div>
 
                 {/* Destination Image */}
@@ -509,7 +511,7 @@ export default function RecommendationResult() {
                 {amenityRows.length > 0 && (
                     <div className="mb-6">
                         <div className="mb-2">
-                            <span className="font-semibold text-gray-700 text-base">What People Said</span>
+                            <span className="font-semibold text-gray-700 text-base">{t('result.says')}</span>
                             <div className="h-1 w-24 bg-teal-500 rounded mt-1"></div>
                         </div>
                         {amenityRows.map((row, rowIndex) => (
@@ -535,7 +537,7 @@ export default function RecommendationResult() {
             {/* Reviews Section */}
             <div className="border-t pt-4">
                 <div className="flex items-center px-4 pb-2 border-b">
-                    <h3 className="font-bold text-lg">Reviews</h3>
+                    <h3 className="font-bold text-lg">{t('result.review')}</h3>
                     <div className="ml-2 h-1 w-16 bg-teal-500 rounded"></div>
                     {isLoadingReviews && (
                         <div className="ml-4 w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
@@ -627,7 +629,7 @@ export default function RecommendationResult() {
                     })
                 ) : (
                     <div className="p-4 text-center">
-                        <p className="text-gray-600">No reviews available for this beach.</p>
+                        <p className="text-gray-600">{t('result.noReviews')}</p>
                     </div>
                 )}
             </div>

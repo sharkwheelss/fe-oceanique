@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Star, Heart, Calendar, X, Loader } from 'lucide-react';
 import { useBeaches } from '../context/BeachContext';
 import { useNavigate } from 'react-router-dom';
-/**
- * WishlistBeachPage - Component for displaying wishlist beach listings
- * Shows beach cards with images, ratings, location, and wishlist functionality
- */
+import { useI18n } from '../context/I18nContext';
+
 const WishlistBeachPage = () => {
     const [wishlistData, setWishlistData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { getWishlist } = useBeaches();
+    const { t } = useI18n();
 
     /**
      * Fetch data on component mount
@@ -37,7 +36,7 @@ const WishlistBeachPage = () => {
             <main className="container mx-auto px-4 py-8">
                 {/* Page title */}
                 <h1 className="text-3xl font-bold text-center mb-8 sticky top-[72px] bg-white p-4 z-10">
-                    Your Wishlist Beaches
+                    {t('wishlist.title')}
                 </h1>
 
                 {/* Loading state */}
@@ -64,15 +63,14 @@ const WishlistBeachPage = () => {
                     /* Empty state */
                     <div className="text-center py-16">
                         <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-600 mb-2">No beaches in your wishlist</h3>
-                        <p className="text-gray-500">Start exploring and add your favorite beaches!</p>
+                        <h3 className="text-xl font-semibold text-gray-600 mb-2">{t('wishlist.empty')}</h3>
                     </div>
                 ) : (
                     <>
                         {/* Results count */}
                         <div className="mb-6">
                             <p className="text-gray-600">
-                                {wishlistData.length} beach{wishlistData.length !== 1 ? 'es' : ''} in your wishlist
+                                {wishlistData.length} {t('wishlist.desc')}
                             </p>
                         </div>
 

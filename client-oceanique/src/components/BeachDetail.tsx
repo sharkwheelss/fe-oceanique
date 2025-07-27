@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, MapPin, Star, Heart, Sun } from 'lucide-react';
+import { ChevronLeft, MapPin, Star, Heart } from 'lucide-react';
 import ReviewsTab from './tabs/ReviewsTab';
 import AboutTab from './tabs/AboutTab';
 import FacilityTab from './tabs/FacilityTab';
@@ -8,6 +8,7 @@ import PhotoVideoTab from './tabs/PhotoVideoTab';
 import LocationTab from './tabs/LocationTab';
 import { useBeaches } from '../context/BeachContext';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 
 // Main BeachDetailPage component
 export interface Beach {
@@ -115,6 +116,7 @@ export default function BeachDetailPage() {
     } = useBeaches();
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { t } = useI18n();
 
     // State for active tab, beach data, and wishlist
     const [activeTab, setActiveTab] = useState('about');
@@ -306,8 +308,8 @@ export default function BeachDetailPage() {
                             : wishlistStatusLoading
                                 ? 'Loading...'
                                 : isWishlisted
-                                    ? 'Remove from wishlist'
-                                    : 'Save to wishlist'
+                                    ? t('beachDetail.removeFromWishlist')
+                                    : t('beachDetail.saveToWishlist')
                         }
                     </button>
                 </div>
@@ -327,7 +329,7 @@ export default function BeachDetailPage() {
                         <div className="flex items-center mb-2">
                             <Star size={20} className="text-yellow-400 fill-current" />
                             <span className="ml-2 font-semibold">
-                                {beachData.rating_average} ({beachData.count_reviews} reviews)
+                                {beachData.rating_average} ({beachData.count_reviews} {t('beachDetail.reviews').toLowerCase()})
                             </span>
                         </div>
 
@@ -366,35 +368,35 @@ export default function BeachDetailPage() {
                         active={activeTab === 'about'}
                         onClick={() => handleTabChange('about')}
                     >
-                        About
+                        {t('beachDetail.about')}
                     </TabButton>
 
                     <TabButton
                         active={activeTab === 'facility'}
                         onClick={() => handleTabChange('facility')}
                     >
-                        Facility
+                        {t('beachDetail.facility')}
                     </TabButton>
 
                     <TabButton
                         active={activeTab === 'foto_video'}
                         onClick={() => handleTabChange('foto_video')}
                     >
-                        Foto / Video
+                        {t('beachDetail.fotoVideo')}
                     </TabButton>
 
                     <TabButton
                         active={activeTab === 'reviews'}
                         onClick={() => handleTabChange('reviews')}
                     >
-                        Reviews
+                        {t('beachDetail.reviews')}
                     </TabButton>
 
                     <TabButton
                         active={activeTab === 'location'}
                         onClick={() => handleTabChange('location')}
                     >
-                        Location
+                        {t('beachDetail.location')}
                     </TabButton>
                 </div>
 

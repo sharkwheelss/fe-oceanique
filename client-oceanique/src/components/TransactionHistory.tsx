@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Clock, ChevronDown, AlertCircle } from 'lucide-react';
 import { useEvents } from '../context/EventContext';
+import { useI18n } from '../context/I18nContext';
 
 // QR Code Generator Component
 function QRCodeGenerator({ bookingId, size = 80 }) {
     const canvasRef = useRef(null);
     const [fallbackUrl, setFallbackUrl] = useState('');
+    const { t } = useI18n();
 
     useEffect(() => {
         if (bookingId) {
@@ -37,7 +39,7 @@ function QRCodeGenerator({ bookingId, size = 80 }) {
             {fallbackUrl ? (
                 <img
                     src={fallbackUrl}
-                    alt={`QR Code for booking ${bookingId}`}
+                    alt={t('transHis.qrCodeAlt', { bookingId })}
                     className="w-full h-full rounded"
                     style={{ maxWidth: `${size}px`, maxHeight: `${size}px` }}
                     onError={(e) => {
@@ -61,8 +63,16 @@ function QRCodeGenerator({ bookingId, size = 80 }) {
  * Displays user's ticket transactions with different status tabs (Pending, Cancelled, Approved)
  */
 const TransactionHistoryPage = () => {
-    // State for active tab (pending, cancelled, approved)
-    const [activeTab, setActiveTab] = useState('pending');
+    const { t } = useI18n();
+
+    // Define tab constants using translation keys
+    const TAB_KEYS = {
+        PENDING: 'pending',
+        REJECTED: 'rejected',
+        APPROVED: 'approved'
+    };
+
+    const [activeTab, setActiveTab] = useState(TAB_KEYS.PENDING);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const { getTransactionHistory } = useEvents();
@@ -74,7 +84,7 @@ const TransactionHistoryPage = () => {
         booked_at: string;
         total_tickets: number;
         subtotal: number;
-        status: 'pending' | 'rejected' | 'approved';
+        status: string;
         payment_method: string;
         updated_at: string;
         total_payment: number;
@@ -84,6 +94,7 @@ const TransactionHistoryPage = () => {
         ticket_name?: string;
         event_description?: string;
         description?: string;
+        ticket_category_name?: string;
     }
 
     interface ApiResponse {
@@ -99,13 +110,15 @@ const TransactionHistoryPage = () => {
         date: string;
         quantity: number;
         price: number;
-        status: 'pending' | 'rejected' | 'approved';
+        status: string;
         paymentMethod: string;
         cancelDate?: string;
         successDate?: string;
         apiId: number;
         description?: string;
         rejectionReason?: string;
+        subtotal: number;
+        booked_date?: string;
     }
 
     interface Transaction {
@@ -113,13 +126,24 @@ const TransactionHistoryPage = () => {
         group_booking_id: number;
         tickets: Ticket[];
         totalPrice: number;
-        status: 'pending' | 'rejected' | 'approved';
+        status: string;
         timeRemaining?: string;
         booked_at: string;
         updated_at: string;
         description?: string;
         rejectionReason?: string;
     }
+
+    // Map API status to local tab keys
+    const mapApiStatusToTabKey = (apiStatus: string): string => {
+        const statusMap = {
+            'pending': TAB_KEYS.PENDING,
+            'rejected': TAB_KEYS.REJECTED,
+            'approved': TAB_KEYS.APPROVED,
+            'cancelled': TAB_KEYS.REJECTED // Map cancelled to rejected if needed
+        };
+        return statusMap[apiStatus.toLowerCase()] || apiStatus;
+    };
 
     // Transform API data to component format
     const transformApiData = (apiData: ApiTransaction[]): Transaction[] => {
@@ -138,37 +162,37 @@ const TransactionHistoryPage = () => {
             const firstTransaction = groupTransactions[0];
 
             // Create tickets from grouped transactions
-            const tickets: Ticket[] = groupTransactions.map((transaction, index) => ({
-                name: transaction.ticket_name,
+            const tickets: Ticket[] = groupTransactions.map((transaction) => ({
+                name: transaction.ticket_name || t('transHis.defaultTicketName'),
                 ticketId: transaction.id.toString(),
-                type: transaction.ticket_category_name,
-                date: new Date(transaction.booked_at).toLocaleDateString('en-US', {
+                type: transaction.ticket_category_name || t('transHis.defaultCategory'),
+                date: new Date(transaction.booked_at).toLocaleDateString(t('common.locale'), {
                     day: '2-digit',
                     month: 'long',
                     year: 'numeric'
                 }),
                 quantity: transaction.total_tickets,
                 price: transaction.total_payment,
-                status: transaction.status,
+                status: mapApiStatusToTabKey(transaction.status),
                 paymentMethod: transaction.payment_method,
-                booked_date: transaction.status === 'pending' ?
-                    new Date(transaction.updated_at).toLocaleString('en-US', {
+                booked_date: transaction.status === TAB_KEYS.PENDING ?
+                    new Date(transaction.updated_at).toLocaleString(t('common.locale'), {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit'
                     }) : undefined,
-                cancelDate: transaction.status === 'rejected' ?
-                    new Date(transaction.updated_at).toLocaleString('en-US', {
+                cancelDate: transaction.status === TAB_KEYS.REJECTED ?
+                    new Date(transaction.updated_at).toLocaleString(t('common.locale'), {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit'
                     }) : undefined,
-                successDate: transaction.status === 'approved' ?
-                    new Date(transaction.updated_at).toLocaleString('en-US', {
+                successDate: transaction.status === TAB_KEYS.APPROVED ?
+                    new Date(transaction.updated_at).toLocaleString(t('common.locale'), {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -176,7 +200,7 @@ const TransactionHistoryPage = () => {
                         minute: '2-digit'
                     }) : undefined,
                 apiId: transaction.id,
-                description: transaction.description,
+                description: transaction.description || transaction.event_description,
                 rejectionReason: transaction.rejection_reason,
                 subtotal: transaction.subtotal
             }));
@@ -189,8 +213,8 @@ const TransactionHistoryPage = () => {
                 group_booking_id: firstTransaction.group_booking_id,
                 tickets,
                 totalPrice,
-                status: firstTransaction.status,
-                timeRemaining: firstTransaction.status === 'pending' ? '59.00' : undefined,
+                status: mapApiStatusToTabKey(firstTransaction.status),
+                timeRemaining: firstTransaction.status === TAB_KEYS.PENDING ? '59.00' : undefined,
                 booked_at: firstTransaction.booked_at,
                 updated_at: firstTransaction.updated_at,
                 rejectionReason: firstTransaction.rejection_reason
@@ -259,7 +283,7 @@ const TransactionHistoryPage = () => {
      * @returns {string} Formatted price
      */
     const formatPrice = (price: number): string => {
-        return new Intl.NumberFormat('id-ID').format(price);
+        return new Intl.NumberFormat(t('common.numberLocale', 'id-ID')).format(price);
     };
 
     /**
@@ -267,13 +291,11 @@ const TransactionHistoryPage = () => {
      * @param {string} status - Transaction status
      * @returns {string} Tailwind CSS classes for the status badge
      */
-    type TransactionStatus = 'pending' | 'rejected' | 'approved';
-
-    const getStatusColor = (status: TransactionStatus): string => {
-        const statusColorMap: Record<TransactionStatus, string> = {
-            pending: 'bg-yellow-100 text-yellow-800',
-            rejected: 'bg-red-100 text-red-800',
-            approved: 'bg-green-100 text-green-800',
+    const getStatusColor = (status: string): string => {
+        const statusColorMap: Record<string, string> = {
+            [TAB_KEYS.PENDING]: 'bg-yellow-100 text-yellow-800',
+            [TAB_KEYS.REJECTED]: 'bg-red-100 text-red-800',
+            [TAB_KEYS.APPROVED]: 'bg-green-100 text-green-800',
         };
         return statusColorMap[status] || 'bg-gray-100 text-gray-800';
     };
@@ -282,7 +304,7 @@ const TransactionHistoryPage = () => {
      * Handle tab change
      * @param {string} tab - Tab name
      */
-    const handleTabChange = (tab: TransactionStatus): void => {
+    const handleTabChange = (tab: string): void => {
         setActiveTab(tab);
     };
 
@@ -298,7 +320,7 @@ const TransactionHistoryPage = () => {
                     <AlertCircle className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
                     <div>
                         <h4 className="text-sm font-medium text-red-800 mb-1">
-                            Rejection Reason
+                            {t('transHis.rejectionReason')}
                         </h4>
                         <p className="text-sm text-red-700">
                             {rejectionReason}
@@ -320,8 +342,8 @@ const TransactionHistoryPage = () => {
 
         // Select accent color for left ticket border based on status
         const borderColor =
-            ticket.status === 'pending' ? 'bg-yellow-500' :
-                ticket.status === 'rejected' ? 'bg-red-500' : 'bg-green-500';
+            ticket.status === TAB_KEYS.PENDING ? 'bg-yellow-500' :
+                ticket.status === TAB_KEYS.REJECTED ? 'bg-red-500' : 'bg-green-500';
 
         return (
             <div key={ticket.ticketId} className="flex mb-4 border border-gray-300 border-opacity-50 rounded-lg overflow-hidden shadow-sm">
@@ -344,29 +366,33 @@ const TransactionHistoryPage = () => {
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="text-xl font-semibold">{ticket.name}</h3>
-                                {ticket.status !== 'pending' && (
+                                {ticket.status !== TAB_KEYS.PENDING && (
                                     <div className="inline-flex items-center mt-1">
                                         <span className={`px-2 py-1 text-xs rounded-full ${statusColor}`}>
-                                            {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
+                                            {t(`transHis.${ticket.status}`)}
                                         </span>
                                     </div>
                                 )}
                             </div>
                             <div className="text-right">
-                                <div className="text-gray-700">GRPTRX-{transactionId}</div>
+                                <div className="text-gray-700">
+                                    {t('transHis.groupTransactionId', { id: transactionId })}
+                                </div>
                                 <div className="text-orange-500 mt-1">
-                                    {ticket.quantity} ticket(s)
+                                    {t('transHis.ticketQuantity', { count: ticket.quantity })}
                                 </div>
                             </div>
                         </div>
 
                         {/* Ticket description */}
-                        <p className="text-gray-600 mt-2 text-sm">
-                            {ticket.description}
-                        </p>
+                        {ticket.description && (
+                            <p className="text-gray-600 mt-2 text-sm">
+                                {ticket.description}
+                            </p>
+                        )}
 
                         {/* Rejection reason section - only show for rejected tickets */}
-                        {ticket.status === 'rejected' && ticket.rejectionReason && (
+                        {ticket.status === TAB_KEYS.REJECTED && ticket.rejectionReason && (
                             renderRejectionReason(ticket.rejectionReason)
                         )}
 
@@ -386,27 +412,27 @@ const TransactionHistoryPage = () => {
 
                             {/* Payment info */}
                             <div className="text-right text-sm text-gray-600">
-                                <div>Payment Method: {ticket.paymentMethod}</div>
-                                {ticket.status === 'pending' && (
-                                    <div>Booked at {ticket.booked_date}</div>
+                                <div>{t('transHis.paymentMethod')}: {ticket.paymentMethod}</div>
+                                {ticket.status === TAB_KEYS.PENDING && ticket.booked_date && (
+                                    <div>{t('transHis.bookedAt')} {ticket.booked_date}</div>
                                 )}
-                                {ticket.status === 'rejected' && ticket.cancelDate && (
-                                    <div>Rejected at {ticket.cancelDate}</div>
+                                {ticket.status === TAB_KEYS.REJECTED && ticket.cancelDate && (
+                                    <div>{t('transHis.rejectedAt')} {ticket.cancelDate}</div>
                                 )}
-                                {ticket.status === 'approved' && ticket.successDate && (
-                                    <div>Approved at {ticket.successDate}</div>
+                                {ticket.status === TAB_KEYS.APPROVED && ticket.successDate && (
+                                    <div>{t('transHis.approvedAt')} {ticket.successDate}</div>
                                 )}
                             </div>
                         </div>
 
-                        {/* ID */}
+                        {/* Transaction ID */}
                         <div className="mt-2 text-sm text-gray-500">
-                            IDTRX-{ticket.ticketId}
+                            {t('transHis.transactionId', { id: ticket.ticketId })}
                         </div>
 
                         <div className="text-right">
                             <div className="text-teal-500 text-sm font-semibold">
-                                Total: Rp{formatPrice(ticket.subtotal)}
+                                {t('transHis.total')}: Rp{formatPrice(ticket.subtotal)}
                             </div>
                         </div>
                     </div>
@@ -422,7 +448,7 @@ const TransactionHistoryPage = () => {
      */
     const renderTransaction = (transaction: Transaction): JSX.Element => {
         // Pending transactions show a payment countdown
-        const showCountdown = transaction.status === 'pending';
+        const showCountdown = transaction.status === TAB_KEYS.PENDING;
 
         return (
             <div key={transaction.id} className="mb-8 border border-gray-300 border-opacity-50 rounded-lg overflow-hidden">
@@ -430,18 +456,18 @@ const TransactionHistoryPage = () => {
                 {/* Transaction heading for pending transactions */}
                 {showCountdown && (
                     <div className="px-6 py-4">
-                        <h2 className="text-xl font-semibold">Your Ticket(s)</h2>
+                        <h2 className="text-xl font-semibold">{t('transHis.yourTickets')}</h2>
                     </div>
                 )}
 
                 {/* Transaction-level rejection reason (if all tickets in group are rejected) */}
-                {transaction.status === 'rejected' && transaction.rejectionReason && (
+                {transaction.status === TAB_KEYS.REJECTED && transaction.rejectionReason && (
                     <div className="px-6 py-4 bg-red-50 border-b border-red-200">
                         <div className="flex items-start">
                             <AlertCircle className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" />
                             <div>
                                 <h3 className="text-sm font-medium text-red-800 mb-1">
-                                    Transaction Rejected
+                                    {t('transHis.transactionRejected')}
                                 </h3>
                                 <p className="text-sm text-red-700">
                                     {transaction.rejectionReason}
@@ -459,11 +485,10 @@ const TransactionHistoryPage = () => {
                     <div className="flex justify-end mt-4">
                         <div className="text-right">
                             <div className="text-teal-500 text-xl font-semibold">
-                                Total: Rp{formatPrice(transaction.totalPrice)}
+                                {t('transHis.total')}: Rp{formatPrice(transaction.totalPrice)}
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         );
@@ -474,7 +499,7 @@ const TransactionHistoryPage = () => {
         return (
             <div className="max-h-screen">
                 <div className="flex justify-center items-center h-64">
-                    <div className="text-gray-500">Loading transactions...</div>
+                    <div className="text-gray-500">{t('transHis.loading')}</div>
                 </div>
             </div>
         );
@@ -484,34 +509,25 @@ const TransactionHistoryPage = () => {
         <div className="max-h-screen">
             {/* Tabs */}
             <div className="flex border-b border-gray-200 sticky top-[72px] z-40 bg-white">
-                {(['pending', 'rejected', 'approved'] as TransactionStatus[]).map((tab) => (
+                {Object.values(TAB_KEYS).map((tab) => (
                     <button
                         key={tab}
-                        className={`px-6 py-3 font-medium capitalize ${activeTab === tab
+                        className={`px-6 py-3 font-medium ${activeTab === tab
                             ? 'text-teal-500 border-b-2 border-teal-500'
                             : 'text-gray-500 hover:text-gray-800'
                             }`}
                         onClick={() => handleTabChange(tab)}
                     >
-                        {tab}
+                        {t(`transHis.${tab}`)}
                     </button>
                 ))}
-            </div>
-
-            {/* Sort button */}
-            <div className="flex justify-end mb-6">
-                <button className="flex items-center px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50">
-                    <Clock className="w-4 h-4 mr-2" />
-                    <span>Sort By</span>
-                    <ChevronDown className="w-4 h-4 ml-2" />
-                </button>
             </div>
 
             {/* Transactions list */}
             <div>
                 {getFilteredTransactions().length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                        No {activeTab} transactions found.
+                        {t('transHis.noTransactions', { status: t(`transHis.${activeTab}`) })}
                     </div>
                 ) : (
                     getFilteredTransactions().map(transaction => renderTransaction(transaction))

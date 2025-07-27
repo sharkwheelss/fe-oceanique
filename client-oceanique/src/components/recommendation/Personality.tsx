@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRecommendation } from '../../context/RecommendationContext';
 import { useAuth } from '../../context/AuthContext';
 import { PersonalityConfirmDialog } from './PersonalityConfirmDialog';
+import { useI18n } from '../../context/I18nContext';
 
 interface Personality {
     id: number;
@@ -14,6 +15,7 @@ interface Personality {
 
 
 export default function OceaniquePersonalityPage() {
+    const { t } = useI18n();
     const [selectedPersonality, setSelectedPersonality] = useState<number | null>(null);
     const navigate = useNavigate();
 
@@ -105,7 +107,7 @@ export default function OceaniquePersonalityPage() {
                     <h1 className="text-3xl font-bold mb-6">
                         Hello! <span className="text-teal-500">{user?.username}</span>
                     </h1>
-                    <p className="text-xl">What's your vibe? Let's match your personality!</p>
+                    <p className="text-xl">{t('personality.vibes')}</p>
                 </div>
 
                 {/* Only show cards grid when not showing confirmation dialog */}

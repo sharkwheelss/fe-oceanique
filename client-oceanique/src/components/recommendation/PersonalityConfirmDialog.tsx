@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useI18n } from '../../context/I18nContext';
 
 interface PersonalityConfirmDialogProps {
     isOpen: boolean;
@@ -19,6 +20,7 @@ interface ProfileCardProps {
 }
 
 function ProfileCard({ type, description, img_path }: ProfileCardProps) {
+    
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
             <div className="flex items-center space-x-4">
@@ -92,6 +94,7 @@ export function PersonalityConfirmDialog({
     const [showSuccess, setShowSuccess] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
+    const { t } = useI18n();
     const handleConfirm = async () => {
         setIsProcessing(true);
 
@@ -117,14 +120,14 @@ export function PersonalityConfirmDialog({
     // Dynamic content based on whether it's existing or new personality
     const dialogContent = {
         existing: {
-            subtitle: "Still the same person as before?",
-            confirmButton: "Yep, that's me!",
-            cancelButton: "No, I'm different now"
+            subtitle: t('personality.extSubtitle'),
+            confirmButton: t('personality.extConfirmButton'),
+            cancelButton: t('personality.extCancelButton')
         },
         new: {
-            subtitle: "Are you sure this matches your vibe?",
-            confirmButton: "Yes, that's me!",
-            cancelButton: "Let me choose again"
+            subtitle: t('personality.newSubtitle'),
+            confirmButton: t('personality.newConfirmButton'),
+            cancelButton: t('personality.newCancelButton')
         }
     };
 

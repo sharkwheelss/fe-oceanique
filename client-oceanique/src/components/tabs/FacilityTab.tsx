@@ -1,9 +1,12 @@
+import { useI18n } from "../../context/I18nContext";
+
 // for the checklist icon
 interface ActivityItemProps {
     text: string;
 }
 
 const ActivityItem = ({ text }: ActivityItemProps) => {
+    const { t } = useI18n();
     return (
         <div className="flex items-center mb-2">
             <div className="w-6 h-6 rounded-full bg-green-100 text-green-500 flex items-center justify-center mr-2">
@@ -46,6 +49,7 @@ const FacilityCategory = ({ title, image, items = [] }: FacilityCategoryProps) =
  * Facility tab content
  */
 const FacilityContent = (data: any) => {
+    const { t } = useI18n();
     const facilities = data.beachData.facilities;
 
     const publicFacilities = facilities.filter(f => f.facility_category_id === 1).map(f => f.facility_name);
@@ -55,7 +59,7 @@ const FacilityContent = (data: any) => {
     // console.log('inside facility:', data.beachData.facilities)
     return (
         <div>
-            <h2 className="text-2xl font-bold mb-6">All Facilities in {data?.beach_name}</h2>
+            <h2 className="text-2xl font-bold mb-6">{t('beachDetail.allFacility')}</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 place-items-center">
                 <FacilityCategory

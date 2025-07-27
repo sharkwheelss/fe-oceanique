@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WishlistEventsSection from './HomeEvents';
 import { useBeaches } from '../context/BeachContext';
+import { useI18n } from '../context/I18nContext';
 
 const Home = () => {
     const navigate = useNavigate();
     const [wishlistBeachIds, setWishlistBeachIds] = useState<number[]>([]);
     const { getWishlist } = useBeaches();
+    const { t } = useI18n();
 
-    // Example: Fetch user's wishlist beach IDs
-    // Replace this with your actual wishlist fetching logic
     useEffect(() => {
         const fetchWishlistBeaches = async () => {
             try {
@@ -41,11 +41,11 @@ const Home = () => {
                 <div className="md:w-1/2 md:pl-12">
                     <h1 className="text-5xl font-bold text-teal-500 mb-4">HI!</h1>
                     <h2 className="text-3xl font-bold text-gray-900 mb-8">
-                        Looking for beach that suits you the most?
+                        {t('home.opening')}
                     </h2>
 
                     <div className="mb-10">
-                        <h3 className="text-xl text-gray-700 mb-6">Try our recommendation!</h3>
+                        <h3 className="text-xl text-gray-700 mb-6">{t('home.try')}</h3>
 
                         {/* Features List */}
                         <div className="space-y-4">
@@ -53,21 +53,21 @@ const Home = () => {
                                 <div className="h-6 w-6 rounded-full flex items-center justify-center mr-3">
                                     <img src="/home-approve.png" alt="approve" />
                                 </div>
-                                <span className="text-gray-600">Based on Preferences</span>
+                                <span className="text-gray-600">{t('home.one')}</span>
                             </div>
 
                             <div className="flex items-center">
                                 <div className="h-6 w-6 rounded-full flex items-center justify-center mr-3">
                                     <img src="/home-approve.png" alt="approve" />
                                 </div>
-                                <span className="text-gray-600">Matches Your Personality</span>
+                                <span className="text-gray-600">{t('home.two')}</span>
                             </div>
 
                             <div className="flex items-center">
                                 <div className="h-6 w-6 rounded-full flex items-center justify-center mr-3">
                                     <img src="/home-approve.png" alt="approve" />
                                 </div>
-                                <span className="text-gray-600">Updated Reviews</span>
+                                <span className="text-gray-600">{t('home.three')}</span>
                             </div>
                         </div>
                     </div>
@@ -78,7 +78,7 @@ const Home = () => {
 
             <button className="w-full py-4 bg-teal-500 text-white rounded-full hover:bg-teal-600 transition-colors flex items-center justify-center font-medium text-sm md:text-base lg:text-lg"
                 onClick={() => navigate(`/personality`)} >
-                <span className="mr-2">Try now</span>
+                <span className="mr-2">{t('home.trynow')}</span>
                 <img src="/home-trynow.png" alt="trynow" className='h-6 w-6 ml-1' />
             </button>
 
@@ -110,10 +110,11 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({ icon, title, description })
 }
 
 const WhyOceaniqueSection = () => {
+    const { t } = useI18n();
     return (
         <section className='pt-20'>
             <div className="container mx-auto px-4">
-                <h2 className="text-4xl font-bold text-center mb-16">Why Oceanique?</h2>
+                <h2 className="text-4xl font-bold text-center mb-16">{t('home.why')}</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                     <FeaturedCard
@@ -125,8 +126,8 @@ const WhyOceaniqueSection = () => {
                                 style={{ animationDelay: '0s' }}
                             />
                         }
-                        title="Sabang to Merauke"
-                        description="Find the beach all over Indonesia"
+                        title={t('home.why1')}
+                        description={t('home.why1Desc')}
                     />
 
                     <FeaturedCard
@@ -138,8 +139,8 @@ const WhyOceaniqueSection = () => {
                                 style={{ animationDelay: '0.4s' }}
                             />
                         }
-                        title="Beach Recommendation"
-                        description="Find the beach that suits you the most"
+                        title={t('home.why2')}
+                        description={t('home.why2Desc')}
                     />
 
                     <FeaturedCard
@@ -151,8 +152,8 @@ const WhyOceaniqueSection = () => {
                                 style={{ animationDelay: '0.8s' }}
                             />
                         }
-                        title="Event Booking"
-                        description="Level up your vibe with epic beach events!"
+                        title={t('home.why3')}
+                        description={t('home.why3Desc')}
                     />
                 </div>
 

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useRecommendation } from '../../context/RecommendationContext';
+import { useI18n } from '../../context/I18nContext';
 
 export interface Option {
     id: number;
@@ -18,6 +19,7 @@ export interface Questions {
 }
 
 function Questions() {
+    const { t } = useI18n();
     const navigate = useNavigate();
     const [questions, setQuestions] = useState<Questions[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -201,6 +203,7 @@ function Questions() {
     const currentQuestion = questions[currentQuestionIndex];
     const hasAnsweredCurrentQuestion = currentQuestion && answers.has(currentQuestion.id);
     const questionText = currentQuestion?.question_text || currentQuestion?.question || '';
+    const isMultipleChoice = currentQuestion?.question_type === 'multiple';
 
     // Calculate visible options for slider
     const maxVisibleOptions = 3;
@@ -220,7 +223,7 @@ function Questions() {
                     className="flex items-center text-teal-500 font-medium"
                     onClick={() => window.history.back()}
                 >
-                    <span className="mr-2">←</span> Back
+                    <span className="mr-2">←</span> {t('questions.back')}
                 </button>
                 <div className="text-gray-500">
                     {currentQuestionIndex + 1} of {questions.length} questions
@@ -228,9 +231,30 @@ function Questions() {
             </div>
 
             {/* Question */}
-            <h1 className="text-3xl font-bold text-center mb-12">
+            <h1 className="text-3xl font-bold text-center mb-6">
                 {questionText}
             </h1>
+
+            {/* Selection Type Indicator */}
+            <div className="flex justify-center mb-8">
+                <div className={`inline-flex items-center px-6 py-3 rounded-full text-sm font-medium ${isMultipleChoice
+                        ? 'bg-blue-50 border-2 border-blue-200 text-blue-700'
+                        : 'bg-green-50 border-2 border-green-200 text-green-700'
+                    }`}>
+                    <div className={`w-4 h-4 rounded mr-3 flex items-center justify-center text-xs font-bold ${isMultipleChoice
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-green-500 text-white'
+                        }`}>
+                        {isMultipleChoice ? '☑' : '●'}
+                    </div>
+                    <span>
+                        {isMultipleChoice
+                            ? t('questions.multiple')
+                            : t('questions.single')
+                        }
+                    </span>
+                </div>
+            </div>
 
             {/* Options with slider */}
             <div className="flex items-center justify-center mb-12 gap-4">
@@ -273,17 +297,19 @@ function Questions() {
                                         {option.option_text}
                                     </div>
                                     <button
-                                        className={`h-8 w-8 rounded-full flex items-center justify-center ${isSelected
-                                            ? 'bg-green-500 text-white'
-                                            : 'bg-gray-200 hover:bg-gray-300'
+                                        className={`h-8 w-8 rounded-full flex items-center justify-center transition-all duration-200 ${isSelected
+                                                ? isMultipleChoice
+                                                    ? 'bg-blue-500 text-white shadow-md'
+                                                    : 'bg-green-500 text-white shadow-md'
+                                                : 'bg-gray-200 hover:bg-gray-300 border-2 border-gray-300'
                                             }`}
                                         onClick={() => handleOptionSelect(
                                             currentQuestion.id,
                                             option.id,
-                                            currentQuestion.question_type === 'multiple'
+                                            isMultipleChoice
                                         )}
                                     >
-                                        {isSelected && '✓'}
+                                        {isSelected && (isMultipleChoice ? '✓' : '●')}
                                     </button>
                                 </div>
                             );
@@ -310,7 +336,7 @@ function Questions() {
                     className="bg-red-500 text-white py-3 px-10 rounded-full font-medium hover:bg-red-600 transition-colors duration-300"
                     onClick={handlePrevQuestion}
                 >
-                    Previous
+                    {t('questions.previous')}
                 </button>
                 <button
                     className={`py-3 px-10 rounded-full font-medium flex items-center ${hasAnsweredCurrentQuestion
@@ -321,10 +347,10 @@ function Questions() {
                     disabled={!hasAnsweredCurrentQuestion}
                 >
                     {isLastQuestion ? (
-                        'Submit'
+                        t('questions.submit')
                     ) : (
                         <>
-                            Next <span className="ml-2">→</span>
+                            {t('questions.next')} <span className="ml-2">→</span>
                         </>
                     )}
                 </button>

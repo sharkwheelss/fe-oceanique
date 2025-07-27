@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useRecommendation } from '../../context/RecommendationContext';
+import { useI18n } from '../../context/I18nContext';
 
 interface PreferenceCategory {
     id: number;
@@ -10,6 +11,7 @@ interface PreferenceCategory {
 }
 
 function PreferenceRankingStep() {
+    const { t } = useI18n();
     const navigate = useNavigate();
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const [rankings, setRankings] = useState<{ [key: string]: number }>({});
@@ -68,12 +70,12 @@ function PreferenceRankingStep() {
             {/* Title and Skip option */}
             <div className="flex justify-between items-center mb-10">
                 <h1 className="text-3xl font-bold max-w-xl">
-                    Your beach, your rules! Rank what you care about the most.
+                    {t('preference.title')}
                 </h1>
                 <button className="text-teal-500 font-medium flex items-center hover:underline hover:text-teal-600 transition-colors duration-300"
                     onClick={() => navigate('/questions')}
                 >
-                    Skip for now <span className="ml-2">→</span>
+                    {t('preference.skip')} <span className="ml-2">→</span>
                 </button>
             </div>
 
@@ -130,13 +132,13 @@ function PreferenceRankingStep() {
                     className="bg-red-500 text-white py-3 px-10 rounded-full font-medium hover:bg-red-600 transition-colors duration-300"
                     onClick={() => window.history.back()}
                 >
-                    Back
+                    {t('preference.back')}
                 </button>
                 <button
                     className="bg-teal-500 text-white py-3 px-10 rounded-full font-medium flex items-center hover:bg-teal-600 transition-colors duration-300"
                     onClick={handleNext}
                 >
-                    Next <span className="ml-2">→</span>
+                    {t('preference.next')} <span className="ml-2">→</span>
                 </button>
             </div>
         </div>

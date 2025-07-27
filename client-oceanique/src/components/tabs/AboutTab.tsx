@@ -1,4 +1,7 @@
+import { useI18n } from "../../context/I18nContext";
+
 const AboutContent = (data: any) => {
+    const { t } = useI18n();
     return (
         <div>
             <h2 className="text-2xl font-bold mb-4">{data.beachData.beach_name}</h2>
@@ -8,7 +11,7 @@ const AboutContent = (data: any) => {
 
             <div className="grid md:grid-cols-2 gap-8 mb-8">
                 <div>
-                    <h3 className="text-lg font-semibold mb-4">Contact Person</h3>
+                    <h3 className="text-lg font-semibold mb-4">{t('beachDetail.contactPerson')}</h3>
                     <div className="flex items-center mb-2">
                         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3">
                             <span className="text-gray-600">👤</span>
@@ -18,7 +21,7 @@ const AboutContent = (data: any) => {
                 </div>
 
                 <div>
-                    <h3 className="text-lg font-semibold mb-4">Official Website</h3>
+                    <h3 className="text-lg font-semibold mb-4">{t('beachDetail.officialWebsite')}</h3>
                     <div className="flex items-center">
                         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3">
                             <span className="text-gray-600">🌐</span>
@@ -38,7 +41,7 @@ const AboutContent = (data: any) => {
             </div>
 
             <div>
-                <h3 className="text-lg font-semibold mb-4">Activities</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('beachDetail.activity')}</h3>
 
                 {data.beachData.activities.length > 0 ? (
                     <div className="grid md:grid-cols-2 gap-4">

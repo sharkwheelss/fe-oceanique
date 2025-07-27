@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../context/EventContext';
+import { useI18n } from '../context/I18nContext';
 
 // Event interface (same as in your EventsPage)
 interface Event {
@@ -34,6 +35,7 @@ const WishlistEventsSection: React.FC<WishlistEventsSectionProps> = ({ wishlistB
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const { getAllEvents } = useEvents();
+    const { t } = useI18n();
 
     // console.log(wishlistBeachIds)
 
@@ -109,10 +111,10 @@ const WishlistEventsSection: React.FC<WishlistEventsSectionProps> = ({ wishlistB
                 {/* Section Header */}
                 <div className="text-center mb-12">
                     <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                        All Events at Your Favorite Beaches
+                        {t('home.eventSection')}
                     </h2>
                     <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Discover exciting events at the beaches you love
+                        {t('home.eventSectionDesc')}
                     </p>
                 </div>
 
@@ -183,7 +185,7 @@ const WishlistEventsSection: React.FC<WishlistEventsSectionProps> = ({ wishlistB
                         onClick={() => navigate('/events')}
                         className="inline-flex items-center px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors duration-200 font-medium"
                     >
-                        View All Events
+                        {t('home.eventSectionButton')}
                         <ArrowRight className="ml-2 w-4 h-4" />
                     </button>
                 </div>

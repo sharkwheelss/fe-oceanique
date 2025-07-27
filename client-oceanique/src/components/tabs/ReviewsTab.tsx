@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Star, ThumbsUp, Plus, Check, Edit, MessageSquare } from 'lucide-react';
 import Pagination from "../helper/pagination";
+import { useI18n } from '../../context/I18nContext';
 
 // Type definitions
 type Review = {
@@ -55,6 +56,7 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate,
     // State for current page
     const [currentPage, setCurrentPage] = useState(1);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const { t } = useI18n();
 
     // Navigation handler
     const handleNavigation = (path: string) => {
@@ -70,7 +72,7 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate,
         return (
             <div className="container mx-auto">
                 <div className="py-6">
-                    <h2 className="text-2xl font-bold mb-8">Overall Rating & Review</h2>
+                    <h2 className="text-2xl font-bold mb-8">{t('beachDetail.overallRating')}</h2>
 
                     {/* Empty state */}
                     <div className="text-center py-12">
@@ -153,7 +155,7 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate,
         <div className="container mx-auto">
             {/* Reviews Content */}
             <div className="py-6">
-                <h2 className="text-2xl font-bold mb-8">Overall Rating & Review</h2>
+                <h2 className="text-2xl font-bold mb-8">{t('beachDetail.overallRating')}</h2>
 
                 {/* Rating Overview and Actions */}
                 <div className="flex justify-between items-center mb-8">
@@ -177,7 +179,7 @@ export default function ReviewsSection({ reviewsData, currentUserId, onNavigate,
                                 onClick={() => handleNavigation(`/add-review/${beachId}`)}
                             >
                                 <Plus size={18} className="mr-1" />
-                                Add
+                                {t('beachDetail.addReview')}
                             </button>
                         )}
 
