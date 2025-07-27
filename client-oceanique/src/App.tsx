@@ -4,14 +4,17 @@ import AdminSidebar from './components/admin_page/AdminSidebar';
 import { BrowserRouter as Router } from 'react-router-dom';
 import OceaniqueRoute from './Routes'
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { I18nProvider } from './context/I18nContext';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Layout />
-      </Router>
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <Router>
+          <Layout />
+        </Router>
+      </AuthProvider>
+    </I18nProvider>
   );
 }
 

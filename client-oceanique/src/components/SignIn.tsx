@@ -1,15 +1,18 @@
-// Refactored Signin.tsx
+// Internationalized Signin.tsx
 import { useState } from 'react';
 import PassInput from './PassInput';
 import DialogMessage from '../components/helper/DialogMessage';
 import { useDialog } from '../components/helper/useDialog';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import LanguageSwitcher from './helper/LanguageSwitcher';
 
 const Signin = () => {
     const [emailOrUsername, setEmailOrUsername] = useState('');
     const [password, setPassword] = useState('');
     const { login, completeLogin } = useAuth();
+    const { t } = useI18n();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -21,15 +24,21 @@ const Signin = () => {
         switch (location.pathname) {
             case '/signin':
                 return {
-                    title: 'Discover Breathtaking Indonesian Shores with ',
-                    subtitle: '– Try our recommendation now!',
+                    title: t('signin.title'),
+                    subtitle: t('signin.subtitle'),
                     img: '/cust-signin.png'
                 };
             case '/adminevent-signin':
                 return {
-                    title: 'Event Admin Hub of ',
-                    subtitle: '- Share your events with the world!',
+                    title: t('adminEvent.title'),
+                    subtitle: t('adminEvent.subtitle'),
                     img: '/adminevent-signin.png'
+                };
+            default:
+                return {
+                    title: t('signin.title'),
+                    subtitle: t('signin.subtitle'),
+                    img: '/cust-signin.png'
                 };
         }
     };
@@ -73,11 +82,11 @@ const Signin = () => {
     const getUserTypeName = (userTypesId: any) => {
         switch (userTypesId) {
             case 1:
-                return 'Customer';
+                return t('userTypes.customer');
             case 3:
-                return 'Event Admin';
+                return t('userTypes.eventAdmin');
             default:
-                return 'Unknown';
+                return t('userTypes.unknown');
         }
     };
 
@@ -96,11 +105,11 @@ const Signin = () => {
     const getPageName = (path: string) => {
         switch (path) {
             case '/signin':
-                return 'Customer Sign In';
+                return t('signin.customerSignIn');
             case '/adminevent-signin':
-                return 'Event Admin Sign In';
+                return t('signin.eventAdminSignIn');
             default:
-                return 'Sign In';
+                return t('common.signin');
         }
     };
 
@@ -115,15 +124,19 @@ const Signin = () => {
             if (!validateUserType(userTypesId)) {
                 const currentUserType = getUserTypeName(userTypesId);
                 const correctPath = getCorrectSigninPath(userTypesId);
+                const correctPageName = getPageName(correctPath);
 
                 // Show wrong user type warning with redirect option
                 showWarning(
-                    'Wrong Sign In Page',
-                    `You are trying to sign in as a ${currentUserType}, but you're on the wrong sign in page. Please use the ${getPageName(correctPath)} page instead.`,
+                    t('signin.wrongPageTitle'),
+                    t('signin.wrongPageMessage', {
+                        userType: currentUserType,
+                        correctPage: correctPageName
+                    }),
                     {
                         showCancel: true,
-                        confirmText: 'Go to Correct Page',
-                        cancelText: 'Stay Here',
+                        confirmText: t('signin.goToCorrectPage'),
+                        cancelText: t('signin.stayHere'),
                         onConfirm: () => {
                             closeDialog();
                             navigate(correctPath);
@@ -138,8 +151,8 @@ const Signin = () => {
 
             // Show success message with redirect
             showSuccess(
-                'Sign In Successful!',
-                'Welcome back to Oceanique!',
+                t('signin.successTitle'),
+                t('signin.successMessage'),
                 {
                     showCancel: false,
                     redirectPath: getRedirectPath()
@@ -148,8 +161,8 @@ const Signin = () => {
         } else {
             // Show error message
             showError(
-                'Sign In Failed!',
-                result.message || 'Login failed',
+                t('signin.failedTitle'),
+                result.message || t('signin.failedMessage'),
                 {
                     showCancel: false
                 }
@@ -159,10 +172,15 @@ const Signin = () => {
 
     return (
         <div className="w-full flex flex-col md:flex-row">
+            {/* Language Switcher - Top Left */}
+            <div className="absolute top-4 left-4 z-99999999">
+                <LanguageSwitcher />
+            </div>
+
             {/* Left side */}
             <div className="md:w-1/2 flex flex-col justify-center p-8">
                 <h1 className="text-3xl font-bold mb-4">
-                    {title}<span className="text-teal-500 font-sharemono">Oceanique</span>
+                    {title} <span className="text-teal-500 font-sharemono">Oceanique</span>
                 </h1>
                 <p className="text-xl mb-6 italic">{subtitle}</p>
                 <div className="max-w-md mx-auto">
@@ -176,13 +194,13 @@ const Signin = () => {
 
             {/* Right side */}
             <div className="md:w-1/2 flex flex-col justify-center p-8">
-                <h2 className="text-3xl font-bold mb-8 text-center">Sign In</h2>
+                <h2 className="text-3xl font-bold mb-8 text-center">{t('common.signin')}</h2>
 
                 <div className="max-w-md mx-auto w-full">
                     <div className="mb-6">
                         <input
                             type="text"
-                            placeholder="Enter email or username"
+                            placeholder={t('signin.emailOrUsernamePlaceholder')}
                             value={emailOrUsername}
                             onChange={(e) => setEmailOrUsername(e.target.value)}
                             className="w-full px-4 py-3 rounded bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -193,13 +211,13 @@ const Signin = () => {
                         <PassInput
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Password"
+                            placeholder={t('signin.passwordPlaceholder')}
                         />
                     </div>
 
                     <div className="text-right mb-6">
                         <a href="#" className="text-sm text-gray-400 hover:text-teal-500">
-                            Forgot password?
+                            {t('common.forgotPassword')}
                         </a>
                     </div>
 
@@ -207,26 +225,26 @@ const Signin = () => {
                         onClick={handleSubmit}
                         className="w-full py-3 bg-teal-500 text-white rounded hover:bg-teal-600 transition-colors"
                     >
-                        Sign in
+                        {t('signin.signinButton')}
                     </button>
 
                     <div className="text-center mt-6">
                         <p>
-                            Don't have an account?
+                            {t('common.dontHaveAccount')}
                             <Link to="/signup" className="text-teal-500 ml-1 hover:underline">
-                                Register here
+                                {t('common.registerHere')}
                             </Link>
                         </p>
                     </div>
 
                     {location.pathname === '/signin' && (
                         <div className="mt-6 text-center">
-                            <p className="text-gray-500 mb-6">Are you the one who held event?</p>
+                            <p className="text-gray-500 mb-6">{t('signin.eventAdminQuestion')}</p>
                             <button
                                 onClick={() => navigate('/adminevent-signin')}
                                 className="w-full py-3 bg-gray-300 text-gray-700 rounded hover:bg-gray-500 hover:text-white transition-colors"
                             >
-                                Sign in here!
+                                {t('signin.eventAdminButton')}
                             </button>
                         </div>
                     )}

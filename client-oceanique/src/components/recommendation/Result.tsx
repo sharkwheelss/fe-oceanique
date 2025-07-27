@@ -296,7 +296,7 @@ export default function RecommendationResult() {
         return {
             id: review.review_id,
             username: review.username,
-            userType: review.experience > 0 ? "Experienced User" : "Regular User",
+            personality: review.personality,
             rating: review.rating,
             date: review.posted,
             content: review.user_review,
@@ -435,6 +435,7 @@ export default function RecommendationResult() {
                     <img
                         src={currentDestination.image || "/api/placeholder/800/300"}
                         alt={currentDestination.name}
+                        onClick={() => navigate(`/beach-detail/${currentDestination.id}`)}
                         className="w-full h-64 object-cover"
                         onError={(e) => {
                             (e.target as HTMLImageElement).src = "/api/placeholder/800/300";
@@ -566,8 +567,8 @@ export default function RecommendationResult() {
                                         </div>
                                         <div>
                                             <p className="font-bold">{displayReview.username}</p>
-                                            <div className="bg-gray-100 rounded-full px-3 py-1 text-xs text-gray-700 mt-1">
-                                                {displayReview.userType}
+                                            <div className="bg-green-100 rounded-full px-3 py-1 text-xs text-gray-700 mt-1">
+                                                {displayReview.personality}
                                             </div>
                                             {displayReview.experienced && (
                                                 <div className="flex items-center gap-1 mt-1 text-xs text-blue-600">

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import DialogMessage from '../components/helper/DialogMessage';
 import { useDialog } from '../components/helper/useDialog';
+import LanguageSwitcher from './helper/LanguageSwitcher';
 
 const navItems = [
   { label: 'Home', path: '/home' },
@@ -50,6 +51,9 @@ const Navbar: React.FC = () => {
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="absolute top-4 left-4 z-99999999">
+                <LanguageSwitcher />
+            </div>
         {/* Logo */}
         {isCust && (
           <div className="flex items-center" onClick={() => navigate('/home')}>

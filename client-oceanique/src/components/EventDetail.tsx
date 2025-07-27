@@ -475,12 +475,12 @@ export default function EventTicketPage() {
 
                             <div className="mt-4 flex items-center text-gray-600">
                                 <BadgeInfo className="h-5 w-5 text-blue-500" />
-                                <span className="ml-2 text-sm">
+                                <span className="ml-2 text-sm" title={eventData.social_media}>
                                     Visit our social media:&nbsp;
                                     {eventData.social_media ? (
                                         <a
                                             href={eventData.social_media.startsWith('http') ? eventData.social_media : `https://${eventData.social_media}`}
-                                            className="text-blue-500 hover:underline"
+                                            className="text-blue-500 hover:underline break-all"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
